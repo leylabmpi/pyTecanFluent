@@ -169,13 +169,11 @@ class multi_disp():
                 n_disp = self.SampleCount - i
             else:
                 n_disp = self.NoOfMultiDisp
-            # amount to aspirate
-            asp_vol = round(self.Volume * n_disp, 2)
             # single-asp
             asp = aspirate()
             asp.RackLabel = self.SrcRackLabel
             asp.Position = self.SrcPosition
-            asp.Volume = sum(self.Volumes[i:(i+n_disp)])   #asp_vol
+            asp.Volume = sum(self.Volumes[i:(i+n_disp)])   
             asp.Volume = round(asp.Volume, 2)
             asp.LiquidClass = self.LiquidClass
             steps.append(asp.cmd())
