@@ -9,8 +9,7 @@ with open('HISTORY.rst') as history_file:
 
 requirements = [
     'numpy',
-    'pandas',
-    'xlrd'
+    'pandas'
 ]
 
 test_requirements = [
