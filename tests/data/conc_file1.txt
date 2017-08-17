@@ -1,0 +1,7 @@
+Labware	Location	Conc
+96 Well[001]	1	10.1
+96 Well[001]	2	6.3
+96 Well[001]	3	21
+96 Well[001]	4	2.2
+96 Well[001]	5	3.1
+96 Well[001]	6	8.5

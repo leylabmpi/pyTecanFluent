@@ -1,0 +1,26 @@
+;Row;Column;Sample Type;Replicate #;*Target Name;*Sample Name;*Biological Set Name;*Well Note;Starting Quantity;Units
+;H;1;Std;;;;;;1,000E+002;copy number
+;H;2;Std;;;;;;1,000E+002;copy number
+;G;1;Std;;;;;;1,000E+003;copy number
+;G;2;Std;;;;;;1,000E+003;copy number
+;F;1;Std;;;;;;1,000E+004;copy number
+;F;2;Std;;;;;;1,000E+004;copy number
+;E;1;Std;;;;;;1,000E+005;copy number
+;E;2;Std;;;;;;1,000E+005;copy number
+;D;1;Std;;;;;;1,000E+006;copy number
+;D;2;Std;;;;;;1,000E+006;copy number
+;C;4;Unkn;3;;test2;;;N/A;copy number
+;C;5;Unkn;3;;test2;;;N/A;copy number
+;C;3;Unkn;3;;test2;;;N/A;copy number
+;C;1;Std;;;;;;1,000E+007;copy number
+;C;2;Std;;;;;;1,000E+007;copy number
+;B;2;Std;;;;;;1,000E+008;copy number
+;B;1;Std;;;;;;1,000E+008;copy number
+;B;3;Unkn;2;;test1;;;N/A;copy number
+;B;5;Unkn;2;;test1;;;N/A;copy number
+;B;4;Unkn;2;;test1;;;N/A;copy number
+;A;2;Std;;;;;;1,000E+009;copy number
+;A;1;Std;;;;;;1,000E+009;copy number
+;A;3;Unkn;1;;test;;;N/A;copy number
+;A;5;Unkn;1;;test;;;N/A;copy number
+;A;4;Unkn;1;;test;;;N/A;copy number
