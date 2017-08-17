@@ -9,8 +9,8 @@ import unittest
 ## 3rd party
 import pandas as pd
 ## package
-from leylab_pipelines.TECAN import QPCR
-from leylab_pipelines import Utils
+from pyTecanFluent import QPCR
+from pyTecanFluent import Utils
 
 
 # data dir
