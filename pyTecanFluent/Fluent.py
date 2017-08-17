@@ -144,7 +144,7 @@ class multi_disp():
         self.DestRackType = []
         self._DestPositions = [1]
         # other
-        self.Volume = 1
+        self.Volume = 1.0
         self._LiquidClass = 'Water Free Multi'
         self.NoOfMultiDisp = 2
         self.psbl_liq_cls = _psbl_liq_cls()
