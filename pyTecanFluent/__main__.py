@@ -42,7 +42,7 @@ def main(args=None):
   else:
     args = parser.parse_args()
 
-  # 
+  # running subcommands
   if len(vars(args)) > 0:
     args.func(args)
   else:

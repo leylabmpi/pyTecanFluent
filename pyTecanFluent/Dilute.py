@@ -96,7 +96,76 @@ def parse_args(test_args=None, subparsers=None):
         return args
 
     return parser
+
+
+def main(args=None):
+    # Input
+    if args is None:
+        args = parse_args()
+    check_args(args)
+    # Import
+    df_conc = conc2df(args.concfile, 
+                      file_format=args.format,
+                      row_select=args.rows, 
+                      header=args.header,
+                      labware_col=args.labware,
+                      location_col=args.location, 
+                      conc_col=args.conc)
+    check_df_conc(df_conc, args)
+
+    # Determining dilution volumes
+    df_conc = dilution_volumes(df_conc, 
+                               dilute_conc=args.dilution,
+                               min_vol=args.minvolume,
+                               max_vol=args.maxvolume,
+                               min_total=args.mintotal,
+                               dest_type=args.desttype)
     
+    # Adding destination data
+    df_conc = add_dest(df_conc, 
+                       dest_labware=args.dest,
+                       dest_start=args.deststart)
+    
+    # Reordering dest if plate type is 384-well
+    if args.desttype == '384':
+        df_conc = reorder_384well(df_conc, 'dest_location')
+    elif args.desttype == '96':
+        pass
+    else:
+        msg = 'Destination labware type "{}" not recognized'
+        raise ValueError(msg.format(args.desttype))
+    
+    # Writing out gwl file
+    gwl_file = args.prefix + '.gwl'
+    with open(gwl_file, 'w') as gwlFH:
+        ## Dilutant
+        pip_dilutant(df_conc, outFH=gwlFH, src_labware=args.dlabware)
+        ## Sample
+        pip_samples(df_conc, outFH=gwlFH)
+        
+    # Writing out table
+    conc_file = args.prefix + '_conc.txt'
+    df_conc.round(1).to_csv(conc_file, sep='\t', index=False)
+
+    # Create windows-line breaks formatted versions
+    gwl_file_win = Utils.to_win(gwl_file)
+    conc_file_win = Utils.to_win(conc_file)
+
+    # status
+    file_written(gwl_file)
+    file_written(conc_file)
+    file_written(gwl_file_win)
+    file_written(conc_file_win)    
+    
+    # end
+    return (gwl_file, gwl_file_win, conc_file, conc_file_win)
+
+
+def file_written(file_name):
+    """Status on writing file"""
+    print('File written: {}'.format(file_name), file=sys.stderr)
+
+
 def check_args(args):
     """Checking user input
     """
@@ -282,8 +351,7 @@ def pip_dilutant(df_conc, outFH, src_labware='100ml[001]'):
     MD.NoOfMultiDisp = n_disp
     # writing
     outFH.write(MD.cmd() + '\n')
-
-
+    
 def pip_samples(df_conc, outFH):
     """Commands for aliquoting samples into dilutant
     """
@@ -308,63 +376,6 @@ def pip_samples(df_conc, outFH):
 
         # tip to waste
         outFH.write('W;\n')
-
-
-def main(args=None):
-    # Input
-    if args is None:
-        args = parse_args()
-    check_args(args)
-    # Import
-    df_conc = conc2df(args.concfile, 
-                      file_format=args.format,
-                      row_select=args.rows, 
-                      header=args.header,
-                      labware_col=args.labware,
-                      location_col=args.location, 
-                      conc_col=args.conc)
-    check_df_conc(df_conc, args)
-
-    # Determining dilution volumes
-    df_conc = dilution_volumes(df_conc, 
-                               dilute_conc=args.dilution,
-                               min_vol=args.minvolume,
-                               max_vol=args.maxvolume,
-                               min_total=args.mintotal,
-                               dest_type=args.desttype)
-    
-    # Adding destination data
-    df_conc = add_dest(df_conc, 
-                       dest_labware=args.dest,
-                       dest_start=args.deststart)
-    
-    # Reordering dest if plate type is 384-well
-    if args.desttype == '384':
-        df_conc = reorder_384well(df_conc, 'dest_location')
-    elif args.desttype == '96':
-        pass
-    else:
-        msg = 'Destination labware type "{}" not recognized'
-        raise ValueError(msg.format(args.desttype))
-    
-    # Writing out gwl file
-    gwl_file = args.prefix + '.gwl'
-    with open(gwl_file, 'w') as gwlFH:
-        ## Dilutant
-        pip_dilutant(df_conc, outFH=gwlFH, src_labware=args.dlabware)
-        ## Sample
-        pip_samples(df_conc, outFH=gwlFH)
-
-    # Writing out table
-    conc_file = args.prefix + '_conc.txt'
-    df_conc.round(1).to_csv(conc_file, sep='\t', index=False)
-
-    # Create windows-line breaks formatted versions
-    gwl_file_win = Utils.to_win(gwl_file)
-    conc_file_win = Utils.to_win(conc_file)
-
-    # end
-    return (gwl_file, gwl_file_win, conc_file, conc_file_win)
 
 
 # main
