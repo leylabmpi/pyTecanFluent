@@ -4,8 +4,6 @@
 from setuptools import setup, find_packages
 import glob
 
-with open('HISTORY.rst') as history_file:
-    history = history_file.read()
 
 requirements = [
     'numpy',
@@ -27,7 +25,7 @@ setup(
     name='pyTecanFluent',
     version='0.0.1',
     description='Python interface to TECAN Fluent liquid handling robot',
-    long_description=long_desc + '\n\n' + history,
+    long_description=long_desc,
     author="Nick Youngblut",
     author_email='leylabmpi@gmail.com',
     entry_points={

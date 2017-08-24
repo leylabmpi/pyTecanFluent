@@ -40,11 +40,13 @@ Python interface to TECAN Fluent liquid handling robot
 
 `pip install pyTecanFluent`
 
-### Testing
+### From source
+
+Optional testing:
 
 `python setpy.py test`
 
-### Build
+Install:
 
 `python setup.py install`
 
