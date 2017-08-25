@@ -122,6 +122,95 @@ def parse_args(test_args=None, subparsers=None):
     return parser
 
 
+def main(args=None):
+    # Input
+    if args is None:
+        args = parse_args()
+    check_args(args)
+    # Import
+    df_map = map2df(args.mapfile, row_select=args.rows)
+    check_df_map(df_map, args)
+    # Making destination dataframe
+    df_map = add_dest(df_map, args.dest,
+                      dest_type=args.desttype,
+                      dest_start=args.deststart,
+                      rxn_reps=args.rxns)
+
+    # Reordering dest if plate type is 384-well
+    if args.desttype == '384':
+        df_map = reorder_384well(df_map, 'TECAN_dest_location')
+    elif args.desttype == '96':
+        pass
+    else:
+        msg = 'Destination labware type "{}" not recognized'
+        msg.format(args.desttype)
+
+    # GWL file construction
+    ## gwl open
+    gwl_file = args.prefix + '.gwl'
+    with open(gwl_file, 'w') as gwlFH:
+        ## mastermix
+        pip_mastermix(df_map, gwlFH,
+                      mmtube=args.mmtube,
+                      mmvolume=args.mmvolume, 
+                      liq_cls=args.mm_liq)
+        ## primers
+        pip_primers(df_map, gwlFH,
+                    fp_volume=args.fpvolume,
+                    rp_volume=args.rpvolume,
+                    fp_tube=args.fptube,
+                    rp_tube=args.rptube, 
+                    liq_cls=args.primer_liq)
+        ## samples
+        pip_samples(df_map, gwlFH, 
+                    liq_cls=args.sample_liq)
+        ## water
+        pip_water(df_map, gwlFH,
+                  pcr_volume=args.pcrvolume,
+                  mm_volume=args.mmvolume,
+                  fp_volume=args.fpvolume,
+                  rp_volume=args.rpvolume, 
+                  liq_cls=args.water_liq)
+
+    # Report (total volumes; sample truncation; samples)
+    report_file = args.prefix + '.report'
+    with open(report_file, 'w') as repFH:
+        write_report(df_map, outFH=repFH,
+                     pcr_volume=args.pcrvolume,
+                     mm_volume=args.mmvolume,
+                     fp_tube=args.fptube,
+                     fp_volume=args.fpvolume,
+                     rp_tube=args.rptube,
+                     rp_volume=args.rpvolume,
+                     n_rxn_reps=args.rxns,
+                     error_perc=args.errorperc)
+
+    # Mapping file with destinations
+    df_file = args.prefix + '_map.txt'
+    df_map['TECAN_water_rxn_volume'] = df_map['TECAN_water_rxn_volume'].round(2)
+    df_map['TECAN_dest_location'] = df_map['TECAN_dest_location'].astype(int)
+    df_map['TECAN_pcr_rxn_rep'] = df_map['TECAN_pcr_rxn_rep'].astype(int)
+    df_map.to_csv(df_file, sep='\t', index=False, na_rep='NA')
+
+    # Create windows-line breaks formatted versions
+    gwl_file_win = Utils.to_win(gwl_file)
+    report_file_win = Utils.to_win(report_file)
+    df_file_win = Utils.to_win(df_file)
+
+    # status on files written
+    Utils.file_written(gwl_file)
+    Utils.file_written(report_file)
+    Utils.file_written(df_file)
+    Utils.file_written(gwl_file_win)
+    Utils.file_written(report_file_win)
+    Utils.file_written(df_file_win)
+    
+    # Return
+    return (gwl_file, gwl_file_win,
+            report_file, report_file_win, 
+            df_file, df_file_win)
+
+
 def check_args(args):
     """Checking user input
     """
@@ -494,86 +583,6 @@ def write_report(df_map, outFH, pcr_volume, mm_volume,
     # samples
     outFH.write('')
 
-
-def main(args=None):
-    # Input
-    if args is None:
-        args = parse_args()
-    check_args(args)
-    # Import
-    df_map = map2df(args.mapfile, row_select=args.rows)
-    check_df_map(df_map, args)
-    # Making destination dataframe
-    df_map = add_dest(df_map, args.dest,
-                      dest_type=args.desttype,
-                      dest_start=args.deststart,
-                      rxn_reps=args.rxns)
-
-    # Reordering dest if plate type is 384-well
-    if args.desttype == '384':
-        df_map = reorder_384well(df_map, 'TECAN_dest_location')
-    elif args.desttype == '96':
-        pass
-    else:
-        msg = 'Destination labware type "{}" not recognized'
-        msg.format(args.desttype)
-
-    # GWL file construction
-    ## gwl open
-    gwl_file = args.prefix + '.gwl'
-    with open(gwl_file, 'w') as gwlFH:
-        ## mastermix
-        pip_mastermix(df_map, gwlFH,
-                      mmtube=args.mmtube,
-                      mmvolume=args.mmvolume, 
-                      liq_cls=args.mm_liq)
-        ## primers
-        pip_primers(df_map, gwlFH,
-                    fp_volume=args.fpvolume,
-                    rp_volume=args.rpvolume,
-                    fp_tube=args.fptube,
-                    rp_tube=args.rptube, 
-                    liq_cls=args.primer_liq)
-        ## samples
-        pip_samples(df_map, gwlFH, 
-                    liq_cls=args.sample_liq)
-        ## water
-        pip_water(df_map, gwlFH,
-                  pcr_volume=args.pcrvolume,
-                  mm_volume=args.mmvolume,
-                  fp_volume=args.fpvolume,
-                  rp_volume=args.rpvolume, 
-                  liq_cls=args.water_liq)
-
-    # Report (total volumes; sample truncation; samples)
-    report_file = args.prefix + '.report'
-    with open(report_file, 'w') as repFH:
-        write_report(df_map, outFH=repFH,
-                     pcr_volume=args.pcrvolume,
-                     mm_volume=args.mmvolume,
-                     fp_tube=args.fptube,
-                     fp_volume=args.fpvolume,
-                     rp_tube=args.rptube,
-                     rp_volume=args.rpvolume,
-                     n_rxn_reps=args.rxns,
-                     error_perc=args.errorperc)
-
-    # Mapping file with destinations
-    df_file = args.prefix + '_map.txt'
-    df_map['TECAN_water_rxn_volume'] = df_map['TECAN_water_rxn_volume'].round(2)
-    df_map['TECAN_dest_location'] = df_map['TECAN_dest_location'].astype(int)
-    df_map['TECAN_pcr_rxn_rep'] = df_map['TECAN_pcr_rxn_rep'].astype(int)
-    df_map.to_csv(df_file, sep='\t', index=False, na_rep='NA')
-
-    # Create windows-line breaks formatted versions
-    gwl_file_win = Utils.to_win(gwl_file)
-    report_file_win = Utils.to_win(report_file)
-    df_file_win = Utils.to_win(df_file)
-
-    # Return
-    return (gwl_file, gwl_file_win,
-            report_file, report_file_win, 
-            df_file, df_file_win)
 
 # main
 if __name__ == '__main__':

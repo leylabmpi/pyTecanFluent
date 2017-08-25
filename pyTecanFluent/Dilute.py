@@ -152,18 +152,13 @@ def main(args=None):
     conc_file_win = Utils.to_win(conc_file)
 
     # status
-    file_written(gwl_file)
-    file_written(conc_file)
-    file_written(gwl_file_win)
-    file_written(conc_file_win)    
+    Utils.file_written(gwl_file)
+    Utils.file_written(conc_file)
+    Utils.file_written(gwl_file_win)
+    Utils.file_written(conc_file_win)    
     
     # end
     return (gwl_file, gwl_file_win, conc_file, conc_file_win)
-
-
-def file_written(file_name):
-    """Status on writing file"""
-    print('File written: {}'.format(file_name), file=sys.stderr)
 
 
 def check_args(args):

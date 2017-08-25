@@ -25,7 +25,6 @@ class Test_import(unittest.TestCase):
     def setUp(self):
         infile = os.path.join(data_dir, 'qPCR_setup/qPCR_Zach_plate1.xlsx')
         args = QPCR.parse_args([infile])
-        QPCR.check_args(args)
         self.df_setup = QPCR.load_setup(args.setup)
         QPCR.check_df_setup(self.df_setup)
 
@@ -44,7 +43,6 @@ class Test_add_dest(unittest.TestCase):
     def setUp(self):
         infile = os.path.join(data_dir, 'qPCR_setup/qPCR_Zach_plate1.xlsx')
         args = QPCR.parse_args([infile])
-        QPCR.check_args(args)
         self.df_setup = QPCR.load_setup(args.setup)
         QPCR.check_df_setup(self.df_setup)
         QPCR.add_dest(self.df_setup, args.dest, dest_type=args.desttype)

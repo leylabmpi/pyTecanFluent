@@ -7,6 +7,13 @@ import logging
 import numpy as np
 
 # functions
+def file_written(file_name):
+    """Status on writing file
+    file_name: string
+    """
+    print('File written: {}'.format(file_name), file=sys.stderr)
+
+
 def make_range(x, set_zero_index=False):
     """Making a range from a string of comma-delimited and hyphenated number strings.
     If x = 'all', None returned

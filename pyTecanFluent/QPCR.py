@@ -94,13 +94,65 @@ def parse_args(test_args=None, subparsers=None):
     return parser
 
 
-def check_args(args):
-    """Checking user input
-    """
-    pass
+def main(args=None):
+    # Input
+    if args is None:
+        args = parse_args()
+
+    # Load input table
+    df_setup = load_setup(args.setup, 
+                          file_format=args.format)
+    check_df_setup(df_setup)
+
+    # adding sample/reagent destinations to setup table
+    add_dest(df_setup, args.dest, dest_type=args.desttype)
+        
+    # Reordering dest if plate type is 384-well
+    if args.desttype == '384':
+         df_setup = reorder_384well(df_setup, 'dest_location')
+    elif args.desttype == '96':
+        pass
+    else:
+        msg = 'Labware type "{}" not recognized'
+        raise ValueError(msg.format(args.desttype))
+    
+    # Writing out gwl file
+    gwl_file = args.prefix + '.gwl'
+    with open(gwl_file, 'w') as gwlFH:
+        ## Master mix(es)
+        pip_mastermix(df_setup, outFH=gwlFH, 
+                      src_labware=args.mm,
+                      src_start=args.mmloc, 
+                      liq_cls=args.mmliq)
+        ## Samples
+        pip_samples(df_setup, outFH=gwlFH, liq_cls=args.sampliq)
+        ## Water
+        pip_water(df_setup, outFH=gwlFH, src_labware=args.water, 
+                  src_start=args.waterloc, liq_cls=args.waterliq)
+
+    # Creating report file
+    report_file = args.prefix + '_report.txt'
+    with open(report_file, 'w') as repFH:
+        write_report(df_setup, outFH=repFH)
+        
+
+    # Create windows-line breaks formatted versions
+    gwl_file_win = Utils.to_win(gwl_file)
+    report_file_win = Utils.to_win(report_file)
+
+    # File written status
+    Utils.file_written(gwl_file)
+    Utils.file_written(report_file)
+    Utils.file_written(gwl_file_win)
+    Utils.file_written(report_file_win)
+    
+    # end
+    return(gwl_file, gwl_file_win, report_file, report_file_win)
 
 
 def load_setup(input_file, file_format=None, header=0):
+    """Loading setup file (Excel or tab-delim)
+    """
     # format
     if file_format is None:
         if input_file.endswith('.txt'):
@@ -351,57 +403,6 @@ def write_report(df_setup, outFH):
     outFH.write('')
 
     
-def main(args=None):
-    # Input
-    if args is None:
-        args = parse_args()
-#    check_args(args)
-
-    # Load input table
-    df_setup = load_setup(args.setup, 
-                          file_format=args.format)
-    check_df_setup(df_setup)
-
-    # adding sample/reagent destinations to setup table
-    add_dest(df_setup, args.dest, dest_type=args.desttype)
-        
-    # Reordering dest if plate type is 384-well
-    if args.desttype == '384':
-         df_setup = reorder_384well(df_setup, 'dest_location')
-    elif args.desttype == '96':
-        pass
-    else:
-        msg = 'Labware type "{}" not recognized'
-        raise ValueError(msg.format(args.desttype))
-    
-    # Writing out gwl file
-    gwl_file = args.prefix + '.gwl'
-    with open(gwl_file, 'w') as gwlFH:
-        ## Master mix(es)
-        pip_mastermix(df_setup, outFH=gwlFH, 
-                      src_labware=args.mm,
-                      src_start=args.mmloc, 
-                      liq_cls=args.mmliq)
-        ## Samples
-        pip_samples(df_setup, outFH=gwlFH, liq_cls=args.sampliq)
-        ## Water
-        pip_water(df_setup, outFH=gwlFH, src_labware=args.water, 
-                  src_start=args.waterloc, liq_cls=args.waterliq)
-
-    # Creating report file
-    report_file = args.prefix + '_report.txt'
-    with open(report_file, 'w') as repFH:
-        write_report(df_setup, outFH=repFH)
-        
-
-    # Create windows-line breaks formatted versions
-    gwl_file_win = Utils.to_win(gwl_file)
-    report_file_win = Utils.to_win(report_file)
-
-    # end
-    return(gwl_file, gwl_file_win, report_file, report_file_win)
-
-
 # main
 if __name__ == '__main__':
     pass
