@@ -155,9 +155,9 @@ def load_setup(input_file, file_format=None, header=0):
     """
     # format
     if file_format is None:
-        if input_file.endswith('.txt'):
+        if input_file.endswith('.csv'):
             file_format = 'csv'
-        elif input_file.endswith('.csv'):
+        elif input_file.endswith('.txt'):
             file_format = 'txt'
         elif input_file.endswith('.xls') or input_file.endswith('.xlsx'):
             file_format = 'excel'
