@@ -194,7 +194,7 @@ class Test_Map2Robot_pipMasterMix(unittest.TestCase):
         self.assertIsNone(ret)
 
 
-class Test_Map2Robot_main(unittest.TestCase):
+class Test_Map2Robot_main_single(unittest.TestCase):
 
     def setUp(self):
         mapfile = os.path.join(data_dir, 'mapping_file_fecal_stability.txt')
@@ -207,3 +207,19 @@ class Test_Map2Robot_main(unittest.TestCase):
     def test_main_gwl(self):
         ret = Utils.check_gwl(self.files[0])
         self.assertIsNone(ret)
+
+        
+class Test_Map2Robot_main_dual(unittest.TestCase):
+
+    def setUp(self):
+        mapfile = os.path.join(data_dir, 'samples_S5-N7.xlsx')
+        self.args = Map2Robot.parse_args(['--prefix', '/tmp/MAP', mapfile])
+        self.files = Map2Robot.main(self.args)
+
+    def tearDown(self):
+        pass
+
+    def test_main_gwl(self):
+        ret = Utils.check_gwl(self.files[0])
+        self.assertIsNone(ret)
+

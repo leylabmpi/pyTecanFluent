@@ -29,11 +29,22 @@ def parse_args(test_args=None, subparsers=None):
     the DESTINATION (plate & well) is set by this script. 
 
     EXTRA COLUMNS in MAPPING FILE:
+
+    # If no barcoding, single barcoding, or dual barcodes already combined:
     * "TECAN_sample_labware" = The sample labware name on the robot worktable
     * "TECAN_sample_location" = The well or tube location (a number)
+    * "TECAN_sample_rxn_volume" = The volume of sample to use per PCR (ul)
     * "TECAN_primer_labware" = The primer plate labware name on the robot worktable
     * "TECAN_primer_location" = The well location (1-96 or 1-384)
+
+    # If dual barcoding with separate primer plates:
+    * "TECAN_sample_labware" = The sample labware name on the robot worktable
+    * "TECAN_sample_location" = The well or tube location (a number)
     * "TECAN_sample_rxn_volume" = The volume of sample to use per PCR (ul)
+    * "TECAN_primer_labware_F" = The primer plate labware name on the robot worktable
+    * "TECAN_primer_location_F" = The well location (1-96 or 1-384)
+    * "TECAN_primer_labware_R" = The primer plate labware name on the robot worktable
+    * "TECAN_primer_location_R" = The well location (1-96 or 1-384)
 
     CONTROLS:
     * For the positive & negative controls, include them in the mapping file.
@@ -267,32 +278,53 @@ def map2df(mapfile, row_select=None):
     # return
     return df
 
+
+def missing_cols(df_map, req_cols):
+    msg = 'Required column "{}" not found'
+    for req_col in req_cols:
+        if req_col not in df_map.columns.values:
+            raise ValueError(msg.format(req_col))    
+
 def check_df_map(df_map, args):
     """Assertions of df_map object formatting
     * Assumes `sample` field = 1st column
     df_map: map dataframe
     """
     # checking columns
+    ## universal
     req_cols = ['TECAN_sample_labware', 'TECAN_sample_location',
-                'TECAN_primer_labware', 'TECAN_primer_location',
                 'TECAN_sample_rxn_volume']
-
-    msg = 'Required column "{}" not found'
-    for req_col in req_cols:
-        if req_col not in df_map.columns.values:
-            raise ValueError(msg.format(req_col))
+    missing_cols(df_map, req_cols)
+    ## single- or dual-barcoding?
+    barcode_type = None
+    req_cols_s = ['TECAN_primer_labware', 'TECAN_primer_location']
+    req_cols_d = ['TECAN_primer_labware_F', 'TECAN_primer_location_F',
+                 'TECAN_primer_labware_R', 'TECAN_primer_location_R']
+    if any(x in df_map.columns.values for x in req_cols_s):
+        missing_cols(df_map, req_cols_s)
+        barcode_type = 'single'
+    elif any(x in df_map.columns.values for x in req_cols_d):
+        missing_cols(df_map, req_cols_d)
+        barcode_type = 'dual'
+    else:
+        raise ValueError('Cannot find required TECAN_primer_* columns')
 
     # checking for unique samples
     if any(df_map.duplicated(df_map.columns.values[0])):
         msg = 'WARNING: duplicated sample values in the mapping file'
         print(msg, file=sys.stderr)
-    # checking for unique barcodes (NaN's filtered out)
-    barcode_col = df_map.columns.values[1]
-    df_tmp = df_map[df_map[barcode_col].notnull()]
-    if any(df_tmp.duplicated(barcode_col)):
+
+    # checking for unique barcode locations (NaN's filtered out)
+    if barcode_type == 'single':
+        dups = df_map[df_map[req_cols_s].notnull()].duplicated(keep=False)
+    elif barcode_type == 'dual':
+        dups = df_map[df_map[req_cols_d].notnull()].duplicated(keep=False)
+    else:
+        raise ValueError('barcode_type not recognized')
+    if any(dups):
         msg = 'WARNING: duplicated barcodes in the mapping file'
         print(msg, file=sys.stderr)
-
+        
     # checking sample volumes
     msg = 'WARNING: sample volume > mastermix volume'
     for sv in df_map['TECAN_sample_rxn_volume']:
@@ -419,6 +451,31 @@ def pip_nonbarcode_primer(df_map, outFH, volume, tube, liq_cls='Water Free Singl
         # tip to waste
         outFH.write('W;\n')
 
+
+def pip_primer(i, outFH, df_map, primer_labware, primer_location,
+               primer_plate_volume, liq_cls):
+    """Pipetting a single primer
+    """
+    # aspiration
+    asp = Fluent.aspirate()
+    asp.RackLabel = df_map.ix[i, primer_labware]
+    asp.Position = df_map.ix[i, primer_location]
+    asp.Volume = primer_plate_volume
+    asp.LiquidClass = liq_cls
+    outFH.write(asp.cmd() + '\n')
+
+    # dispensing
+    disp = Fluent.dispense()
+    disp.RackLabel = df_map.ix[i,'TECAN_dest_labware']
+    disp.Position = df_map.ix[i,'TECAN_dest_location']
+    disp.Volume = primer_plate_volume
+    asp.LiquidClass = liq_cls
+    outFH.write(disp.cmd() + '\n')
+    
+    # tip to waste
+    outFH.write('W;\n')
+
+        
 def pip_primers(df_map, outFH, fp_volume=0, rp_volume=0,
                 fp_tube=0, rp_tube=0, liq_cls='Water Free Single'):
     """Commands for aliquoting primers
@@ -437,28 +494,37 @@ def pip_primers(df_map, outFH, fp_volume=0, rp_volume=0,
     else:
         primer_plate_volume += rp_volume
 
+    # single or dual barcodes?
+    req_cols_s = ['TECAN_primer_labware', 'TECAN_primer_location']
+    req_cols_d = ['TECAN_primer_labware_F', 'TECAN_primer_location_F',
+                 'TECAN_primer_labware_R', 'TECAN_primer_location_R']
+    barcode_type = None
+    if all(x in df_map.columns.values for x in req_cols_s):
+        barcode_type = 'single'
+    elif all(x in df_map.columns.values for x in req_cols_d):
+        barcode_type = 'dual'
+    else:
+        raise ValueError('Cannot find required TECAN_primer_* columns')
+    
+        
     # pipetting barcoded primers
     outFH.write('C;Barcoded primers\n')
     ## for each Sample-PCR_rxn_rep, write out asp/dispense commands
     for i in range(df_map.shape[0]):
-        # aspiration
-        asp = Fluent.aspirate()
-        asp.RackLabel = df_map.ix[i,'TECAN_primer_labware']
-        asp.Position = df_map.ix[i,'TECAN_primer_location']
-        asp.Volume = primer_plate_volume
-        asp.LiquidClass = liq_cls
-        outFH.write(asp.cmd() + '\n')
-
-        # dispensing
-        disp = Fluent.dispense()
-        disp.RackLabel = df_map.ix[i,'TECAN_dest_labware']
-        disp.Position = df_map.ix[i,'TECAN_dest_location']
-        disp.Volume = primer_plate_volume
-        asp.LiquidClass = liq_cls
-        outFH.write(disp.cmd() + '\n')
-
-        # tip to waste
-        outFH.write('W;\n')
+        if barcode_type == 'single':
+            pip_primer(i, outFH, df_map,
+                       'TECAN_primer_labware', 'TECAN_primer_location',
+                       primer_plate_volume, liq_cls)
+        elif barcode_type == 'dual':
+            pip_primer(i, outFH, df_map,
+                       'TECAN_primer_labware_F', 'TECAN_primer_location_F',
+                       primer_plate_volume, liq_cls)
+            pip_primer(i, outFH, df_map,
+                       'TECAN_primer_labware_R', 'TECAN_primer_location_R',
+                       primer_plate_volume, liq_cls)            
+        else:
+            raise ValueError('barcode_type not recognized')
+                
 
 def pip_samples(df_map, outFH, liq_cls='Water Free Single'):
     """Commands for aliquoting samples to each PCR rxn
