@@ -320,9 +320,9 @@ def check_df_map(df_map, args):
 
     # checking for unique barcode locations (NaN's filtered out)
     if barcode_type == 'single':
-        dups = df_map[df_map[req_cols_s].notnull()].duplicated(keep=False)
+        dups = df_map[req_cols_s].dropna().duplicated(keep=False)
     elif barcode_type == 'dual':
-        dups = df_map[df_map[req_cols_d].notnull()].duplicated(keep=False)
+        dups = df_map[req_cols_d].dropna().duplicated(keep=False)
     else:
         raise ValueError('barcode_type not recognized')
     if any(dups):
