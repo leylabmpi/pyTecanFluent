@@ -301,11 +301,15 @@ def check_df_map(df_map, args):
     req_cols_d = ['TECAN_primer_labware_F', 'TECAN_primer_location_F',
                  'TECAN_primer_labware_R', 'TECAN_primer_location_R']
     if any(x in df_map.columns.values for x in req_cols_s):
-        missing_cols(df_map, req_cols_s)
         barcode_type = 'single'
+        msg = 'NOTE: assuming barcode type: {}'.format(barcode_type)
+        print(msg, file=sys.stderr)
+        missing_cols(df_map, req_cols_s)
     elif any(x in df_map.columns.values for x in req_cols_d):
-        missing_cols(df_map, req_cols_d)
         barcode_type = 'dual'
+        msg = 'NOTE: assuming barcode type: {}'.format(barcode_type)
+        print(msg, file=sys.stderr)
+        missing_cols(df_map, req_cols_d)
     else:
         raise ValueError('Cannot find required TECAN_primer_* columns')
 
