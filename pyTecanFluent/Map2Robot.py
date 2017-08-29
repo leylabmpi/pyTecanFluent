@@ -514,20 +514,22 @@ def pip_primers(df_map, outFH, fp_volume=0, rp_volume=0,
     # pipetting barcoded primers
     outFH.write('C;Barcoded primers\n')
     ## for each Sample-PCR_rxn_rep, write out asp/dispense commands
-    for i in range(df_map.shape[0]):
-        if barcode_type == 'single':
+    if barcode_type == 'single':
+        for i in range(df_map.shape[0]):
             pip_primer(i, outFH, df_map,
                        'TECAN_primer_labware', 'TECAN_primer_location',
                        primer_plate_volume, liq_cls)
-        elif barcode_type == 'dual':
+    elif barcode_type == 'dual':
+        for i in range(df_map.shape[0]):
             pip_primer(i, outFH, df_map,
-                       'TECAN_primer_labware_F', 'TECAN_primer_location_F',
-                       primer_plate_volume, liq_cls)
+                   'TECAN_primer_labware_F', 'TECAN_primer_location_F',
+                   primer_plate_volume, liq_cls)
+        for i in range(df_map.shape[0]):
             pip_primer(i, outFH, df_map,
                        'TECAN_primer_labware_R', 'TECAN_primer_location_R',
                        primer_plate_volume, liq_cls)            
-        else:
-            raise ValueError('barcode_type not recognized')
+    else:
+        raise ValueError('barcode_type not recognized')
                 
 
 def pip_samples(df_map, outFH, liq_cls='Water Free Single'):
