@@ -163,7 +163,7 @@ class multi_disp():
         # each multi-disp
         steps = []
         for i in range(0, self.SampleCount, self.NoOfMultiDisp):
-            # number of dispenses
+            # number of dispenses (accounting for end of samples)
             if self.SampleCount - i < self.NoOfMultiDisp:
                 n_disp = self.SampleCount - i
             else:
@@ -185,7 +185,6 @@ class multi_disp():
                 disp.LiquidClass = self.LiquidClass
                 steps.append(disp.cmd())
             steps.append('W;')
-                
         return '\n'.join(steps)
 
     @property

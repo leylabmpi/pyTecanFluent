@@ -374,13 +374,13 @@ def pip_dilutant(df_conc, outFH, src_labware='100ml[001]'):
     Method:
     * calc max multi-dispense for 50 or 200 ul tips 
     """
-    # determing how many multi-disp
+    # determing how many multi-disp per tip
     max_vol = max(df_conc.dilutant_volume)
     if max_vol > 180:
         n_disp = int(np.floor(900 / max_vol))  # using 1000 ul tips
     else:
         n_disp= int(np.floor(180 / max_vol))   # using 200 ul tips
-
+        
     # making multi-disp object
     outFH.write('C;Dilutant\n')
     MD = Fluent.multi_disp()
