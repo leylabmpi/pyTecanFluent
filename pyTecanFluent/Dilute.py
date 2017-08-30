@@ -4,6 +4,7 @@ from __future__ import print_function
 import os
 import sys
 import argparse
+import functools
 from itertools import product
 ## 3rd party
 import numpy as np
@@ -65,7 +66,7 @@ def parse_args(test_args=None, subparsers=None):
 
     ## dilution
     dil = parser.add_argument_group('Dilution')
-    dil.add_argument('--dilution', type=float, default=1.0,
+    dil.add_argument('--dilution', type=float, default=5.0,
                      help='Target dilution concentration (ng/ul) (default: %(default)s)')
     dil.add_argument('--minvolume', type=float, default=2.0,
                      help='Minimum sample volume to use (default: %(default)s)')
@@ -73,7 +74,7 @@ def parse_args(test_args=None, subparsers=None):
                      help='Maximum sample volume to use (default: %(default)s)')
     dil.add_argument('--mintotal', type=float, default=10.0,
                      help='Minimum post-dilution total volume (default: %(default)s)')
-    dil.add_argument('--dlabware', type=str, default='100ml[001]',
+    dil.add_argument('--dlabware', type=str, default='100ml_1',
                      help='Labware containing the dilutant (default: %(default)s)')
 
     ## destination plate
@@ -85,10 +86,6 @@ def parse_args(test_args=None, subparsers=None):
                       help='Destination plate labware type (default: %(default)s)')
     dest.add_argument('--deststart', type=int, default=1,
                       help='Start well number on destination OD plate (default: %(default)s)')
-#    dest.add_argument('--destlabware', type=str, default='384 Well[004]',
-#                      help='Destination Labware ID on the TECAN worktable (default: %(default)s)')
-#                      default='96-well:96 Well[008],384-well:384 Well[004]',
-#                      help='Choices for the destination labware name base on --desttype')
 
     # parse & return
     if test_args:
@@ -235,11 +232,45 @@ def check_df_conc(df_conc, args):
             print(msg.format(i), file=sys.stderr)
     
     # checking sample conc
-    msg = 'ERROR (concfile, line={}): concentration is <= 0'
+    msg = 'WARNING (concfile, line={}): concentration is <= 0'
     for i,sc in enumerate(df_conc['conc']):
         if sc <= 0.0:
             print(msg.format(i), file=sys.stderr)
 
+
+def calc_sample_volume(row, dilute_conc, min_vol, max_vol):
+    """sample_volume = dilute_conc * total_volume / conc 
+    (v1 = c2*v2/c1)
+    If sample_volume > max possibl volume to use, then just use max
+    """
+    # use all if very low conc
+    if row['conc'] <= 0:
+        return max_vol
+    # calc volume to use
+    x = dilute_conc * row['total_volume'] / row['conc']
+    # ceiling
+    if x > max_vol:
+        x = max_vol
+    # floor
+    if x < min_vol:
+        x = min_vol
+    return x
+
+def calc_dilutant_volume(row):
+    """ dilutatant volume = total_volume - sample_volume
+    """
+    x = row['total_volume'] - row['sample_volume']
+    if x < 0:
+        x = 0
+    return x
+
+def calc_total_volume(row, min_vol, max_vol, dilute_conc):
+    """Calculating post-dlution volume
+    """
+    x = row['conc'] * min_vol / dilute_conc
+    if x > max_vol:
+        x = max_vol
+    return x    
 
 def dilution_volumes(df_conc, dilute_conc, min_vol, max_vol, 
                      min_total, dest_type='96'):
@@ -248,7 +279,7 @@ def dilution_volumes(df_conc, dilute_conc, min_vol, max_vol,
     dilute_conc: concentration to dilute to 
     min_vol: min volume of sample to use
     max_vol: max total volume to use
-    min_total: minimum total volume
+    min_total: minimum total post-dilution volume
     """
     # c1*v1 = c2*v2 
     # v2 = c1 * v1 / c2
@@ -256,35 +287,54 @@ def dilution_volumes(df_conc, dilute_conc, min_vol, max_vol,
 
     # max well volume
     if dest_type == '96':
-        max_well_vol = 280
+        max_well_vol = 200
     elif dest_type == '384':
-        max_well_vol = 140
+        max_well_vol = 40
     else:
         msg = 'Destination labware type "{}" not recognized'
         raise ValueError(msg.format(dest_type))
 
+    # converting all negative concentrations to zero
+    f = lambda row: 0 if row['conc'] < 0 else row['conc']
+    df_conc['conc'] = df_conc.apply(f, axis=1)
+    
     # range of dilutions
     samp_vol_range = max_vol - min_vol
     target_total_vol = round(samp_vol_range / 2 + min_vol)
     
-    # bare min for sample volume used
-    df_conc['total_volume'] = [x * min_vol / dilute_conc for x in df_conc['conc']]
+    # final volume
+    f = functools.partial(calc_total_volume, dilute_conc=dilute_conc,
+                          min_vol=min_vol, max_vol=max_vol)
+    df_conc['total_volume'] = df_conc.apply(f, axis=1)
     if max(df_conc['total_volume']) > max_well_vol:
-        msg = 'ERROR: dilution volume exceeds max possible well volume.'
+        msg = 'ERROR: post-dilution volume exceeds max possible well volume.'
         msg += ' Lower --minvolume or chane destination labware type.'
         raise ValueError(msg)
     
-    # raising total_vols if low volume (if small dilution factor)
+    # raising total post-dilute volume if too low of dilute volume (if small dilution factor)
     df_conc.loc[df_conc.total_volume < min_total, 'total_volume'] = min_total
     # setting volumes
-    ## v1 = c2*v2/c1
-    ## sample_volume = dilute_conc * total_volume / conc 
-    f = lambda row: dilute_conc * row['total_volume'] / row['conc']
+    f = functools.partial(calc_sample_volume, dilute_conc=dilute_conc,
+                          min_vol=min_vol, max_vol=max_vol)
     df_conc['sample_volume'] = df_conc.apply(f, axis=1)
     # dilutatant volume = total_volume - sample_volume
-    f = lambda row: row['total_volume'] - row['sample_volume']
-    df_conc['dilutant_volume'] = df_conc.apply(f, axis=1)
-    
+    df_conc['dilutant_volume'] = df_conc.apply(calc_dilutant_volume, axis=1)
+    # updating total volume
+    f = lambda row: row['sample_volume'] + row['dilutant_volume']
+    df_conc['total_volume'] = df_conc.apply(f, axis=1)
+    # calculating final conc
+    f = lambda row: row['conc'] * row['sample_volume'] / row['total_volume']
+    df_conc['final_conc'] = df_conc.apply(f, axis=1)
+    ## target conc hit?
+    msg_low = 'WARNING: (concfile, line{}): final concentration is low: {}'
+    msg_high = 'WARNING: (concfile, line{}): final concentration is high: {}'
+    for i,fc in enumerate(df_conc['final_conc']):
+        fc = round(fc, 1)
+        if fc < round(dilute_conc, 1):            
+            print(msg_low.format(i, fc), file=sys.stderr)
+        if fc > round(dilute_conc, 1):
+            print(msg_high.format(i, fc), file=sys.stderr)
+        
     # return
     return df_conc
         
@@ -295,10 +345,6 @@ def add_dest(df_conc, dest_labware, dest_start=1):
       [dest_labware, dest_location]
     """
     dest_start= int(dest_start)
-    #try:
-    #    dest_labware = dest_labware_index[dest_type]
-    #except KeyError:
-    #    raise KeyError('Destination labware type not recognized')
     
     # adding columns
     df_conc['dest_labware'] = dest_labware
@@ -328,13 +374,13 @@ def pip_dilutant(df_conc, outFH, src_labware='100ml[001]'):
     Method:
     * calc max multi-dispense for 50 or 200 ul tips 
     """
-    # determing how many multi-disp
+    # determing how many multi-disp per tip
     max_vol = max(df_conc.dilutant_volume)
     if max_vol > 180:
         n_disp = int(np.floor(900 / max_vol))  # using 1000 ul tips
     else:
         n_disp= int(np.floor(180 / max_vol))   # using 200 ul tips
-
+        
     # making multi-disp object
     outFH.write('C;Dilutant\n')
     MD = Fluent.multi_disp()

@@ -1,0 +1,43 @@
+#SampleID	TECAN_sample_labware	TECAN_sample_location	TECAN_sample_rxn_volume	Notes	TECAN_primer_name_F	TECAN_primer_index_F	TECAN_primer_labware_F	TECAN_primer_location_F	TECAN_primer_name_R	TECAN_primer_index_R	TECAN_primer_labware_R	TECAN_primer_location_R	TECAN_pcr_rxn_rep	TECAN_dest_labware	TECAN_dest_location	TECAN_water_rxn_volume
+Poop1	96 Well[001]	1	2	DNA sample in a 96-well plate	S501	TAGATCGC	F1	1	N701	TCGCCTTA	R1	1	1	96 Well[008]	1	7.9
+Poop1	96 Well[001]	1	2	DNA sample in a 96-well plate	S501	TAGATCGC	F1	1	N701	TCGCCTTA	R1	1	2	96 Well[008]	2	7.9
+Poop1	96 Well[001]	1	2	DNA sample in a 96-well plate	S501	TAGATCGC	F1	1	N701	TCGCCTTA	R1	1	3	96 Well[008]	3	7.9
+Poop2	96 Well[001]	2	2	DNA sample in a 96-well plate	S502	CTCTCTAT	F1	2	N701	TCGCCTTA	R1	2	1	96 Well[008]	4	7.9
+Poop2	96 Well[001]	2	2	DNA sample in a 96-well plate	S502	CTCTCTAT	F1	2	N701	TCGCCTTA	R1	2	2	96 Well[008]	5	7.9
+Poop2	96 Well[001]	2	2	DNA sample in a 96-well plate	S502	CTCTCTAT	F1	2	N701	TCGCCTTA	R1	2	3	96 Well[008]	6	7.9
+Poop3	96 Well[001]	3	2	DNA sample in a 96-well plate	S503	TATCCTCT	F1	3	N701	TCGCCTTA	R1	3	1	96 Well[008]	7	7.9
+Poop3	96 Well[001]	3	2	DNA sample in a 96-well plate	S503	TATCCTCT	F1	3	N701	TCGCCTTA	R1	3	2	96 Well[008]	8	7.9
+Poop3	96 Well[001]	3	2	DNA sample in a 96-well plate	S503	TATCCTCT	F1	3	N701	TCGCCTTA	R1	3	3	96 Well[008]	9	7.9
+Soil1	96 Well[001]	4	2	DNA sample in a 96-well plate	S504	AGAGTAGA	F1	4	N701	TCGCCTTA	R1	4	1	96 Well[008]	10	7.9
+Soil1	96 Well[001]	4	2	DNA sample in a 96-well plate	S504	AGAGTAGA	F1	4	N701	TCGCCTTA	R1	4	2	96 Well[008]	11	7.9
+Soil1	96 Well[001]	4	2	DNA sample in a 96-well plate	S504	AGAGTAGA	F1	4	N701	TCGCCTTA	R1	4	3	96 Well[008]	12	7.9
+Soil2	96 Well[001]	5	2	DNA sample in a 96-well plate	S505	GTAAGGAG	F1	5	N701	TCGCCTTA	R1	5	1	96 Well[008]	13	7.9
+Soil2	96 Well[001]	5	2	DNA sample in a 96-well plate	S505	GTAAGGAG	F1	5	N701	TCGCCTTA	R1	5	2	96 Well[008]	14	7.9
+Soil2	96 Well[001]	5	2	DNA sample in a 96-well plate	S505	GTAAGGAG	F1	5	N701	TCGCCTTA	R1	5	3	96 Well[008]	15	7.9
+Soil3	96 Well[001]	6	2	DNA sample in a 96-well plate	S506	ACTGCATA	F1	6	N701	TCGCCTTA	R1	6	1	96 Well[008]	16	7.9
+Soil3	96 Well[001]	6	2	DNA sample in a 96-well plate	S506	ACTGCATA	F1	6	N701	TCGCCTTA	R1	6	2	96 Well[008]	17	7.9
+Soil3	96 Well[001]	6	2	DNA sample in a 96-well plate	S506	ACTGCATA	F1	6	N701	TCGCCTTA	R1	6	3	96 Well[008]	18	7.9
+Tissue1	96 Well[001]	7	2	DNA sample in a 96-well plate	S507	AAGGAGTA	F1	7	N701	TCGCCTTA	R1	7	1	96 Well[008]	19	7.9
+Tissue1	96 Well[001]	7	2	DNA sample in a 96-well plate	S507	AAGGAGTA	F1	7	N701	TCGCCTTA	R1	7	2	96 Well[008]	20	7.9
+Tissue1	96 Well[001]	7	2	DNA sample in a 96-well plate	S507	AAGGAGTA	F1	7	N701	TCGCCTTA	R1	7	3	96 Well[008]	21	7.9
+Tissue2	96 Well[001]	8	2	DNA sample in a 96-well plate	S508	CTAAGCCT	F1	8	N701	TCGCCTTA	R1	8	1	96 Well[008]	22	7.9
+Tissue2	96 Well[001]	8	2	DNA sample in a 96-well plate	S508	CTAAGCCT	F1	8	N701	TCGCCTTA	R1	8	2	96 Well[008]	23	7.9
+Tissue2	96 Well[001]	8	2	DNA sample in a 96-well plate	S508	CTAAGCCT	F1	8	N701	TCGCCTTA	R1	8	3	96 Well[008]	24	7.9
+Tissue3	96 Well[001]	9	2	DNA sample in a 96-well plate	S501	TAGATCGC	F1	9	N702	CTAGTACG	R1	9	1	96 Well[008]	25	7.9
+Tissue3	96 Well[001]	9	2	DNA sample in a 96-well plate	S501	TAGATCGC	F1	9	N702	CTAGTACG	R1	9	2	96 Well[008]	26	7.9
+Tissue3	96 Well[001]	9	2	DNA sample in a 96-well plate	S501	TAGATCGC	F1	9	N702	CTAGTACG	R1	9	3	96 Well[008]	27	7.9
+Random1	96 Well[001]	10	2	DNA sample in a 96-well plate	S502	CTCTCTAT	F1	10	N702	CTAGTACG	R1	10	1	96 Well[008]	28	7.9
+Random1	96 Well[001]	10	2	DNA sample in a 96-well plate	S502	CTCTCTAT	F1	10	N702	CTAGTACG	R1	10	2	96 Well[008]	29	7.9
+Random1	96 Well[001]	10	2	DNA sample in a 96-well plate	S502	CTCTCTAT	F1	10	N702	CTAGTACG	R1	10	3	96 Well[008]	30	7.9
+Random2	96 Well[001]	11	2	DNA sample in a 96-well plate	S503	TATCCTCT	F1	11	N702	CTAGTACG	R1	11	1	96 Well[008]	31	7.9
+Random2	96 Well[001]	11	2	DNA sample in a 96-well plate	S503	TATCCTCT	F1	11	N702	CTAGTACG	R1	11	2	96 Well[008]	32	7.9
+Random2	96 Well[001]	11	2	DNA sample in a 96-well plate	S503	TATCCTCT	F1	11	N702	CTAGTACG	R1	11	3	96 Well[008]	33	7.9
+DNAx_blank	96 Well[001]	9	2	DNA sample in a 96-well plate	S504	AGAGTAGA	F1	12	N702	CTAGTACG	R1	12	1	96 Well[008]	34	7.9
+DNAx_blank	96 Well[001]	9	2	DNA sample in a 96-well plate	S504	AGAGTAGA	F1	12	N702	CTAGTACG	R1	12	2	96 Well[008]	35	7.9
+DNAx_blank	96 Well[001]	9	2	DNA sample in a 96-well plate	S504	AGAGTAGA	F1	12	N702	CTAGTACG	R1	12	3	96 Well[008]	36	7.9
+PCR_positive	micro15[004]	1	2	Mock community (DNA in Tube 4)	S505	GTAAGGAG	F1	13	N702	CTAGTACG	R1	13	1	96 Well[008]	37	7.9
+PCR_positive	micro15[004]	1	2	Mock community (DNA in Tube 4)	S505	GTAAGGAG	F1	13	N702	CTAGTACG	R1	13	2	96 Well[008]	38	7.9
+PCR_positive	micro15[004]	1	2	Mock community (DNA in Tube 4)	S505	GTAAGGAG	F1	13	N702	CTAGTACG	R1	13	3	96 Well[008]	39	7.9
+PCR_negative	micro15[005]	1	2	PCR water control (water in Tube 5)	S506	ACTGCATA	F1	14	N702	CTAGTACG	R1	14	1	96 Well[008]	40	7.9
+PCR_negative	micro15[005]	1	2	PCR water control (water in Tube 5)	S506	ACTGCATA	F1	14	N702	CTAGTACG	R1	14	2	96 Well[008]	41	7.9
+PCR_negative	micro15[005]	1	2	PCR water control (water in Tube 5)	S506	ACTGCATA	F1	14	N702	CTAGTACG	R1	14	3	96 Well[008]	42	7.9
