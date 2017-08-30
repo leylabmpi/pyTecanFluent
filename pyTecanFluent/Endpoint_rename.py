@@ -30,17 +30,11 @@ def parse_args(test_args=None, subparsers=None):
       * Names column: "#SampleID" 
       * Location (well) column: "TECAN_dest_location"
 
-    #* Sample labware  (eg., "96 Well[001]")
-    #* Sample location (numeric value; minimum of 1)
-    #* Sample concentration (numeric value; units=ng/ul)
-    
-    #Notes:
-    #* You can designate the input table columns for each value (see options).
-    #* Sample locations in plates numbered are column-wise. 
-    #* All volumes are in ul.
+    Notes:
+    * Input files can be in Excel, csv, or txt format
     """
     if subparsers:
-        parser = subparsers.add_parser('PCR_pool', description=desc, epilog=epi,
+        parser = subparsers.add_parser('PCR_derep', description=desc, epilog=epi,
                                        formatter_class=argparse.RawTextHelpFormatter)
     else:
         parser = argparse.ArgumentParser(description=desc, epilog=epi,
@@ -54,9 +48,12 @@ def parse_args(test_args=None, subparsers=None):
     groupIO.add_argument('--prefix', type=str, default='TECAN_dilute',
                          help='Output file name prefix (default: %(default)s)')
 
-
-    ## PCR success/failure
-    
+    ## PCR success/failure/pass
+    groupSFP = parser.add_argument_group('Success, failure, pass')
+    groupSFP.add_argument('--RFU', type=float, default=0,
+                          help='RFU cutoff for calling PCR success (default: %(default)s)')
+    groupSFP.add_argument('--passes', type=str, nargs='+',
+                          help='Designate "pass" sample(s)')
     
     ## destination plate
     dest = parser.add_argument_group('Destination plate')
@@ -89,7 +86,7 @@ def main(args=None):
       * Mapping file from map2robot
     * join tables by location
       * For endpoint file: convert "Well" to location
-      * Just 
+      * inner-join(endpoint, mapping)
     * call PCR success/failure/pass based on RFU values
       * Place in "Call" column
       * User defined: "pass" (failures to be sequenced) 
