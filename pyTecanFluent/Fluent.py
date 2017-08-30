@@ -160,31 +160,45 @@ class multi_disp():
             self.Volumes = self.Volume
         else:
             self.Volumes = [self.Volume] * len(self.DestPositions)
+                    
         # each multi-disp
         steps = []
-        for i in range(0, self.SampleCount, self.NoOfMultiDisp):
-            # number of dispenses (accounting for end of samples)
-            if self.SampleCount - i < self.NoOfMultiDisp:
-                n_disp = self.SampleCount - i
-            else:
-                n_disp = self.NoOfMultiDisp
+        sample_cnt = 0
+        while 1:
             # single-asp
             asp = aspirate()
             asp.RackLabel = self.SrcRackLabel
             asp.Position = self.SrcPosition
-            asp.Volume = sum(self.Volumes[i:(i+n_disp)])   
-            asp.Volume = round(asp.Volume, 2)
             asp.LiquidClass = self.LiquidClass
-            steps.append(asp.cmd())
-            # multi-disp
-            for ii in range(n_disp):
+            # loading dispenses
+            dispenses = []
+            while 1:
+                sample_cnt += 1
+                # Total samples reached
+                if sample_cnt > len(self.DestPositions):
+                    break
+                # Number of multi-disp reached
+                if len(dispenses) >= self.NoOfMultiDisp:
+                    break
+                # Skipping 0-volumes
+                if self.Volumes[sample_cnt-1] <= 0:
+                    continue 
                 disp = dispense()
-                disp.RackLabel = self.DestRackLabel[i+ii]
-                disp.Position = self.DestPositions[i+ii]
-                disp.Volume = round(self.Volumes[i+ii], 2)
+                disp.RackLabel = self.DestRackLabel[sample_cnt-1]
+                disp.Position = self.DestPositions[sample_cnt-1]
+                disp.Volume = round(self.Volumes[sample_cnt-1], 2)
                 disp.LiquidClass = self.LiquidClass
-                steps.append(disp.cmd())
+                if disp.Volume > 0:
+                    dispenses.append(disp)
+            # break if no more dispenses
+            if len(dispenses) <= 0:
+                break
+            # adding asp-disp cycle
+            asp.Volume = round(sum([x.Volume for x in dispenses]),2)
+            steps.append(asp.cmd())
+            steps = steps + [x.cmd() for x in dispenses]
             steps.append('W;')
+        # return string of commands
         return '\n'.join(steps)
 
     @property
