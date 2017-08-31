@@ -180,8 +180,6 @@ def check_args(args):
     if args.deststart < 1 or args.deststart > destlimit:
         msg = 'Destination start well # must be in range: 1-{}'
         raise ValueError(msg.format(destlimit))
-    # destination labware
-    #args.destlabware = {x.split(':')[0]:x.split(':')[1] for x in args.destlabware.split(',')} 
 
 
 def conc2df(concfile, row_select=None, file_format=None, header=True,
@@ -376,10 +374,14 @@ def pip_dilutant(df_conc, outFH, src_labware='100ml[001]'):
     """
     # determing how many multi-disp per tip
     max_vol = max(df_conc.dilutant_volume)
-    if max_vol > 180:
-        n_disp = int(np.floor(900 / max_vol))  # using 1000 ul tips
+    if max_vol > 900:
+        raise ValueError('Max dilutant volume >900ul')
+    if max_vol * 2 < 45:
+        n_disp= int(np.floor(45 / max_vol))   # using 50 ul tips
+    elif max_vol * 2 < 180:
+        n_disp = int(np.floor(180 / max_vol))  # using 200 ul tips
     else:
-        n_disp= int(np.floor(180 / max_vol))   # using 200 ul tips
+        n_disp = int(np.floor(900 / max_vol))  # using 1000 ul tips
         
     # making multi-disp object
     outFH.write('C;Dilutant\n')
@@ -392,6 +394,7 @@ def pip_dilutant(df_conc, outFH, src_labware='100ml[001]'):
     MD.NoOfMultiDisp = n_disp
     # writing
     outFH.write(MD.cmd() + '\n')
+
     
 def pip_samples(df_conc, outFH):
     """Commands for aliquoting samples into dilutant
