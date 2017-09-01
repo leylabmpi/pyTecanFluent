@@ -98,11 +98,11 @@ class labware_tracker():
         else:
             tip_size = 1000
         self.tip_cnt[self._tip_labware_type(tip_size)] += 1
-
         
     def _tip_labware_type(self, tip_size):
         return '{}ul {}'.format(tip_size, self.tip_type)
-    
+
+    # TODO: make labware output (with header)
 
 # main
 if __name__ == '__main__':

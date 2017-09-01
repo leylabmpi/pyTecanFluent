@@ -174,6 +174,7 @@ def check_args(args):
         Labware.LABWARE_DB[args.desttype]
     except KeyError:
         msg = 'Destination labware type "{}" not recognized'
+
         raise ValueError(msg.format(args.desttype))
 
                          

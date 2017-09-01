@@ -7,6 +7,11 @@ INPUT=$DIR'/../../tests/data/conc_file1.txt'
 echo "Using input file: " $INPUT
 pyTecanFluent dilute --prefix /tmp/TECAN_dilute_conc1 $INPUT
 
+# 96-well source plates & destination plates
+INPUT=$DIR'/../../tests/data/conc_file2.txt'
+echo "Using input file: " $INPUT
+pyTecanFluent dilute --prefix /tmp/TECAN_dilute_conc2 $INPUT
+
 
 # low concentrations
 #INPUT=$DIR'/../../tests/data/conc_zach1.txt'
