@@ -279,10 +279,10 @@ def map2df(mapfile, row_select=None):
     return df
 
 
-def missing_cols(df_map, req_cols):
+def missing_cols(df, req_cols):
     msg = 'Required column "{}" not found'
     for req_col in req_cols:
-        if req_col not in df_map.columns.values:
+        if req_col not in df.columns.values:
             raise ValueError(msg.format(req_col))    
 
 def check_df_map(df_map, args):

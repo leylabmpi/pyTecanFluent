@@ -15,13 +15,19 @@ def xstr(x):
 def _psbl_liq_cls():
     """Returns a set of possible liquid classes available for Fluent
     """
-    x = ('Water Free Multi', 'Water Free Single',
-         'MasterMix Free Multi', 'MasterMix Free Single', 
-         'Ethanol Free Multi', 'Ethanol Free Single', 
-         'DMSO Free Multi', 'DMSO Free Single', 
-         'Serum Free Multi', 'Serum Free Single',
-         'Water Contact Wet Multi', 'Water Contact Wet Single',
-         'Water Mix')
+    x = ('Water Free Multi', 'Water Free Multi No-cLLD',
+         'Water Free Single', 'Water Free Single No-cLLD',
+         'MasterMix Free Multi', 'MasterMix Free Multi No-cLLD',
+         'MasterMix Free Single', 'MasterMix Free Single No-cLLD', 
+         'Ethanol Free Multi',
+         'Ethanol Free Single', 
+         'DMSO Free Multi',
+         'DMSO Free Single', 
+         'Serum Free Multi',
+         'Serum Free Single',
+         'Water Contact Wet Multi', 'Water Contact Wet Multi No-cLLD',
+         'Water Contact Wet Single', 'Water Contact Wet Single No-cLLD',
+         'Water Mix', 'Water Mix No-cLLD')
     return x
 
 class asp_disp():
@@ -57,7 +63,6 @@ class asp_disp():
                           'Position', 'TubeID', 'Volume',
                           'LiquidClass', 'TipType', 'TipMask']
         self.psbl_liq_cls = _psbl_liq_cls()
-
 
     def cmd(self):
         # list of values in correct order
@@ -125,7 +130,7 @@ class multi_disp():
     Volume = How much volume per dispense?
     LiquidClass = Which liquid class to use? Default: 'Water Free Multi'
     NoOfMultiDisp = How many multi-dispenses?
-    
+    Labware_tracker = Labware object that tracks what labware is needed
     Returns
     * string of commands
     """
@@ -147,6 +152,7 @@ class multi_disp():
         self._LiquidClass = 'Water Free Multi'
         self.NoOfMultiDisp = 2
         self.psbl_liq_cls = _psbl_liq_cls()
+        self.Labware_tracker = None
 
     def xstr(self, x):
         if x is None:
@@ -198,6 +204,10 @@ class multi_disp():
             steps.append(asp.cmd())
             steps = steps + [x.cmd() for x in dispenses]
             steps.append('W;')
+            # labware tracking
+            if self.Labware_tracker is not None:
+                self.Labware_tracker.add(asp)
+                
         # return string of commands
         return '\n'.join(steps)
 

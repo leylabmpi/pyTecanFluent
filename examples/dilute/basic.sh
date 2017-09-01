@@ -9,6 +9,6 @@ pyTecanFluent dilute --prefix /tmp/TECAN_dilute_conc1 $INPUT
 
 
 # low concentrations
-INPUT=$DIR'/../../tests/data/conc_zach1.txt'
-echo "Using input file: " $INPUT
-pyTecanFluent dilute --prefix /tmp/TECAN_dilute_zach1 $INPUT
+#INPUT=$DIR'/../../tests/data/conc_zach1.txt'
+#echo "Using input file: " $INPUT
+#pyTecanFluent dilute --prefix /tmp/TECAN_dilute_zach1 $INPUT

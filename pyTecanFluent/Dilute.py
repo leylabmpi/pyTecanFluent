@@ -12,7 +12,7 @@ import pandas as pd
 ## package
 from pyTecanFluent import Utils
 from pyTecanFluent import Fluent
-
+from pyTecanFluent import Labware
 
 # functions
 def get_desc():
@@ -24,10 +24,11 @@ def parse_args(test_args=None, subparsers=None):
     desc = get_desc()
     epi = """DESCRIPTION:
     Create a worklist file for the TECAN Fluent robot for diluting samples.
-    The input is an Excel or tab-delimited file with:
-    * Sample labware  (eg., "96 Well[001]")
-    * Sample location (numeric value; minimum of 1)
-    * Sample concentration (numeric value; units=ng/ul)
+    The input is an Excel or tab-delimited file the following columns:
+    * "TECAN_labware_name" = Any name you want to give to your plate of samples
+    * "TECAN_labware_type" = The labware type matching your samples
+    * "TECAN_target_position" = The location of your samples in your labware (plate)
+    * "TECAN_sample_conc" = The sample concentrations (numeric value; units=ng/ul) 
     
     Notes:
     * You can designate the input table columns for each value (see options).
@@ -55,12 +56,6 @@ def parse_args(test_args=None, subparsers=None):
                         help='File format (excel or tab). If not provided, the format is determined from the file extension') 
     conc.add_argument('--header', action='store_false', default=True,
                         help='Header in the file? (default: %(default)s)')
-    conc.add_argument('--labware', type=int, default=1,
-                        help='Column containing the sample labware IDs (default: %(default)s)') 
-    conc.add_argument('--location', type=int, default=2,
-                        help='Column containing the sample location numbers (default: %(default)s)')
-    conc.add_argument('--conc', type=int, default=3,
-                        help='Column containing the sample concentrations (default: %(default)s)')
     conc.add_argument('--rows', type=str, default='all',
                       help='Which rows (not including header) of the column file to use ("all"=all rows; "1-48"=rows 1-48) (default: %(default)s)')
 
@@ -74,18 +69,22 @@ def parse_args(test_args=None, subparsers=None):
                      help='Maximum sample volume to use (default: %(default)s)')
     dil.add_argument('--mintotal', type=float, default=10.0,
                      help='Minimum post-dilution total volume (default: %(default)s)')
-    dil.add_argument('--dlabware', type=str, default='100ml_1',
-                     help='Labware containing the dilutant (default: %(default)s)')
+    dil.add_argument('--dlabware_name', type=str, default='100ml_1',
+                     help='Name of labware containing the dilutant (default: %(default)s)')
+    dil.add_argument('--dlabware_type', type=str, default='100ml_1',
+                     choices=['100ml_1', '1.5ml Eppendorf',
+                              '2.0ml Eppendorf', '96 Well Eppendorf TwinTec PCR'], 
+                     help='Labware type containing the dilutant (default: %(default)s)')
 
     ## destination plate
-    dest = parser.add_argument_group('Destination plate')
-    dest.add_argument('--dest', type=str, default='96 Well[001]',
-                      help='Destination plate labware ID on TECAN worktable (default: %(default)s)')
-    dest.add_argument('--desttype', type=str, default='96',
-                      choices=['96','384'],
-                      help='Destination plate labware type (default: %(default)s)')
+    dest = parser.add_argument_group('Destination labware')
+    dest.add_argument('--destname', type=str, default='Diluted DNA plate',
+                      help='Destination labware name (default: %(default)s)')
+    dest.add_argument('--desttype', type=str, default='96 Well Eppendorf TwinTec PCR',
+                      choices=['96 Well Eppendorf TwinTec PCR', '384 Well Biorad PCR'],                          
+                      help='Destination labware type  on TECAN worktable (default: %(default)s)')
     dest.add_argument('--deststart', type=int, default=1,
-                      help='Start well number on destination OD plate (default: %(default)s)')
+                      help='Starting location on the destination labware (default: %(default)s)')
 
     # parse & return
     if test_args:
@@ -100,16 +99,13 @@ def main(args=None):
     if args is None:
         args = parse_args()
     check_args(args)
+    
     # Import
     df_conc = conc2df(args.concfile, 
                       file_format=args.format,
                       row_select=args.rows, 
-                      header=args.header,
-                      labware_col=args.labware,
-                      location_col=args.location, 
-                      conc_col=args.conc)
-    check_df_conc(df_conc, args)
-
+                      header=args.header)
+    
     # Determining dilution volumes
     df_conc = dilution_volumes(df_conc, 
                                dilute_conc=args.dilution,
@@ -119,26 +115,32 @@ def main(args=None):
                                dest_type=args.desttype)
     
     # Adding destination data
-    df_conc = add_dest(df_conc, 
-                       dest_labware=args.dest,
+    df_conc = add_dest(df_conc,
+                       dest_name=args.destname,
+                       dest_type=args.desttype,
                        dest_start=args.deststart)
+
     
     # Reordering dest if plate type is 384-well
-    if args.desttype == '384':
-        df_conc = reorder_384well(df_conc, 'dest_location')
-    elif args.desttype == '96':
-        pass
-    else:
-        msg = 'Destination labware type "{}" not recognized'
-        raise ValueError(msg.format(args.desttype))
-    
+    try:
+        n_wells = Labware.LABWARE_DB[args.desttype]['wells']
+    except KeyError:
+        msg = 'Labware type "{}" does not have "wells" attribute'
+        raise KeyError(msg.format(args.desttype))
+    if n_wells == '384':
+        df_conc = reorder_384well(df_conc, 'TECAN_dest_target_position')
+
     # Writing out gwl file
+    lw_tracker = Labware.labware_tracker()
     gwl_file = args.prefix + '.gwl'
     with open(gwl_file, 'w') as gwlFH:
         ## Dilutant
-        pip_dilutant(df_conc, outFH=gwlFH, src_labware=args.dlabware)
+        pip_dilutant(df_conc, outFH=gwlFH,
+                     src_labware_name=args.dlabware_name,
+                     lw_tracker=lw_tracker)
         ## Sample
-        pip_samples(df_conc, outFH=gwlFH)
+        pip_samples(df_conc, outFH=gwlFH,
+                    lw_tracker=lw_tracker)
         
     # Writing out table
     conc_file = args.prefix + '_conc.txt'
@@ -162,28 +164,20 @@ def check_args(args):
     """Checking user input
     """
     # input table column IDs
-    assert args.labware >= 1, '--labware must be >= 1'
-    assert args.location >= 1, '--location must be >= 1'
-    assert args.conc >= 1, '--conc must be >= 1'
-    # input table row select
     args.rows = Utils.make_range(args.rows, set_zero_index=True)
     # dilution
     assert args.dilution >= 0.0, '--dilution must be >= 0'
     assert args.minvolume >= 0.0, '--minvolume must be >= 0'
     assert args.maxvolume > 0.0, '--maxvolume must be > 0'
-    # destination start
-    args.destype = args.desttype.lower()
-    if args.desttype == '96':
-        destlimit = 96
-    elif args.desttype == '384':
-        destlimit = 384
-    if args.deststart < 1 or args.deststart > destlimit:
-        msg = 'Destination start well # must be in range: 1-{}'
-        raise ValueError(msg.format(destlimit))
+    # destination labware type
+    try:
+        Labware.LABWARE_DB[args.desttype]
+    except KeyError:
+        msg = 'Destination labware type "{}" not recognized'
+        raise ValueError(msg.format(args.desttype))
 
-
-def conc2df(concfile, row_select=None, file_format=None, header=True,
-            labware_col=1, location_col=2, conc_col=3):
+                         
+def conc2df(concfile, row_select=None, file_format=None, header=True):
     """Loading a concentration file as a pandas dataframe
     """
     if header==True:
@@ -192,7 +186,9 @@ def conc2df(concfile, row_select=None, file_format=None, header=True,
         header=None
     # format
     if file_format is None:
-        if concfile.endswith('.txt') or concfile.endswith('.csv'):
+        if concfile.endswith('.csv'):
+            file_format = 'csv'
+        elif concfile.endswith('.txt'):
             file_format = 'tab'
         elif concfile.endswith('.xls') or concfile.endswith('.xlsx'):
             file_format = 'excel'
@@ -200,7 +196,9 @@ def conc2df(concfile, row_select=None, file_format=None, header=True,
         file_format = file_format.lower()
         
     # load via pandas IO
-    if file_format == 'tab':
+    if file_format == 'csv':
+        df = pd.read_csv(concfile, sep=',', header=header)        
+    elif file_format == 'tab':
         df = pd.read_csv(concfile, sep='\t', header=header)
     elif file_format == 'excel':
         xls = pd.ExcelFile(concfile)
@@ -208,44 +206,74 @@ def conc2df(concfile, row_select=None, file_format=None, header=True,
     else:
         raise ValueError('Concentration file not in usable format')
 
-    # selecting particular rows
-    if row_select is not None:
-        df = df.iloc[row_select]
-
-    # selecting columns
-    df = df.iloc[:,[labware_col-1,location_col-1,conc_col-1]]
-    df.columns = ['labware', 'location', 'conc']
+    # checking file format
+    check_df_conc(df)
 
     # return
     return df
 
+def missing_cols(df, req_cols):
+    msg = 'Required column "{}" not found'
+    for req_col in req_cols:
+        if req_col not in df.columns.values:
+            raise ValueError(msg.format(req_col))    
 
-def check_df_conc(df_conc, args):
+def check_df_conc(df_conc):
     """Assertions of df_conc object formatting
     """
+    # checking for columns
+    req_cols = ['TECAN_labware_name', 'TECAN_labware_type',
+                'TECAN_target_position', 'TECAN_sample_conc']
+    missing_cols(df_conc, req_cols)
+
+    # checking labware types
+    msg = 'ERROR (concfile, line={}): labware type not recognized: {}'
+    for i,lt in enumerate(df_conc['TECAN_labware_type']):
+        try:
+            Labware.LABWARE_DB[lt]
+        except KeyError:
+            raise KeyError(msg.format(i, lt))
+                         
     # checking sample locations (>=1)
     msg = 'ERROR (concfile, line={}): location is < 1'
-    for i,loc in enumerate(df_conc['location']):
+    for i,loc in enumerate(df_conc['TECAN_target_position']):
         if loc < 1:
             print(msg.format(i), file=sys.stderr)
     
     # checking sample conc
     msg = 'WARNING (concfile, line={}): concentration is <= 0'
-    for i,sc in enumerate(df_conc['conc']):
+    for i,sc in enumerate(df_conc['TECAN_sample_conc']):
         if sc <= 0.0:
             print(msg.format(i), file=sys.stderr)
 
+    # adding target position
+    df_conc['TECAN_target_location'] = df_conc.apply(add_target_location, axis=1)
 
+
+def add_target_location(row):
+    labware_type = row['TECAN_labware_type']
+    try:
+        tp = Labware.LABWARE_DB[labware_type]
+    except KeyError:
+        msg = 'Labware type "{}" not recognized'
+        raise KeyError(msg.format(labware_type))
+    try:
+        tp = Labware.LABWARE_DB[labware_type]['target_location']
+    except KeyError:
+        msg = 'Labware type "{}" does not have target location key'
+        raise KeyError(msg.format(labware_type))
+    return tp
+            
 def calc_sample_volume(row, dilute_conc, min_vol, max_vol):
     """sample_volume = dilute_conc * total_volume / conc 
     (v1 = c2*v2/c1)
     If sample_volume > max possibl volume to use, then just use max
     """
     # use all if very low conc
-    if row['conc'] <= 0:
+    if row['TECAN_sample_conc'] <= 0:
         return max_vol
     # calc volume to use
-    x = dilute_conc * row['total_volume'] / row['conc']
+    x = dilute_conc * row['TECAN_total_volume'] / row['TECAN_sample_conc']
     # ceiling
     if x > max_vol:
         x = max_vol
@@ -257,7 +285,7 @@ def calc_sample_volume(row, dilute_conc, min_vol, max_vol):
 def calc_dilutant_volume(row):
     """ dilutatant volume = total_volume - sample_volume
     """
-    x = row['total_volume'] - row['sample_volume']
+    x = row['TECAN_total_volume'] - row['TECAN_sample_volume']
     if x < 0:
         x = 0
     return x
@@ -265,36 +293,40 @@ def calc_dilutant_volume(row):
 def calc_total_volume(row, min_vol, max_vol, dilute_conc):
     """Calculating post-dlution volume
     """
-    x = row['conc'] * min_vol / dilute_conc
+    x = row['TECAN_sample_conc'] * min_vol / dilute_conc
     if x > max_vol:
         x = max_vol
     return x    
 
 def dilution_volumes(df_conc, dilute_conc, min_vol, max_vol, 
-                     min_total, dest_type='96'):
+                     min_total, dest_type):
     """Setting the amoutn of sample to aliquot for dilution
     df_conc: pd.dataframe
     dilute_conc: concentration to dilute to 
     min_vol: min volume of sample to use
     max_vol: max total volume to use
     min_total: minimum total post-dilution volume
+    dest_type: labware type for destination labware
     """
     # c1*v1 = c2*v2 
     # v2 = c1 * v1 / c2
     # v1 = c2 * v2 / c1
 
     # max well volume
-    if dest_type == '96':
-        max_well_vol = 200
-    elif dest_type == '384':
-        max_well_vol = 40
-    else:
+    try:
+        Labware.LABWARE_DB[dest_type]
+    except KeyError:
         msg = 'Destination labware type "{}" not recognized'
+        raise ValueError(msg.format(dest_type))
+    try:
+        max_well_vol = Labware.LABWARE_DB[dest_type]['max_volume']
+    except KeyError:
+        msg = 'Cannot find max_volume for labware type: {}'
         raise ValueError(msg.format(dest_type))
 
     # converting all negative concentrations to zero
-    f = lambda row: 0 if row['conc'] < 0 else row['conc']
-    df_conc['conc'] = df_conc.apply(f, axis=1)
+    f = lambda row: 0 if row['TECAN_sample_conc'] < 0 else row['TECAN_sample_conc']
+    df_conc['TECAN_sample_conc'] = df_conc.apply(f, axis=1)
     
     # range of dilutions
     samp_vol_range = max_vol - min_vol
@@ -303,30 +335,30 @@ def dilution_volumes(df_conc, dilute_conc, min_vol, max_vol,
     # final volume
     f = functools.partial(calc_total_volume, dilute_conc=dilute_conc,
                           min_vol=min_vol, max_vol=max_vol)
-    df_conc['total_volume'] = df_conc.apply(f, axis=1)
-    if max(df_conc['total_volume']) > max_well_vol:
+    df_conc['TECAN_total_volume'] = df_conc.apply(f, axis=1)
+    if max(df_conc['TECAN_total_volume']) > max_well_vol:
         msg = 'ERROR: post-dilution volume exceeds max possible well volume.'
         msg += ' Lower --minvolume or chane destination labware type.'
         raise ValueError(msg)
     
     # raising total post-dilute volume if too low of dilute volume (if small dilution factor)
-    df_conc.loc[df_conc.total_volume < min_total, 'total_volume'] = min_total
+    df_conc.loc[df_conc.TECAN_total_volume < min_total, 'TECAN_total_volume'] = min_total
     # setting volumes
     f = functools.partial(calc_sample_volume, dilute_conc=dilute_conc,
                           min_vol=min_vol, max_vol=max_vol)
-    df_conc['sample_volume'] = df_conc.apply(f, axis=1)
+    df_conc['TECAN_sample_volume'] = df_conc.apply(f, axis=1)
     # dilutatant volume = total_volume - sample_volume
-    df_conc['dilutant_volume'] = df_conc.apply(calc_dilutant_volume, axis=1)
+    df_conc['TECAN_dilutant_volume'] = df_conc.apply(calc_dilutant_volume, axis=1)
     # updating total volume
-    f = lambda row: row['sample_volume'] + row['dilutant_volume']
-    df_conc['total_volume'] = df_conc.apply(f, axis=1)
+    f = lambda row: row['TECAN_sample_volume'] + row['TECAN_dilutant_volume']
+    df_conc['TECAN_total_volume'] = df_conc.apply(f, axis=1)
     # calculating final conc
-    f = lambda row: row['conc'] * row['sample_volume'] / row['total_volume']
-    df_conc['final_conc'] = df_conc.apply(f, axis=1)
+    f = lambda row: row['TECAN_sample_conc'] * row['TECAN_sample_volume'] / row['TECAN_total_volume']
+    df_conc['TECAN_final_conc'] = df_conc.apply(f, axis=1)
     ## target conc hit?
     msg_low = 'WARNING: (concfile, line{}): final concentration is low: {}'
     msg_high = 'WARNING: (concfile, line{}): final concentration is high: {}'
-    for i,fc in enumerate(df_conc['final_conc']):
+    for i,fc in enumerate(df_conc['TECAN_final_conc']):
         fc = round(fc, 1)
         if fc < round(dilute_conc, 1):            
             print(msg_low.format(i, fc), file=sys.stderr)
@@ -337,7 +369,7 @@ def dilution_volumes(df_conc, dilute_conc, min_vol, max_vol,
     return df_conc
         
 
-def add_dest(df_conc, dest_labware, dest_start=1):
+def add_dest(df_conc, dest_name, dest_type, dest_start=1):
     """Setting destination locations for samples & primers.
     Adding to df_conc:
       [dest_labware, dest_location]
@@ -345,9 +377,10 @@ def add_dest(df_conc, dest_labware, dest_start=1):
     dest_start= int(dest_start)
     
     # adding columns
-    df_conc['dest_labware'] = dest_labware
-    dest_end = dest_start + df_conc.shape[0] 
-    df_conc['dest_location'] = list(range(dest_start, dest_end))
+    df_conc['TECAN_dest_labware_name'] = dest_name
+    df_conc['TECAN_dest_labware_type'] = dest_type
+    df_conc['TECAN_dest_target_location'] = Labware.LABWARE_DB[dest_type]['target_location']
+    df_conc['TECAN_dest_target_position'] = list(range(dest_start, dest_start + df_conc.shape[0]))
 
     # return
     return df_conc
@@ -366,14 +399,14 @@ def reorder_384well(df, reorder_col):
     return df
 
 
-def pip_dilutant(df_conc, outFH, src_labware='100ml[001]'):
+def pip_dilutant(df_conc, outFH, src_labware_name, lw_tracker=None):
     """Writing worklist commands for aliquoting dilutant.
     Using 1-asp-multi-disp with 200 ul tips.
     Method:
     * calc max multi-dispense for 50 or 200 ul tips 
     """
     # determing how many multi-disp per tip
-    max_vol = max(df_conc.dilutant_volume)
+    max_vol = max(df_conc.TECAN_dilutant_volume)
     if max_vol > 900:
         raise ValueError('Max dilutant volume >900ul')
     if max_vol * 2 < 45:
@@ -386,17 +419,18 @@ def pip_dilutant(df_conc, outFH, src_labware='100ml[001]'):
     # making multi-disp object
     outFH.write('C;Dilutant\n')
     MD = Fluent.multi_disp()
-    MD.SrcRackLabel = src_labware
-    MD.SrcPosition = 1                               # need to set for all channels?
-    MD.DestRackLabel = df_conc.dest_labware
-    MD.DestPositions = df_conc.dest_location
-    MD.Volume = df_conc.dilutant_volume             
+    MD.SrcRackLabel = src_labware_name
+    MD.SrcPosition = 1                                   # need to set for all channels?
+    MD.DestRackLabel = df_conc.TECAN_dest_labware_name
+    MD.DestPositions = df_conc.TECAN_dest_target_position
+    MD.Volume = df_conc.TECAN_dilutant_volume             
     MD.NoOfMultiDisp = n_disp
+    MD.Labware_tracker = lw_tracker
     # writing
     outFH.write(MD.cmd() + '\n')
 
     
-def pip_samples(df_conc, outFH):
+def pip_samples(df_conc, outFH, lw_tracker=None):
     """Commands for aliquoting samples into dilutant
     """
     outFH.write('C;Samples\n')
@@ -404,23 +438,29 @@ def pip_samples(df_conc, outFH):
     for i in range(df_conc.shape[0]):
         # aspiration
         asp = Fluent.aspirate()
-        asp.RackLabel = df_conc.ix[i,'labware']
-        asp.Position = df_conc.ix[i,'location']
-        asp.Volume = round(df_conc.ix[i,'sample_volume'], 2)
-        asp.LiquidClass = 'Water Contact Wet Single'
+        asp.RackLabel = df_conc.ix[i,'TECAN_labware_name']
+        asp.RackType = df_conc.ix[i,'TECAN_labware_type']
+        asp.Position = df_conc.ix[i,'TECAN_target_position']
+        asp.Volume = round(df_conc.ix[i,'TECAN_sample_volume'], 2)
+        asp.LiquidClass = 'Water Contact Wet Single No-cLLD'
         outFH.write(asp.cmd() + '\n')
-
+        
         # dispensing
         disp = Fluent.dispense()
-        disp.RackLabel = df_conc.ix[i,'dest_labware']
-        disp.Position = df_conc.ix[i,'dest_location']
-        disp.Volume = round(df_conc.ix[i,'sample_volume'], 2)
-        disp.LiquidClass = 'Water Contact Wet Single'
+        disp.RackLabel = df_conc.ix[i,'TECAN_dest_labware_name']
+        disp.RackType = df_conc.ix[i,'TECAN_dest_labware_type']        
+        disp.Position = df_conc.ix[i,'TECAN_dest_target_position']
+        disp.Volume = round(df_conc.ix[i,'TECAN_sample_volume'], 2)
+        disp.LiquidClass = 'Water Contact Wet Single No-cLLD'
         outFH.write(disp.cmd() + '\n')
 
         # tip to waste
         outFH.write('W;\n')
+        lw_tracker.add(asp)
 
+        print(lw_tracker.labware)
+        print(lw_tracker.tip_cnt)
+        
 
 # main
 if __name__ == '__main__':
