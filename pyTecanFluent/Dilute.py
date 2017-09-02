@@ -137,11 +137,16 @@ def main(args=None):
         ## Dilutant
         pip_dilutant(df_conc, outFH=gwlFH,
                      src_labware_name=args.dlabware_name,
+                     src_labware_type=args.dlabware_type,
                      lw_tracker=lw_tracker)
         ## Sample
         pip_samples(df_conc, outFH=gwlFH,
                     lw_tracker=lw_tracker)
-        
+
+    # making labware table
+    lw_tbl = lw_tracker.labware_table()
+    print(lw_tbl)
+
     # Writing out table
     conc_file = args.prefix + '_conc.txt'
     df_conc.round(1).to_csv(conc_file, sep='\t', index=False)
@@ -400,7 +405,8 @@ def reorder_384well(df, reorder_col):
     return df
 
 
-def pip_dilutant(df_conc, outFH, src_labware_name, lw_tracker=None):
+def pip_dilutant(df_conc, outFH, src_labware_name, 
+                 src_labware_type=None, lw_tracker=None):
     """Writing worklist commands for aliquoting dilutant.
     Using 1-asp-multi-disp with 200 ul tips.
     Method:
@@ -421,8 +427,10 @@ def pip_dilutant(df_conc, outFH, src_labware_name, lw_tracker=None):
     outFH.write('C;Dilutant\n')
     MD = Fluent.multi_disp()
     MD.SrcRackLabel = src_labware_name
+    MD.SrcRackType = src_labware_type
     MD.SrcPosition = 1                                   # need to set for all channels?
     MD.DestRackLabel = df_conc.TECAN_dest_labware_name
+    MD.DestRackType = df_conc.TECAN_dest_labware_type
     MD.DestPositions = df_conc.TECAN_dest_target_position
     MD.Volume = df_conc.TECAN_dilutant_volume             
     MD.NoOfMultiDisp = n_disp
@@ -459,8 +467,8 @@ def pip_samples(df_conc, outFH, lw_tracker=None):
         outFH.write('W;\n')
         lw_tracker.add(asp)
 
-        print(lw_tracker.labware)
-        print(lw_tracker.tip_cnt)
+        #print(lw_tracker.labware)
+        #print(lw_tracker.tip_cnt)
         
 
 # main

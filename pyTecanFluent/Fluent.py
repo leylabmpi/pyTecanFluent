@@ -174,6 +174,7 @@ class multi_disp():
             # single-asp
             asp = aspirate()
             asp.RackLabel = self.SrcRackLabel
+            asp.RackType = self.SrcRackType
             asp.Position = self.SrcPosition
             asp.LiquidClass = self.LiquidClass
             # loading dispenses
@@ -191,6 +192,7 @@ class multi_disp():
                     continue 
                 disp = dispense()
                 disp.RackLabel = self.DestRackLabel[sample_cnt-1]
+                disp.RackType = self.DestRackType[sample_cnt-1]
                 disp.Position = self.DestPositions[sample_cnt-1]
                 disp.Volume = round(self.Volumes[sample_cnt-1], 2)
                 disp.LiquidClass = self.LiquidClass
