@@ -135,7 +135,7 @@ class multi_disp():
     * string of commands
     """
 
-    def __init__(self):
+    def __init__(self, labware_tracker=None):
         self._ID = 'R'
         # aspirate parameters
         self.SrcRackLabel = None
@@ -152,7 +152,7 @@ class multi_disp():
         self._LiquidClass = 'Water Free Multi'
         self.NoOfMultiDisp = 2
         self.psbl_liq_cls = _psbl_liq_cls()
-        self.Labware_tracker = None
+        self.Labware_tracker = labware_tracker
 
     def xstr(self, x):
         if x is None:

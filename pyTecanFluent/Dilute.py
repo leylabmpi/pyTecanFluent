@@ -167,7 +167,9 @@ def main(args=None):
 
     
     # end
-    return (gwl_file, gwl_file_win, conc_file, conc_file_win)
+    return (gwl_file, gwl_file_win, 
+            conc_file, conc_file_win, 
+            lw_file, lw_file_win)
 
 
 def check_args(args):

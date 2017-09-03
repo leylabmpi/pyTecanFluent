@@ -11,6 +11,7 @@ import pandas as pd
 ## package
 from pyTecanFluent import Utils
 from pyTecanFluent import Fluent
+from pyTecanFluent import Labware
 
 
 # functions
@@ -31,20 +32,13 @@ def parse_args(test_args=None, subparsers=None):
     EXTRA COLUMNS in MAPPING FILE:
 
     # If no barcoding, single barcoding, or dual barcodes already combined:
-    * "TECAN_sample_labware" = The sample labware name on the robot worktable
-    * "TECAN_sample_location" = The well or tube location (a number)
+    * "TECAN_sample_labware_name" = The sample labware name on the robot worktable
+    * "TECAN_sample_labware_type" = The type of labware containing samples (eg., '96 Well Eppendorf TwinTec PCR')
+    * "TECAN_sample_target_position" = The well or tube location (a number)
     * "TECAN_sample_rxn_volume" = The volume of sample to use per PCR (ul)
-    * "TECAN_primer_labware" = The primer plate labware name on the robot worktable
-    * "TECAN_primer_location" = The well location (1-96 or 1-384)
-
-    # If dual barcoding with separate primer plates:
-    * "TECAN_sample_labware" = The sample labware name on the robot worktable
-    * "TECAN_sample_location" = The well or tube location (a number)
-    * "TECAN_sample_rxn_volume" = The volume of sample to use per PCR (ul)
-    * "TECAN_primer_labware_F" = The primer plate labware name on the robot worktable
-    * "TECAN_primer_location_F" = The well location (1-96 or 1-384)
-    * "TECAN_primer_labware_R" = The primer plate labware name on the robot worktable
-    * "TECAN_primer_location_R" = The well location (1-96 or 1-384)
+    * "TECAN_primer_labware_name" = The primer plate labware name on the robot worktable
+    * "TECAN_primer_labware_type" = The primer plate labware type on the robot worktable
+    * "TECAN_primer_target_position" = The well location (1-96 or 1-384)
 
     CONTROLS:
     * For the positive & negative controls, include them in the mapping file.
@@ -79,11 +73,12 @@ def parse_args(test_args=None, subparsers=None):
 
     ## Destination plate
     dest = parser.add_argument_group('Destination plate')
-    dest.add_argument('--dest', type=str, default='96 Well[008]',
-                      help='Distination labware ID on TECAN workbench (default: %(default)s)')
-    dest.add_argument('--desttype', type=str, default='96',
-                      choices=['96','384'],
-                      help='Destination plate labware type (default: %(default)s)')
+    dest.add_argument('--destname', type=str, default='Destination plate',
+                      help='Distination labware name (default: %(default)s)')
+    dest.add_argument('--desttype', type=str, default='96 Well Eppendorf TwinTec PCR',
+                      choices=['96 Well Eppendorf TwinTec PCR',
+                               '384 Well Biorad PCR'],
+                      help='Destination labware type (default: %(default)s)')
     dest.add_argument('--deststart', type=int, default=1,
                       help='Start well number on destination plate (default: %(default)s)')
     dest.add_argument('--rxns', type=int, default=3,
@@ -141,22 +136,20 @@ def main(args=None):
     # Import
     df_map = map2df(args.mapfile, row_select=args.rows)
     check_df_map(df_map, args)
+
     # Making destination dataframe
-    df_map = add_dest(df_map, args.dest,
+    df_map = add_dest(df_map, args.destname,
                       dest_type=args.desttype,
                       dest_start=args.deststart,
                       rxn_reps=args.rxns)
 
+    positions = get_wells(args.desttype)
     # Reordering dest if plate type is 384-well
-    if args.desttype == '384':
-        df_map = reorder_384well(df_map, 'TECAN_dest_location')
-    elif args.desttype == '96':
-        pass
-    else:
-        msg = 'Destination labware type "{}" not recognized'
-        msg.format(args.desttype)
+    if positions == '384':
+        df_map = reorder_384well(df_map, 'TECAN_dest_target_position')
 
     # GWL file construction
+    lw_tracker = Labware.labware_tracker()
     ## gwl open
     gwl_file = args.prefix + '.gwl'
     with open(gwl_file, 'w') as gwlFH:
@@ -164,24 +157,28 @@ def main(args=None):
         pip_mastermix(df_map, gwlFH,
                       mmtube=args.mmtube,
                       mmvolume=args.mmvolume, 
-                      liq_cls=args.mm_liq)
+                      liq_cls=args.mm_liq, 
+                      lw_tracker=lw_tracker)
         ## primers
         pip_primers(df_map, gwlFH,
                     fp_volume=args.fpvolume,
                     rp_volume=args.rpvolume,
                     fp_tube=args.fptube,
                     rp_tube=args.rptube, 
-                    liq_cls=args.primer_liq)
+                    liq_cls=args.primer_liq, 
+                    lw_tracker=lw_tracker)
         ## samples
         pip_samples(df_map, gwlFH, 
-                    liq_cls=args.sample_liq)
+                    liq_cls=args.sample_liq, 
+                    lw_tracker=lw_tracker)
         ## water
         pip_water(df_map, gwlFH,
                   pcr_volume=args.pcrvolume,
                   mm_volume=args.mmvolume,
                   fp_volume=args.fpvolume,
                   rp_volume=args.rpvolume, 
-                  liq_cls=args.water_liq)
+                  liq_cls=args.water_liq, 
+                  lw_tracker=lw_tracker)
 
     # Report (total volumes; sample truncation; samples)
     report_file = args.prefix + '.report'
@@ -196,10 +193,15 @@ def main(args=None):
                      n_rxn_reps=args.rxns,
                      error_perc=args.errorperc)
 
+    # making labware table
+    df_labware = lw_tracker.labware_table()
+    lw_file = args.prefix + '_labware.txt'
+    df_labware.to_csv(lw_file, sep='\t', index=False)
+
     # Mapping file with destinations
     df_file = args.prefix + '_map.txt'
     df_map['TECAN_water_rxn_volume'] = df_map['TECAN_water_rxn_volume'].round(2)
-    df_map['TECAN_dest_location'] = df_map['TECAN_dest_location'].astype(int)
+    df_map['TECAN_dest_target_position'] = df_map['TECAN_dest_target_position'].astype(int)
     df_map['TECAN_pcr_rxn_rep'] = df_map['TECAN_pcr_rxn_rep'].astype(int)
     df_map.to_csv(df_file, sep='\t', index=False, na_rep='NA')
 
@@ -207,34 +209,48 @@ def main(args=None):
     gwl_file_win = Utils.to_win(gwl_file)
     report_file_win = Utils.to_win(report_file)
     df_file_win = Utils.to_win(df_file)
+    lw_file_win = Utils.to_win(lw_file)
 
     # status on files written
     Utils.file_written(gwl_file)
     Utils.file_written(report_file)
     Utils.file_written(df_file)
+    Utils.file_written(lw_file)
     Utils.file_written(gwl_file_win)
     Utils.file_written(report_file_win)
     Utils.file_written(df_file_win)
+    Utils.file_written(lw_file_win)
     
     # Return
     return (gwl_file, gwl_file_win,
             report_file, report_file_win, 
-            df_file, df_file_win)
+            df_file, df_file_win, 
+            lw_file, lw_file_win)
 
+
+def get_wells(dest_type):
+    try:
+        Labware.LABWARE_DB[dest_type]
+    except KeyError:
+        msg = 'Labware type "{}" not recognised'
+        raise KeyError(msg.format(dest_type))
+    try:
+        positions = Labware.LABWARE_DB[dest_type]['wells']
+    except KeyError:
+        msg = 'No "wells" key for labware type "{}"'
+        raise KeyError(msg.format(dest_type))
+    return positions
+    
 
 def check_args(args):
     """Checking user input
     """
     # destination start
-    if args.desttype == '96':
-        destlimit = 96
-    elif args.desttype == '384':
-        destlimit = 384
-    if args.deststart < 1 or args.deststart > destlimit:
+    positions = get_wells(args.desttype)
+    if args.deststart < 1 or args.deststart > positions:
         msg = 'Destination start well # must be in range: 1-{}'
         raise ValueError(msg.format(destlimit))
-    # destination labware
-   # args.destlabware = {x.split(':')[0]:x.split(':')[1] for x in args.destlabware.split(',')}
+
     # rows in mapping file
     args.rows = Utils.make_range(args.rows, set_zero_index=True)
     # tube number
@@ -255,7 +271,7 @@ def check_args(args):
     if args.mmvolume / 2.0 > args.pcrvolume:
         msg = 'WARNING: MasterMix volume > half of PCR volume'
         print(msg, file=sys.stderr)
-    ## primers?
+
 
 def map2df(mapfile, row_select=None):
     """Loading a mapping file as a pandas dataframe
@@ -278,7 +294,6 @@ def map2df(mapfile, row_select=None):
     # return
     return df
 
-
 def missing_cols(df, req_cols):
     msg = 'Required column "{}" not found'
     for req_col in req_cols:
@@ -292,26 +307,10 @@ def check_df_map(df_map, args):
     """
     # checking columns
     ## universal
-    req_cols = ['TECAN_sample_labware', 'TECAN_sample_location',
-                'TECAN_sample_rxn_volume']
+    req_cols = ['TECAN_sample_labware_name', 'TECAN_sample_labware_type',
+                'TECAN_sample_target_position', 'TECAN_sample_rxn_volume', 
+                'TECAN_primer_labware_name', 'TECAN_primer_labware_type']
     missing_cols(df_map, req_cols)
-    ## single- or dual-barcoding?
-    barcode_type = None
-    req_cols_s = ['TECAN_primer_labware', 'TECAN_primer_location']
-    req_cols_d = ['TECAN_primer_labware_F', 'TECAN_primer_location_F',
-                 'TECAN_primer_labware_R', 'TECAN_primer_location_R']
-    if any(x in df_map.columns.values for x in req_cols_s):
-        barcode_type = 'single'
-        msg = 'NOTE: assuming barcode type: {}'.format(barcode_type)
-        print(msg, file=sys.stderr)
-        missing_cols(df_map, req_cols_s)
-    elif any(x in df_map.columns.values for x in req_cols_d):
-        barcode_type = 'dual'
-        msg = 'NOTE: assuming barcode type: {}'.format(barcode_type)
-        print(msg, file=sys.stderr)
-        missing_cols(df_map, req_cols_d)
-    else:
-        raise ValueError('Cannot find required TECAN_primer_* columns')
 
     # checking for unique samples
     if any(df_map.duplicated(df_map.columns.values[0])):
@@ -319,12 +318,7 @@ def check_df_map(df_map, args):
         print(msg, file=sys.stderr)
 
     # checking for unique barcode locations (NaN's filtered out)
-    if barcode_type == 'single':
-        dups = df_map[req_cols_s].dropna().duplicated(keep=False)
-    elif barcode_type == 'dual':
-        dups = df_map[req_cols_d].dropna().duplicated(keep=False)
-    else:
-        raise ValueError('barcode_type not recognized')
+    dups = df_map[req_cols].dropna().duplicated(keep=False)
     if any(dups):
         msg = 'WARNING: duplicated barcodes in the mapping file'
         print(msg, file=sys.stderr)
@@ -337,7 +331,8 @@ def check_df_map(df_map, args):
         if sv < 0:
             raise ValueError('Sample volume < 0')
 
-def add_dest(df_map, dest_labware, dest_type='96',
+
+def add_dest(df_map, dest_labware, dest_type='96 Well Eppendorf TwinTec PCR',
              dest_start=1, rxn_reps=3):
     """Setting destination locations for samples & primers.
     Making a new dataframe with:
@@ -349,33 +344,36 @@ def add_dest(df_map, dest_labware, dest_type='96',
     Joining to df_map
     """
     dest_start= int(dest_start)
+    # labware type found in DB?
+    positions = get_wells(dest_type)
 
     # init destination df
     sample_col = df_map.columns[0]
     cols = [sample_col, 'TECAN_pcr_rxn_rep',
-            'TECAN_dest_labware', 'TECAN_dest_location']
+            'TECAN_dest_labware_name',
+            'TECAN_dest_labware_type', 
+            'TECAN_dest_target_position']    
     ncol = len(cols)
     nrow = df_map.shape[0] * rxn_reps
-    if dest_type == '96' and nrow > 97 - dest_start:
-        nrow = 97 - dest_start
-    elif dest_type == '384' and nrow > 385 - dest_start:
-        nrow = 385 - dest_start
+    if nrow > positions + 1 - dest_start:
+        nrow = positions + 1 - dest_start
+    elif nrow > positions + 1 - dest_start:
+        nrow = positions + 1 - dest_start
     df_dest = pd.DataFrame(np.nan, index=range(nrow), columns=cols)
 
     # filling destination df
+    orig_dest_labware = dest_labware
     for i,(sample,rep) in enumerate(product(df_map.ix[:,0], range(rxn_reps))):
         # dest location
-        dest_location = i + dest_start
-        msg = 'WARNING: Not enough wells for the number of samples'
-        msg = msg + '. Truncating to max samples that will fit on the plate'
-        if dest_type == '96' and dest_location > 96:
+        dest_position = i + dest_start
+        msg = 'WARNING: Not enough wells for the number of samples.' 
+        'Using multiple destination plates'
+        if dest_position > positions:           
+            x = round(dest_position / positions + 0.5, 0)
+            dest_labware = '{} {}'.format(orig_dest_labware, x)
             print(msg, file=sys.stderr)
-            break
-        elif dest_type == '384' and dest_location > 384:
-            print(msg, file=sys.stderr)
-            break
-            # adding values DF
-        df_dest.iloc[i] = [sample, rep+1, dest_labware, dest_location]
+        # adding values DF
+        df_dest.iloc[i] = [sample, rep+1, dest_labware, dest_type, dest_position]
 
     # df join (map + destination)
     df_j = pd.merge(df_map, df_dest, on=sample_col, how='inner')
@@ -399,7 +397,8 @@ def reorder_384well(df, reorder_col):
     return df
 
 
-def pip_mastermix(df_map, outFH, mmvolume=13.1, mmtube=1, liq_cls='Water Free Single'):
+def pip_mastermix(df_map, outFH, mmvolume=13.1, mmtube=1, 
+                  liq_cls='Water Free Single', lw_tracker=None):
     """Writing worklist commands for aliquoting mastermix.
     Using 1-asp-multi-disp with 200 ul tips.
     Method:
@@ -412,11 +411,13 @@ def pip_mastermix(df_map, outFH, mmvolume=13.1, mmtube=1, liq_cls='Water Free Si
     mmtube = int(mmtube)
     outFH.write('C;MasterMix\n')
 
-    MD = Fluent.multi_disp()
-    MD.SrcRackLabel = 'micro15[{0:0>3}]'.format(mmtube)
+    MD = Fluent.multi_disp(lw_tracker)
+    MD.SrcRackLabel = 'Mastermix tube[{0:0>3}]'.format(mmtube)
+    MD.SrcRackType = '1.5ml Eppendorf'
     MD.SrcPosition = mmtube
-    MD.DestRackLabel = df_map.ix[:,'TECAN_dest_labware']    
-    MD.DestPositions = df_map.ix[:,'TECAN_dest_location']
+    MD.DestRackLabel = df_map.ix[:,'TECAN_dest_labware_name']    
+    MD.DestRackType = df_map.ix[:,'TECAN_dest_labware_type']    
+    MD.DestPositions = df_map.ix[:,'TECAN_dest_target_position']
     MD.Volume = mmvolume
     MD.LiquidClass = liq_cls
     MD.NoOfMultiDisp = int(np.floor(160 / mmvolume))  # using 200 ul tips
@@ -424,7 +425,8 @@ def pip_mastermix(df_map, outFH, mmvolume=13.1, mmtube=1, liq_cls='Water Free Si
     outFH.write(MD.cmd() + '\n')
 
 
-def pip_nonbarcode_primer(df_map, outFH, volume, tube, liq_cls='Water Free Single'):
+def pip_nonbarcode_primer(df_map, outFH, volume, tube, liq_cls='Water Free Single',
+                          lw_tracker=None):
     """Pipetting primers from tube.
     Assuming primer is aliquoted to all samples
     df_map : mapping file dataframe
@@ -438,7 +440,8 @@ def pip_nonbarcode_primer(df_map, outFH, volume, tube, liq_cls='Water Free Singl
     for i in range(df_map.shape[0]):
         # aspiration
         asp = Fluent.aspirate()
-        asp.RackLabel = 'micro15[{0:0>3}]'.format(tube)
+        asp.RackLabel = 'Primer tube[{0:0>3}]'.format(tube)
+        asp.RackType = '1.5ml Eppendorf'
         asp.Position = tube
         asp.Volume = volume
         asp.LiquidClass = liq_cls
@@ -446,8 +449,9 @@ def pip_nonbarcode_primer(df_map, outFH, volume, tube, liq_cls='Water Free Singl
 
         # dispensing
         disp = Fluent.dispense()
-        disp.RackLabel = df_map.ix[i,'TECAN_dest_labware']
-        disp.Position = df_map.ix[i,'TECAN_dest_location']
+        disp.RackLabel = df_map.ix[i,'TECAN_dest_labware_name']
+        disp.RackType = df_map.ix[i,'TECAN_dest_labware_type']
+        disp.Position = df_map.ix[i,'TECAN_dest_target_position']
         disp.Volume = volume
         disp.LiquidClass = liq_cls
         outFH.write(disp.cmd() + '\n')
@@ -455,33 +459,44 @@ def pip_nonbarcode_primer(df_map, outFH, volume, tube, liq_cls='Water Free Singl
         # tip to waste
         outFH.write('W;\n')
 
+        # tracking labware & tip usage
+        lw_tracker.add(asp)
+        lw_tracker.add(disp, add_tip=False)
 
-def pip_primer(i, outFH, df_map, primer_labware, primer_location,
-               primer_plate_volume, liq_cls):
+
+def pip_primer(i, outFH, df_map, primer_labware_name, 
+               primer_labware_type, primer_target_position,
+               primer_plate_volume, liq_cls, lw_tracker=None):
     """Pipetting a single primer
     """
     # aspiration
     asp = Fluent.aspirate()
-    asp.RackLabel = df_map.ix[i, primer_labware]
-    asp.Position = df_map.ix[i, primer_location]
+    asp.RackLabel = df_map.ix[i, primer_labware_name]
+    asp.RackType = df_map.ix[i, primer_labware_type]
+    asp.Position = df_map.ix[i, primer_target_position]
     asp.Volume = primer_plate_volume
     asp.LiquidClass = liq_cls
     outFH.write(asp.cmd() + '\n')
 
     # dispensing
     disp = Fluent.dispense()
-    disp.RackLabel = df_map.ix[i,'TECAN_dest_labware']
-    disp.Position = df_map.ix[i,'TECAN_dest_location']
+    disp.RackLabel = df_map.ix[i,'TECAN_dest_labware_name']
+    disp.RackType = df_map.ix[i,'TECAN_dest_labware_type']
+    disp.Position = df_map.ix[i,'TECAN_dest_target_position']
     disp.Volume = primer_plate_volume
     asp.LiquidClass = liq_cls
     outFH.write(disp.cmd() + '\n')
     
     # tip to waste
     outFH.write('W;\n')
-
+    
+    # tracking labware & tip usage
+    lw_tracker.add(asp)
+    lw_tracker.add(disp, add_tip=False)
+    
         
-def pip_primers(df_map, outFH, fp_volume=0, rp_volume=0,
-                fp_tube=0, rp_tube=0, liq_cls='Water Free Single'):
+def pip_primers(df_map, outFH, fp_volume=0, rp_volume=0, fp_tube=0, rp_tube=0, 
+                liq_cls='Water Free Single', lw_tracker=None):
     """Commands for aliquoting primers
     """
     outFH.write('C;Primers\n')
@@ -489,50 +504,59 @@ def pip_primers(df_map, outFH, fp_volume=0, rp_volume=0,
     # pipetting non-barcoded primers
     ## forward primer
     if fp_tube > 0 and fp_volume > 0:
-        pip_nonbarcode_primer(df_map, outFH, fp_volume, fp_tube)
+        pip_nonbarcode_primer(df_map, outFH, fp_volume, fp_tube, 
+                              lw_tracker=lw_tracker)
     else:
         primer_plate_volume += fp_volume
     ## reverse primer
     if rp_tube > 0 and rp_volume > 0:
-        pip_nonbarcode_primer(df_map, outFH, rp_volume, rp_tube)
+        pip_nonbarcode_primer(df_map, outFH, rp_volume, rp_tube, 
+                              lw_tracker=lw_tracker)
     else:
         primer_plate_volume += rp_volume
 
     # single or dual barcodes?
-    req_cols_s = ['TECAN_primer_labware', 'TECAN_primer_location']
-    req_cols_d = ['TECAN_primer_labware_F', 'TECAN_primer_location_F',
-                 'TECAN_primer_labware_R', 'TECAN_primer_location_R']
-    barcode_type = None
-    if all(x in df_map.columns.values for x in req_cols_s):
-        barcode_type = 'single'
-    elif all(x in df_map.columns.values for x in req_cols_d):
-        barcode_type = 'dual'
-    else:
-        raise ValueError('Cannot find required TECAN_primer_* columns')
-    
-        
+    #req_cols_s = ['TECAN_primer_labware', 'TECAN_primer_location']
+    #req_cols_d = ['TECAN_primer_labware_F', 'TECAN_primer_location_F',
+    #             'TECAN_primer_labware_R', 'TECAN_primer_location_R']
+    #barcode_type = None
+    #if all(x in df_map.columns.values for x in req_cols_s):
+    #    barcode_type = 'single'
+    #elif all(x in df_map.columns.values for x in req_cols_d):
+    #    barcode_type = 'dual'
+    #else:
+    #    raise ValueError('Cannot find required TECAN_primer_* columns')
+            
     # pipetting barcoded primers
     outFH.write('C;Barcoded primers\n')
+    for i in range(df_map.shape[0]):
+        pip_primer(i, outFH, df_map,
+                   'TECAN_primer_labware_name', 
+                   'TECAN_primer_labware_type',
+                   'TECAN_primer_target_position',
+                   primer_plate_volume, liq_cls, 
+                   lw_tracker=lw_tracker)
+
     ## for each Sample-PCR_rxn_rep, write out asp/dispense commands
-    if barcode_type == 'single':
-        for i in range(df_map.shape[0]):
-            pip_primer(i, outFH, df_map,
-                       'TECAN_primer_labware', 'TECAN_primer_location',
-                       primer_plate_volume, liq_cls)
-    elif barcode_type == 'dual':
-        for i in range(df_map.shape[0]):
-            pip_primer(i, outFH, df_map,
-                   'TECAN_primer_labware_F', 'TECAN_primer_location_F',
-                   primer_plate_volume, liq_cls)
-        for i in range(df_map.shape[0]):
-            pip_primer(i, outFH, df_map,
-                       'TECAN_primer_labware_R', 'TECAN_primer_location_R',
-                       primer_plate_volume, liq_cls)            
-    else:
-        raise ValueError('barcode_type not recognized')
+    # if barcode_type == 'single':
+    #     for i in range(df_map.shape[0]):
+    #         pip_primer(i, outFH, df_map,
+    #                    'TECAN_primer_labware', 'TECAN_primer_location',
+    #                    primer_plate_volume, liq_cls)
+    # elif barcode_type == 'dual':
+    #     for i in range(df_map.shape[0]):
+    #         pip_primer(i, outFH, df_map,
+    #                'TECAN_primer_labware_F', 'TECAN_primer_location_F',
+    #                primer_plate_volume, liq_cls)
+    #     for i in range(df_map.shape[0]):
+    #         pip_primer(i, outFH, df_map,
+    #                    'TECAN_primer_labware_R', 'TECAN_primer_location_R',
+    #                    primer_plate_volume, liq_cls)            
+    # else:
+    #     raise ValueError('barcode_type not recognized')
                 
 
-def pip_samples(df_map, outFH, liq_cls='Water Free Single'):
+def pip_samples(df_map, outFH, liq_cls='Water Free Single', lw_tracker=None):
     """Commands for aliquoting samples to each PCR rxn
     """
     outFH.write('C;Samples\n')
@@ -540,16 +564,18 @@ def pip_samples(df_map, outFH, liq_cls='Water Free Single'):
     for i in range(df_map.shape[0]):
         # aspiration
         asp = Fluent.aspirate()
-        asp.RackLabel = df_map.ix[i,'TECAN_sample_labware']
-        asp.Position = df_map.ix[i,'TECAN_sample_location']
+        asp.RackLabel = df_map.ix[i,'TECAN_sample_labware_name']
+        asp.RackType = df_map.ix[i,'TECAN_sample_labware_type']
+        asp.Position = df_map.ix[i,'TECAN_sample_target_position']
         asp.Volume = df_map.ix[i,'TECAN_sample_rxn_volume']
         asp.LiquidClass = liq_cls
         outFH.write(asp.cmd() + '\n')
 
         # dispensing
         disp = Fluent.dispense()
-        disp.RackLabel = df_map.ix[i,'TECAN_dest_labware']
-        disp.Position = df_map.ix[i,'TECAN_dest_location']
+        disp.RackLabel = df_map.ix[i,'TECAN_dest_labware_name']
+        disp.RackType = df_map.ix[i,'TECAN_dest_labware_type']
+        disp.Position = df_map.ix[i,'TECAN_dest_target_position']
         disp.Volume = df_map.ix[i,'TECAN_sample_rxn_volume']
         disp.LiquidClass = liq_cls
         outFH.write(disp.cmd() + '\n')
@@ -557,8 +583,14 @@ def pip_samples(df_map, outFH, liq_cls='Water Free Single'):
         # tip to waste
         outFH.write('W;\n')
 
-def pip_water(df_map, outFH, pcr_volume=25.0, mm_volume=13.1, 
-              fp_volume=2.0, rp_volume=2.0, liq_cls='Water Free Single'):
+        # tracking labware & tip usage
+        lw_tracker.add(asp)
+        lw_tracker.add(disp, add_tip=False)
+
+
+def pip_water(df_map, outFH, pcr_volume=25.0, mm_volume=13.1,
+              fp_volume=2.0, rp_volume=2.0, liq_cls='Water Free Single',
+              lw_tracker=None):
     """Commands for aliquoting water to each PCR rxn
     """
     outFH.write('C;Water\n')
@@ -575,22 +607,28 @@ def pip_water(df_map, outFH, pcr_volume=25.0, mm_volume=13.1,
     for i in range(df_map.shape[0]):
         # aspiration
         asp = Fluent.aspirate()
-        asp.RackLabel = df_map.ix[i,'TECAN_sample_labware']
-        asp.Position = df_map.ix[i,'TECAN_sample_location']
+        asp.RackLabel = df_map.ix[i,'TECAN_sample_labware_name']
+        asp.RackType = df_map.ix[i,'TECAN_sample_labware_type']
+        asp.Position = df_map.ix[i,'TECAN_sample_target_position']
         asp.Volume = water_volume[i]
         asp.LiquidClass = liq_cls
         outFH.write(asp.cmd() + '\n')
 
         # dispensing
         disp = Fluent.dispense()
-        disp.RackLabel = df_map.ix[i,'TECAN_dest_labware']
-        disp.Position = df_map.ix[i,'TECAN_dest_location']
+        disp.RackLabel = df_map.ix[i,'TECAN_dest_labware_name']
+        disp.RackType = df_map.ix[i,'TECAN_dest_labware_type']
+        disp.Position = df_map.ix[i,'TECAN_dest_target_position']
         disp.LiquidClass = liq_cls
         disp.Volume = water_volume[i]
         outFH.write(disp.cmd() + '\n')
 
         # tip to waste
         outFH.write('W;\n')
+
+        # tracking labware & tip usage
+        lw_tracker.add(asp)
+        lw_tracker.add(disp, add_tip=False)
 
 def add_error(x, error_perc):
     if x is None:
