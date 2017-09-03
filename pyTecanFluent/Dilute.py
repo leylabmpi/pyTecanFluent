@@ -144,8 +144,9 @@ def main(args=None):
                     lw_tracker=lw_tracker)
 
     # making labware table
-    lw_tbl = lw_tracker.labware_table()
-    print(lw_tbl)
+    df_labware = lw_tracker.labware_table()
+    lw_file = args.prefix + '_labware.txt'
+    df_labware.to_csv(lw_file, sep='\t', index=False)
 
     # Writing out table
     conc_file = args.prefix + '_conc.txt'
@@ -154,12 +155,16 @@ def main(args=None):
     # Create windows-line breaks formatted versions
     gwl_file_win = Utils.to_win(gwl_file)
     conc_file_win = Utils.to_win(conc_file)
+    lw_file_win = Utils.to_win(lw_file)
 
     # status
     Utils.file_written(gwl_file)
     Utils.file_written(conc_file)
+    Utils.file_written(lw_file)
     Utils.file_written(gwl_file_win)
     Utils.file_written(conc_file_win)    
+    Utils.file_written(lw_file_win)
+
     
     # end
     return (gwl_file, gwl_file_win, conc_file, conc_file_win)
@@ -466,10 +471,7 @@ def pip_samples(df_conc, outFH, lw_tracker=None):
         # tip to waste
         outFH.write('W;\n')
         lw_tracker.add(asp)
-
-        #print(lw_tracker.labware)
-        #print(lw_tracker.tip_cnt)
-        
+        lw_tracker.add(disp, add_tip=False)
 
 # main
 if __name__ == '__main__':

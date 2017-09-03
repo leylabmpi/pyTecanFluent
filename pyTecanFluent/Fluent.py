@@ -209,6 +209,7 @@ class multi_disp():
             # labware tracking
             if self.Labware_tracker is not None:
                 self.Labware_tracker.add(asp)
+                self.Labware_tracker.add(disp, add_tip=False)
                 
         # return string of commands
         return '\n'.join(steps)
