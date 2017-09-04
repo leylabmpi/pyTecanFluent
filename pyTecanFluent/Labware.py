@@ -62,7 +62,8 @@ LABWARE_DB = {
 TARGET_POSITIONS = {
     'Nest7mm_Pos': {
         'position_count' : 36, 
-        'boarders' : (1,2,3,4,5,6,7,12,13,18,19,24,25,30,31,36)}, 
+        'boarders' : (1,2,3,4,5,6,7,8,9,10,11,12,
+                      13,18,19,24,25,30,31,36)}, 
     'eppendorf' : {
         'position_count' : 96, 
         'boarders' : ()},
@@ -113,11 +114,10 @@ class worktable_tracker():
                 break
         # adding to count for target location 
         if add == True:
-            self.add(target_location, 
-                     i - self._current_count(target_location))
+            self.add(target_location, i - self._current_count(target_location))
         # ret
         return i
-
+    
     def _current_count(self, target_location):
         """Current count of target_positions filled for target location (1-indexing)
         """
@@ -209,7 +209,40 @@ class labware_tracker():
             else:
                 tip_size = 1000
             self._tip_cnt[self._tip_labware_type(tip_size)] += 1
+
+    def next_target_position(self, labware_type, boarder_check=False):
+        """Getting the next target position for the labware type
+        """
+        # getting sum for labware type
+        i = len([k for k,v in self._labware.items() if v['labware_type'] == labware_type])
+        try:
+            target_location = LABWARE_DB[labware_type]['target_location']
+        except KeyError:
+            msg = 'Labware type "{}" not recognized'
+            raise KeyError(msg.format(labware_type))
         
+        wt_tracker = worktable_tracker()        
+        max_pos = wt_tracker._max_target_position(target_location)
+        # finding next available position
+        if boarder_check == True:
+            while 1:
+                i += 1    
+                if i > max_pos:
+                    msg = 'Note enough target_positions for target_location: {}!'
+                    raise ValueError(msg.format(target_location))
+                elif boarder_check == True and i in boarders:
+                    # skip boarder positions
+                    continue
+                else:
+                    break
+        else:
+            i += 1
+            if i > max_pos:
+                msg = 'Note enough target_positions for target_location: {}!'
+                raise ValueError(msg.format(target_location))
+        return i
+            
+            
     def _tip_labware_type(self, tip_size):
         """Getting tip box labware type
         tip_size: size of tip (in ul)

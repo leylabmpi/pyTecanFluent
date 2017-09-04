@@ -101,7 +101,7 @@ def parse_args(test_args=None, subparsers=None):
                         help='Forward non-bacode primer tube number (0 = barcoded primer on a plate), (default: %(default)s)')
     primers.add_argument('--rptube', type=int, default=0,
                         help='Reverse non-bacode primer tube number (0 = barcoded primer on a plate), (default: %(default)s)')
-
+    
     # Liquid classes
     liq = parser.add_argument_group('Liquid classes')
     liq.add_argument('--mm-liq', type=str, default='MasterMix Free Multi',
@@ -354,24 +354,33 @@ def add_dest(df_map, dest_labware, dest_type='96 Well Eppendorf TwinTec PCR',
             'TECAN_dest_labware_type', 
             'TECAN_dest_target_position']    
     ncol = len(cols)
-    nrow = df_map.shape[0] * rxn_reps
-    if nrow > positions + 1 - dest_start:
-        nrow = positions + 1 - dest_start
-    elif nrow > positions + 1 - dest_start:
-        nrow = positions + 1 - dest_start
+    nrow = df_map.shape[0] * rxn_reps        # number of rxns
+    #if nrow > positions + 1 - dest_start:
+    #    nrow = positions + 1 - dest_start
+    #elif nrow > positions + 1 - dest_start:
+    #    nrow = positions + 1 - dest_start
     df_dest = pd.DataFrame(np.nan, index=range(nrow), columns=cols)
 
+    # number of destination plates required
+    n_dest_plates = round(df_dest.shape[0] / positions + 0.5, 0)
+    if n_dest_plates > 1:
+        msg = ('WARNING: Not enough wells for the number of samples.' 
+        ' Using multiple destination plates')
+        print(msg, file=sys.stderr)
+        
+    
     # filling destination df
     orig_dest_labware = dest_labware
     for i,(sample,rep) in enumerate(product(df_map.ix[:,0], range(rxn_reps))):
         # dest location
         dest_position = i + dest_start
-        msg = 'WARNING: Not enough wells for the number of samples.' 
-        'Using multiple destination plates'
-        if dest_position > positions:           
-            x = round(dest_position / positions + 0.5, 0)
-            dest_labware = '{} {}'.format(orig_dest_labware, x)
-            print(msg, file=sys.stderr)
+        dest_position = positions if dest_position % positions == 0 else dest_position % positions 
+
+        # destination plate name
+        if n_dest_plates > 1:
+            x = round((i + dest_start) / positions + 0.5, 0)        
+            dest_labware = '{} {}'.format(orig_dest_labware, int(x))
+
         # adding values DF
         df_dest.iloc[i] = [sample, rep+1, dest_labware, dest_type, dest_position]
 
@@ -379,7 +388,7 @@ def add_dest(df_map, dest_labware, dest_type='96 Well Eppendorf TwinTec PCR',
     df_j = pd.merge(df_map, df_dest, on=sample_col, how='inner')
     assert df_j.shape[0] == df_dest.shape[0], 'map-dest DF join error'
     assert df_j.shape[0] > 0, 'DF has len=0 after adding destinations'
-
+    
     # return
     return df_j
 
@@ -602,14 +611,18 @@ def pip_water(df_map, outFH, pcr_volume=25.0, mm_volume=13.1,
         assert w_need >= 0, 'Water volume is negative: {}'.format(w_need)
         water_volume.append(w_need)
     df_map['TECAN_water_rxn_volume'] = water_volume
-
+    water_target_position = lw_tracker.next_target_position('1.5ml Eppendorf')
+    
     # for each Sample-PCR_rxn_rep, write out asp/dispense commands
     for i in range(df_map.shape[0]):
         # aspiration
         asp = Fluent.aspirate()
-        asp.RackLabel = df_map.ix[i,'TECAN_sample_labware_name']
-        asp.RackType = df_map.ix[i,'TECAN_sample_labware_type']
-        asp.Position = df_map.ix[i,'TECAN_sample_target_position']
+        #asp.RackLabel = df_map.ix[i,'TECAN_sample_labware_name']
+        #asp.RackType = df_map.ix[i,'TECAN_sample_labware_type']
+        #asp.Position = df_map.ix[i,'TECAN_sample_target_position']
+        asp.RackLabel = 'PCR water tube'
+        asp.RackType = '1.5ml Eppendorf'
+        asp.Position = water_target_position
         asp.Volume = water_volume[i]
         asp.LiquidClass = liq_cls
         outFH.write(asp.cmd() + '\n')

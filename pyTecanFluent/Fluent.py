@@ -186,6 +186,7 @@ class multi_disp():
                     break
                 # Number of multi-disp reached
                 if len(dispenses) >= self.NoOfMultiDisp:
+                    sample_cnt -= 1 
                     break
                 # Skipping 0-volumes
                 if self.Volumes[sample_cnt-1] <= 0:
@@ -202,7 +203,7 @@ class multi_disp():
             if len(dispenses) <= 0:
                 break
             # adding asp-disp cycle
-            asp.Volume = round(sum([x.Volume for x in dispenses]),2)
+            asp.Volume = round(sum([x.Volume for x in dispenses]) * 1.05, 1)
             steps.append(asp.cmd())
             steps = steps + [x.cmd() for x in dispenses]
             steps.append('W;')
@@ -236,7 +237,7 @@ class multi_disp():
         except AttributeError:
             pass
         values = [int(x) for x in values]
-        assert min(values) > 0, 'Min position is 1'
+        assert min(values) > 0, 'Min position is <= 0'
         self._DestPositions = values 
 
     @property
