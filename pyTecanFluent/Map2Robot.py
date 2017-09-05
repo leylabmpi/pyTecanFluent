@@ -4,6 +4,7 @@ from __future__ import print_function
 import os
 import sys
 import argparse
+import functools
 from itertools import product
 ## 3rd party
 import numpy as np
@@ -31,7 +32,6 @@ def parse_args(test_args=None, subparsers=None):
 
     EXTRA COLUMNS in MAPPING FILE:
 
-    # If no barcoding, single barcoding, or dual barcodes already combined:
     * "TECAN_sample_labware_name" = The sample labware name on the robot worktable
     * "TECAN_sample_labware_type" = The type of labware containing samples (eg., '96 Well Eppendorf TwinTec PCR')
     * "TECAN_sample_target_position" = The well or tube location (a number)
@@ -181,7 +181,7 @@ def main(args=None):
                   lw_tracker=lw_tracker)
 
     # Report (total volumes; sample truncation; samples)
-    report_file = args.prefix + '.report'
+    report_file = args.prefix + '_report.txt'
     with open(report_file, 'w') as repFH:
         write_report(df_map, outFH=repFH,
                      pcr_volume=args.pcrvolume,
@@ -205,21 +205,40 @@ def main(args=None):
     df_map['TECAN_pcr_rxn_rep'] = df_map['TECAN_pcr_rxn_rep'].astype(int)
     df_map.to_csv(df_file, sep='\t', index=False, na_rep='NA')
 
+    # Plate import file for Bio-Rad PrimePCR software
+    dest_pos_max = 96 if df_map['TECAN_dest_target_position'].shape[0] <= 96 else 384    
+    f = functools.partial(map2biorad, positions=dest_pos_max)
+    df_biorad = df_map.groupby('TECAN_dest_labware_name').apply(f)
+    biorad_files = []
+    if isinstance(df_biorad.index, pd.core.index.MultiIndex):
+        for labware in df_biorad.index.get_level_values(0).unique():
+            biorad_file = args.prefix + '_BIORAD-{}.txt'.format(labware.replace(' ', '_'))
+            df_biorad.loc[labware].to_csv(biorad_file, sep='\t', index=False, na_rep='')
+            biorad_files.append(biorad_file)
+    else:
+        biorad_file = args.prefix + '_BIORAD.txt'
+        df_biorad.to_csv(biorad_file, sep='\t', index=False, na_rep='')
+        biorad_files.append(biorad_file)
+           
+    
     # Create windows-line breaks formatted versions
     gwl_file_win = Utils.to_win(gwl_file)
     report_file_win = Utils.to_win(report_file)
+    biorad_files_win = [Utils.to_win(x) for x in biorad_files]
     df_file_win = Utils.to_win(df_file)
     lw_file_win = Utils.to_win(lw_file)
 
     # status on files written
     Utils.file_written(gwl_file)
-    Utils.file_written(report_file)
-    Utils.file_written(df_file)
     Utils.file_written(lw_file)
+    Utils.file_written(report_file)
+    [Utils.file_written(x) for x in biorad_files]
+    Utils.file_written(df_file)
     Utils.file_written(gwl_file_win)
-    Utils.file_written(report_file_win)
-    Utils.file_written(df_file_win)
     Utils.file_written(lw_file_win)
+    Utils.file_written(report_file_win)
+    [Utils.file_written(x) for x in biorad_files_win]
+    Utils.file_written(df_file_win)
     
     # Return
     return (gwl_file, gwl_file_win,
@@ -355,10 +374,6 @@ def add_dest(df_map, dest_labware, dest_type='96 Well Eppendorf TwinTec PCR',
             'TECAN_dest_target_position']    
     ncol = len(cols)
     nrow = df_map.shape[0] * rxn_reps        # number of rxns
-    #if nrow > positions + 1 - dest_start:
-    #    nrow = positions + 1 - dest_start
-    #elif nrow > positions + 1 - dest_start:
-    #    nrow = positions + 1 - dest_start
     df_dest = pd.DataFrame(np.nan, index=range(nrow), columns=cols)
 
     # number of destination plates required
@@ -378,7 +393,7 @@ def add_dest(df_map, dest_labware, dest_type='96 Well Eppendorf TwinTec PCR',
 
         # destination plate name
         if n_dest_plates > 1:
-            x = round((i + dest_start) / positions + 0.5, 0)        
+            x = round((i + dest_start) / positions + 0.499, 0)        
             dest_labware = '{} {}'.format(orig_dest_labware, int(x))
 
         # adding values DF
@@ -643,6 +658,31 @@ def pip_water(df_map, outFH, pcr_volume=25.0, mm_volume=13.1,
         lw_tracker.add(asp)
         lw_tracker.add(disp, add_tip=False)
 
+        
+def map2biorad(df_map, positions):
+    """Making a table for loading into the Bio-Rad PrimePCR software
+    columns are:  Row,Column,*Target Name,*Sample Name
+    positions = max number of positions on qPCR plate
+    Notes:
+      Row = letter format
+      Column = numeric
+    """
+    df_biorad = df_map.copy()
+    df_biorad = df_biorad[['#SampleID', 'TECAN_dest_target_position']]
+    df_biorad.columns = ['*Sample Name', 'TECAN_dest_target_position']
+    f = functools.partial(Utils.position2well, wells = positions)
+    x = df_map['TECAN_dest_target_position'].apply(f)
+    x = pd.DataFrame([y for y in x], columns=['Row', 'Column'])
+    df_biorad['Row'] = x.ix[:,0].tolist()
+    df_biorad['Column'] = x.ix[:,1].tolist()
+
+    df_biorad['*Target Name'] = np.nan
+    df_biorad = df_biorad[['Row', 'Column', '*Target Name', '*Sample Name']]
+    
+
+    return df_biorad
+
+        
 def add_error(x, error_perc):
     if x is None:
         return None

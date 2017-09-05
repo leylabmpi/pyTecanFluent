@@ -3,7 +3,9 @@ from __future__ import print_function
 # import
 import os
 import sys
+import string
 import logging
+import itertools
 import numpy as np
 
 # functions
@@ -101,6 +103,39 @@ def backup_file(f):
     else:
         logging.warning('{0} doesn\'t exist'.format(f))
 
+
+def position2well(position, wells=96, just_row=False, just_col=False):
+    """Convert position to well
+    Note: assuming column-wise ordering
+    """
+    # making plate index
+    wells = int(wells)
+    if wells == 96:
+        nrows = 8
+        ncols = 12
+    elif wells == 384:
+        nrows = 16
+        ncols = 24
+    else:
+        raise ValueError('Number of wells ({}) not recognized'.format(wells))
+    
+    rows = list(string.ascii_uppercase[:nrows])
+    cols = [x + 1 for x in range(ncols)]
+    # position : [row, col]
+    pos_idx = {i+1:x for i,x in enumerate(itertools.product(rows, cols))}
+    # getting row-col
+    try:
+        row,col = pos_idx[position]
+    except KeyError:
+        msg = 'Cannot find well for position: {}'
+        raise KeyError(msg.format(position))
+    if just_row == True:
+        return row
+    elif just_col == True:
+        return col
+    else:
+        return [row,col]
+        
 # main
 if __name__ == '__main__':
     pass

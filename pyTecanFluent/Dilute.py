@@ -31,7 +31,6 @@ def parse_args(test_args=None, subparsers=None):
     * "TECAN_sample_conc" = The sample concentrations (numeric value; units=ng/ul) 
     
     Notes:
-    * You can designate the input table columns for each value (see options).
     * Sample locations in plates numbered are column-wise. 
     * All volumes are in ul.
     """
@@ -84,7 +83,7 @@ def parse_args(test_args=None, subparsers=None):
                       choices=['96 Well Eppendorf TwinTec PCR', '384 Well Biorad PCR'],                          
                       help='Destination labware type  on TECAN worktable (default: %(default)s)')
     dest.add_argument('--deststart', type=int, default=1,
-                      help='Starting location on the destination labware (default: %(default)s)')
+                      help='Starting position (well) on the destination labware (default: %(default)s)')
 
     # parse & return
     if test_args:
