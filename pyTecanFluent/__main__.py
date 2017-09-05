@@ -9,6 +9,7 @@ import argparse
 from pyTecanFluent import Map2Robot
 from pyTecanFluent import Dilute
 from pyTecanFluent import QPCR
+from pyTecanFluent import Pool
 
 # main
 def main(args=None):
@@ -32,6 +33,9 @@ def main(args=None):
   ## dilute
   dilute = Dilute.parse_args(subparsers=subparsers)
   dilute.set_defaults(func=Dilute.main)
+  ## pool
+  pool = Pool.parse_args(subparsers=subparsers)
+  pool.set_defaults(func=Pool.main)
   ## qpcr
   qpcr = QPCR.parse_args(subparsers=subparsers)
   qpcr.set_defaults(func=QPCR.main)

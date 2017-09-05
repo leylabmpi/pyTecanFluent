@@ -104,13 +104,13 @@ def parse_args(test_args=None, subparsers=None):
     
     # Liquid classes
     liq = parser.add_argument_group('Liquid classes')
-    liq.add_argument('--mm-liq', type=str, default='MasterMix Free Multi',
+    liq.add_argument('--mm-liq', type=str, default='MasterMix Free Multi No-cLLD',
                       help='Mastermix liquid class (default: %(default)s)')
-    liq.add_argument('--primer-liq', type=str, default='Water Contact Wet Single',
+    liq.add_argument('--primer-liq', type=str, default='Water Contact Wet Single No-cLLD',
                       help='Primer liquid class (default: %(default)s)')
-    liq.add_argument('--sample-liq', type=str, default='Water Contact Wet Single',
+    liq.add_argument('--sample-liq', type=str, default='Water Contact Wet Single No-cLLD',
                       help='Sample liquid class (default: %(default)s)')
-    liq.add_argument('--water-liq', type=str, default='Water Contact Wet Single',
+    liq.add_argument('--water-liq', type=str, default='Water Contact Wet Single No-cLLD',
                       help='Water liquid class (default: %(default)s)')
 
     ## Misc
