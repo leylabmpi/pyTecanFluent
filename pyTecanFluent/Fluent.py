@@ -112,7 +112,7 @@ class dispense(asp_disp):
 
 
 class multi_disp():
-    """Commands for aliquoting mastermix
+    """Commands for aliquoting reagent to multiple labware positions
     *AspirateParameters*
     SrcRackLabel
     SrcRackID
@@ -244,8 +244,7 @@ class multi_disp():
     def SampleCount(self):
         return len(self._DestPositions)
 
-
-
+    
 class reagent_distribution():
     """Commands for aliquoting mastermix
     *AspirateParameters*

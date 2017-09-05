@@ -143,7 +143,7 @@ def main(args=None):
                       dest_start=args.deststart,
                       rxn_reps=args.rxns)
 
-    positions = get_wells(args.desttype)
+    positions = Labware.total_positions(args.desttype)
     # Reordering dest if plate type is 384-well
     if positions == '384':
         df_map = reorder_384well(df_map, 'TECAN_dest_target_position')
@@ -245,27 +245,13 @@ def main(args=None):
             report_file, report_file_win, 
             df_file, df_file_win, 
             lw_file, lw_file_win)
-
-
-def get_wells(dest_type):
-    try:
-        Labware.LABWARE_DB[dest_type]
-    except KeyError:
-        msg = 'Labware type "{}" not recognised'
-        raise KeyError(msg.format(dest_type))
-    try:
-        positions = Labware.LABWARE_DB[dest_type]['wells']
-    except KeyError:
-        msg = 'No "wells" key for labware type "{}"'
-        raise KeyError(msg.format(dest_type))
-    return positions
     
 
 def check_args(args):
     """Checking user input
     """
     # destination start
-    positions = get_wells(args.desttype)
+    positions = Labware.total_positions(args.desttype)
     if args.deststart < 1 or args.deststart > positions:
         msg = 'Destination start well # must be in range: 1-{}'
         raise ValueError(msg.format(destlimit))
@@ -364,7 +350,7 @@ def add_dest(df_map, dest_labware, dest_type='96 Well Eppendorf TwinTec PCR',
     """
     dest_start= int(dest_start)
     # labware type found in DB?
-    positions = get_wells(dest_type)
+    positions = Labware.total_positions(dest_type)
 
     # init destination df
     sample_col = df_map.columns[0]
@@ -670,7 +656,7 @@ def map2biorad(df_map, positions):
     df_biorad = df_map.copy()
     df_biorad = df_biorad[['#SampleID', 'TECAN_dest_target_position']]
     df_biorad.columns = ['*Sample Name', 'TECAN_dest_target_position']
-    f = functools.partial(Utils.position2well, wells = positions)
+    f = functools.partial(Labware.position2well, wells = positions)
     x = df_map['TECAN_dest_target_position'].apply(f)
     x = pd.DataFrame([y for y in x], columns=['Row', 'Column'])
     df_biorad['Row'] = x.ix[:,0].tolist()

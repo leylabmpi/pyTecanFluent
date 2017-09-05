@@ -23,17 +23,21 @@ def parse_args(test_args=None, subparsers=None):
     # desc
     desc = get_desc()
     epi = """DESCRIPTION:
-    Create a worklist and labware file for the TECAN Fluent robot for pooling samples
-    (eg., reaction replicates). 
-    The input is an Excel or tab-delimited file containing 2 columns:
+    Create a worklist and labware file for the TECAN Fluent robot for pooling 
+    samples (eg., pooling PCR reaction replicates). 
+    The input is an Excel or tab-delimited file containing the following columns:
     1) A column of sample names (samples with the same name will be pooled)
     2) A column designating whether to include or skip the samplles 
        (include = 'Success/Pass/Include'; skip = 'Fail/Skip')
-    
+    3) A column designating the sample labware name
+    4) A column designating the sample labware type (eg., '96 Well Eppendorf TwinTec PCR')
+    5) A column designating the sample position (well)
+        
     Mapping file:
     If a mapping file is provided (same names as in the pooling file),
     then the mapping file will be trimmed to just those pooled, and
     the final pooled locations will be added to the mapping table. 
+    The added columns have the prefix: "TECAN_postPool_*"
 
     Notes:
     * Sample locations in plates numbered are column-wise. 
@@ -45,15 +49,11 @@ def parse_args(test_args=None, subparsers=None):
     else:
         parser = argparse.ArgumentParser(description=desc, epilog=epi,
                                          formatter_class=argparse.RawTextHelpFormatter)
-
-
-    #----------------------------------------------------------#
-    # TODO: allow multiple sample files; need to provide plateID 
         
     # args
     ## I/O
     groupIO = parser.add_argument_group('I/O')
-    groupIO.add_argument('samplefile', metavar='SampleFile', type=str,
+    groupIO.add_argument('samplefiles', metavar='SampleFile', type=str, nargs='+',
                          help='An excel or tab-delim file of samples to pool')
     groupIO.add_argument('--prefix', type=str, default='TECAN_pool',
                          help='Output file name prefix (default: %(default)s)')
@@ -73,7 +73,11 @@ def parse_args(test_args=None, subparsers=None):
                         help='Column containing the samples  (default: %(default)s)')
     filef.add_argument('--include_col', type=str, default='Call',
                         help='Column designating sample include/skip? (default: %(default)s)')
-    filef.add_argument('--pos_col', type=str, defaul='Well',
+    filef.add_argument('--sample_labware_name', type=str, default='labware_name',
+                        help='Column designating the sample labware name  (default: %(default)s)')
+    filef.add_argument('--sample_labware_type', type=str, default='labware_type',
+                        help='Column designating the sample labware type (default: %(default)s)')
+    filef.add_argument('--pos_col', type=str, default='Well',
                         help='Column designating sample location in the plate')
     ### mapping file
     filef.add_argument('--map_format', type=str, default=None,
@@ -85,8 +89,10 @@ def parse_args(test_args=None, subparsers=None):
     pooling = parser.add_argument_group('Pooling')
     pooling.add_argument('--volume', type=float, default=30.0,
                          help='Per-sample volume to pool (default: %(default)s)')
-    pooling.add_argument('--liqcls', type=str, default='Water Contact Free Multi No-cLLD',
+    pooling.add_argument('--liqcls', type=str, default='Water Free Multi No-cLLD',
                          help='Liquid class for pooling (default: %(default)s)')
+    pooling.add_argument('--new_tips',  action='store_true', default=False,
+                        help='Re-use tips among sample replicates? (default: %(default)s)')
 
     ## destination plate
     dest = parser.add_argument_group('Destination labware')
@@ -115,73 +121,100 @@ def main(args=None):
     
     # Import
     ## sample file
-    df_samp = sample2df(args.samplefile, 
-                        sample_col=args.sample_col,
-                        include_col=args.include_col,
-                        file_format=args.sample_format,
-                        row_select=args.sample_rows, 
-                        header=args.sample_header)
+    df_samps = []
+    for f in args.samplefiles:
+        df_samp = sample2df(f,
+                            sample_col=args.sample_col,
+                            include_col=args.include_col,
+                            labware_name_col=args.sample_labware_name,
+                            labware_type_col=args.sample_labware_type,
+                            position_col=args.pos_col,
+                            file_format=args.sample_format,
+                            row_select=args.sample_rows, 
+                            header=args.sample_header)
+        df_samps.append(df_samp)
+    df_samp = pd.concat(df_samps)
 
     ## mapping file
-    df_map = map2df(args.mapfile,
+    df_map = map2df(args.mapfile,                    
                     file_format=args.map_format,
                     header=args.map_header)
 
     # filtering sample file to just pass
     df_samp = df_samp.loc[df_samp[args.include_col].isin(['success', 'pass', 'include'])]
-    print(df_samp)
+
+    # adding destination
+    df_samp = add_dest(df_samp,
+                       args.destname,
+                       args.sample_col,
+                       args.pos_col,
+                       dest_type=args.desttype,
+                       dest_start=args.deststart)
     
-    # # Reordering dest if plate type is 384-well
-    # try:
-    #     n_wells = Labware.LABWARE_DB[args.desttype]['wells']
-    # except KeyError:
-    #     msg = 'Labware type "{}" does not have "wells" attribute'
-    #     raise KeyError(msg.format(args.desttype))
-    # if n_wells == '384':
-    #     df_conc = reorder_384well(df_conc, 'TECAN_dest_target_position')
+    
+    # Reordering dest if plate type is 384-well
+    try:
+        n_wells = Labware.LABWARE_DB[args.desttype]['wells']
+    except KeyError:
+        msg = 'Labware type "{}" does not have "wells" attribute'
+        raise KeyError(msg.format(args.desttype))
+    if n_wells == '384':
+        df_samp = reorder_384well(df_samp, args.pos_col)
 
-    # # Writing out gwl file
-    # lw_tracker = Labware.labware_tracker()
-    # gwl_file = args.prefix + '.gwl'
-    # with open(gwl_file, 'w') as gwlFH:
-    #     ## Dilutant
-    #     pip_dilutant(df_conc, outFH=gwlFH,
-    #                  src_labware_name=args.dlabware_name,
-    #                  src_labware_type=args.dlabware_type,
-    #                  lw_tracker=lw_tracker)
-    #     ## Sample
-    #     pip_samples(df_conc, outFH=gwlFH,
-    #                 lw_tracker=lw_tracker)
+    # Writing out gwl file
+    lw_tracker = Labware.labware_tracker()
+    gwl_file = args.prefix + '.gwl'
+    with open(gwl_file, 'w') as gwlFH:
+        # samples
+        pool_samples(df_samp,
+                     outFH=gwlFH,
+                     sample_col=args.sample_col,
+                     labware_name_col=args.sample_labware_name,
+                     labware_type_col=args.sample_labware_type,
+                     position_col=args.pos_col,                     
+                     dest_labware_name=args.destname,
+                     dest_labware_type=args.desttype,
+                     volume=args.volume,
+                     liq_cls=args.liqcls,
+                     new_tips=args.new_tips,
+                     lw_tracker=lw_tracker)
 
-    # # making labware table
-    # df_labware = lw_tracker.labware_table()
-    # lw_file = args.prefix + '_labware.txt'
-    # df_labware.to_csv(lw_file, sep='\t', index=False)
+    # making labware table
+    df_labware = lw_tracker.labware_table()
+    lw_file = args.prefix + '_labware.txt'
+    df_labware.to_csv(lw_file, sep='\t', index=False)
 
     # # Writing out table
-    # conc_file = args.prefix + '_conc.txt'
-    # df_conc.round(1).to_csv(conc_file, sep='\t', index=False)
+    if df_map is not None:
+        df_map = filter_map(df_map, df_samp, args.sample_col)
+        map_file = args.prefix + '_map.txt'        
+        df_map.round(1).to_csv(map_file, sep='\t', index=False)
 
-    # # Create windows-line breaks formatted versions
-    # gwl_file_win = Utils.to_win(gwl_file)
-    # conc_file_win = Utils.to_win(conc_file)
-    # lw_file_win = Utils.to_win(lw_file)
+    # Create windows-line breaks formatted versions
+    gwl_file_win = Utils.to_win(gwl_file)
+    lw_file_win = Utils.to_win(lw_file)
+    if df_map is not None:
+        map_file_win = Utils.to_win(map_file)
 
     # # status
-    # Utils.file_written(gwl_file)
-    # Utils.file_written(conc_file)
-    # Utils.file_written(lw_file)
-    # Utils.file_written(gwl_file_win)
-    # Utils.file_written(conc_file_win)    
-    # Utils.file_written(lw_file_win)
-
+    Utils.file_written(gwl_file)
+    Utils.file_written(lw_file)
+    if df_map is not None:
+        Utils.file_written(map_file)
+    Utils.file_written(gwl_file_win)
+    Utils.file_written(lw_file_win)
+    if df_map is not None:
+        Utils.file_written(map_file_win)
     
-    # # end
-    # return (gwl_file, gwl_file_win, 
-    #         conc_file, conc_file_win, 
-    #         lw_file, lw_file_win)
-
-
+    # end
+    if df_map is not None:
+        return (gwl_file, gwl_file_win, 
+                lw_file, lw_file_win,
+                map_file, map_file_win)
+    else:
+        return (gwl_file, gwl_file_win, 
+                lw_file, lw_file_win)
+    
 def check_args(args):
     """Checking user input
     """
@@ -195,9 +228,11 @@ def check_args(args):
     except KeyError:
         msg = 'Destination labware type "{}" not recognized'
         raise ValueError(msg.format(args.desttype))
-
+    
                          
-def sample2df(samplefile, sample_col, include_col, row_select=None, file_format=None, header=True):
+def sample2df(samplefile, sample_col, include_col,
+              labware_name_col, labware_type_col, position_col,
+              row_select=None, file_format=None, header=True):
     """Loading a sample file as a pandas dataframe
     """
     if header==True:
@@ -228,7 +263,7 @@ def sample2df(samplefile, sample_col, include_col, row_select=None, file_format=
 
     # checking dataframe format
     ## columns
-    req_cols = [sample_col, include_col]
+    req_cols = [sample_col, include_col, labware_name_col, labware_type_col, position_col]
     msg = 'Column "{}" not found in sample table'
     for req_col in req_cols:
         if req_col not in df.columns.values:
@@ -238,10 +273,17 @@ def sample2df(samplefile, sample_col, include_col, row_select=None, file_format=
     df.ix[:,include_col] = df.ix[:,include_col].apply(f)
     msg = '"{}" value not allowed in include column in sample file'
     df.ix[:,include_col].apply(check_include_column)
-    
+    ## labware type col
+    df.ix[:,labware_type_col].apply(check_labware_type_column)
+    ## converting wells to positions
+    f = lambda row: Labware.well2position(row[position_col],
+                                        labware_type=row[labware_type_col])
+    df[position_col] = df.apply(f, axis=1)
+        
     # selecting relevant columns
-    df = df.ix[:,[sample_col, include_col]]
-
+    df = df.ix[:,req_cols]
+    # ordering by position
+    df = df.sort_values(position_col)
     
     # return
     return df
@@ -250,6 +292,10 @@ def check_include_column(x):
     psbl_vals = ('success', 'include', 'pass', 'fail', 'skip')
     assert x in psbl_vals, msg.format(x)
 
+def check_labware_type_column(x):
+    msg = 'Labware type "{}" not recognized'
+    assert x in Labware.LABWARE_DB.keys(), msg.format(x)
+    
 def map2df(mapfile, file_format=None, header=True):
     """Loading a mapping file as a pandas dataframe
     """
@@ -292,6 +338,131 @@ def map2df(mapfile, file_format=None, header=True):
     return df
 
     
+def add_dest(df, dest_labware, sample_col, position_col, dest_type='96 Well Eppendorf TwinTec PCR',
+             dest_start=1):
+    """Setting destination locations for samples & primers.
+    Making a new dataframe with:
+      [sample, sample_rep, dest_labware, dest_location]
+    * For each sample (i):
+      * For each replicate (ii):
+        * plate = destination plate type
+        * well = i * (ii+1) + (ii+1) + start_offset
+    Joining to df
+    """
+    dest_start= int(dest_start)
+    # labware type found in DB?
+    positions = Labware.total_positions(dest_type)
+
+    # init destination df
+    cols = ['TECAN_dest_labware_name',
+            'TECAN_dest_labware_type', 
+            'TECAN_dest_target_position']    
+    df_dest = pd.DataFrame(np.nan, index=range(df.shape[0]), columns=cols)
+
+    # number of destination plates required
+    n_dest_plates = round(df_dest.shape[0] / positions + 0.5, 0)
+    if n_dest_plates > 1:
+        msg = ('WARNING: Not enough wells for the number of samples.' 
+        ' Using multiple destination plates')
+        print(msg, file=sys.stderr)
+        
+    # filling destination df
+    ## for position, just 1 position per sample
+    samples = {}
+    for i,sample in enumerate(df.ix[:,sample_col]):
+        # dest position
+        try:
+            dest_position = samples[sample]
+        except KeyError:
+            dest_position = len(samples.keys()) + 1
+            samples[sample] = dest_position                                
+        # dest location
+        dest_position = positions if dest_position % positions == 0 else dest_position % positions 
+        # destination plate name
+        if n_dest_plates > 1:
+            x = round((i + dest_start) / positions + 0.499, 0)        
+            dest_labware = '{} {}'.format(orig_dest_labware, int(x))
+        # adding values DF; sample left off
+        df_dest.iloc[i] = [dest_labware, dest_type, dest_position]
+
+    # df join (map + destination)
+    df.index = df_dest.index
+    df_j = pd.concat([df, df_dest], axis=1)
+    
+    # return
+    return df_j
+
+
+def pool_samples(df, outFH, sample_col, labware_name_col,
+                 labware_type_col, position_col,
+                 dest_labware_name, dest_labware_type,
+                 volume, liq_cls='Water Free Multi No-cLLD',
+                 new_tips=False, lw_tracker=None):
+    """Writing gwl commands for pooling sample replicates
+    """
+    # sorting by postion
+    df = df.sort_values('TECAN_dest_target_position')
+    
+    outFH.write('C;Sample pooling\n')
+    # for each Sample, write out asp/dispense commands
+    ## optional: keep tips among sample replicates
+    for sample in df[sample_col].unique():
+        df_sub = df.loc[df[sample_col] == sample]
+        df_sub.index = range(df_sub.shape[0])
+        for i in range(df_sub.shape[0]):
+            # aspiration
+            asp = Fluent.aspirate()
+            asp.RackLabel = df_sub.ix[i, labware_name_col]
+            asp.RackType = df_sub.ix[i, labware_type_col]
+            asp.Position = df_sub.ix[i, position_col]
+            asp.Volume = volume 
+            asp.LiquidClass = liq_cls
+            outFH.write(asp.cmd() + '\n')
+
+            # dispensing
+            disp = Fluent.dispense()
+            disp.RackLabel = df_sub.ix[i,'TECAN_dest_labware_name']
+            disp.RackType = df_sub.ix[i,'TECAN_dest_labware_type']
+            disp.Position = df_sub.ix[i,'TECAN_dest_target_position']
+            disp.Volume = volume
+            disp.LiquidClass = liq_cls
+            outFH.write(disp.cmd() + '\n')
+
+            # tracking labware & tip usage
+            lw_tracker.add(asp, add_tip=False)
+            lw_tracker.add(disp, add_tip=True)
+
+            # tip to waste
+            if new_tips == True:
+                outFH.write('W;\n')
+                
+        # tip to waste
+        if new_tips == False:            
+            outFH.write('W;\n')
+
+
+def filter_map(df_map, df_samp, sample_col):
+    """Filtering df_sample to just destination position, 
+    then adding values to df_map
+    """
+    # formatting sample table
+    cols = [sample_col, 'TECAN_dest_labware_name',
+            'TECAN_dest_labware_type', 'TECAN_dest_target_position']
+    df_samp = df_samp[cols].drop_duplicates()
+    x = 'TECAN_dest_target_position'
+    df_samp[x] = df_samp[x].astype(int)
+    df_samp.columns = [sample_col,
+                       'TECAN_postPool_labware_name',
+                       'TECAN_postPool_labware_type',
+                       'TECAN_postPool_target_position']
+    # formatting mapping table
+    df_map = df_map.drop_duplicates(subset='#SampleID')
+    # joining 
+    df_map = pd.merge(df_map, df_samp, how='inner',
+                      left_on=['#SampleID'], right_on=[sample_col])
+    return df_map
+
+            
 # main
 if __name__ == '__main__':
     pass

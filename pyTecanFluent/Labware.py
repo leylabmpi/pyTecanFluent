@@ -3,6 +3,8 @@ from __future__ import print_function
 # import
 import os
 import sys
+import string
+import itertools
 import numpy as np
 import pandas as pd
 import collections
@@ -71,6 +73,88 @@ TARGET_POSITIONS = {
         'position_count' : 8,
         'boarders' : ()}
 }
+
+def total_positions(labware_type):
+    """Getting total number of positions for the labware type
+    """
+    try:
+        LABWARE_DB[labware_type]
+    except KeyError:
+        msg = 'Labware type "{}" not recognised'
+        raise KeyError(msg.format(labware_type))
+    try:
+        positions = LABWARE_DB[labware_type]['wells']
+    except KeyError:
+        msg = 'No "wells" key for labware type "{}"'
+        raise KeyError(msg.format(labware_type))
+    return positions
+
+def position2well(position, wells=96, just_row=False, just_col=False):
+    """Convert position to well
+    Note: assuming column-wise ordering
+    """
+    # making plate index
+    wells = int(wells)
+    if wells == 96:
+        nrows = 8
+        ncols = 12
+    elif wells == 384:
+        nrows = 16
+        ncols = 24
+    else:
+        raise ValueError('Number of wells ({}) not recognized'.format(wells))
+    
+    rows = list(string.ascii_uppercase[:nrows])
+    cols = [x + 1 for x in range(ncols)]
+    # position : [row, col]
+    pos_idx = {i+1:x for i,x in enumerate(itertools.product(cols, rows))}
+    # getting row-col
+    try:
+        col,row = pos_idx[position]
+    except KeyError:
+        msg = 'Cannot find well for position: {}'
+        raise KeyError(msg.format(position))
+    if just_row == True:
+        return row
+    elif just_col == True:
+        return col
+    else:
+        return [row,col]
+
+
+def well2position(well, wells=96, labware_type=None):
+    """well ID to column-wise position
+    """
+    # setting wells based on labware type (if provided)
+    if labware_type is not None:
+        wells = total_positions(labware_type)
+    # skip if already integer (not well)
+    try:
+        return int(well)
+    except ValueError:
+        pass
+    # well --> position index
+    wells = int(wells)
+    if wells == 96:
+        nrows = 8
+        ncols = 12
+    elif wells == 384:
+        nrows = 16
+        ncols = 24
+    else:
+        raise ValueError('Number of wells ({}) not recognized'.format(wells))    
+    rows = list(string.ascii_uppercase[:nrows])
+    cols = [x + 1 for x in range(ncols)]
+    well_idx = {'{0}{1:0>2}'.format(x[1], x[0]):i+1 for i,x in enumerate(itertools.product(cols, rows))}
+    # getting position
+    try:
+        position = well_idx[well]
+    except KeyError:
+        msg = 'Cannot find well "{}"'
+        raise KeyError(msg.format(well))
+    # return 
+    return position
+
 
 class worktable_tracker():
     """Keeping track of available target positions for each target location
