@@ -25,7 +25,8 @@ def parse_args(test_args=None, subparsers=None):
     epi = """DESCRIPTION:
     Create a worklist and labware file for the TECAN Fluent robot for pooling 
     samples (eg., pooling PCR reaction replicates). 
-    The input is an Excel or tab-delimited file containing the following columns:
+
+    The main input is >=1 Excel or tab-delimited file containing the following columns:
     1) A column of sample names (samples with the same name will be pooled)
     2) A column designating whether to include or skip the samplles 
        (include = 'Success/Pass/Include'; skip = 'Fail/Skip')
@@ -70,15 +71,15 @@ def parse_args(test_args=None, subparsers=None):
     filef.add_argument('--sample_rows', type=str, default='all',
                       help='Which rows (not including header) of the sample file to use ("all"=all rows; "1-48"=rows 1-48) (default: %(default)s)')
     filef.add_argument('--sample_col', type=str, default='Sample',
-                        help='Column containing the samples  (default: %(default)s)')
+                        help='Name of column containing the samples  (default: %(default)s)')
     filef.add_argument('--include_col', type=str, default='Call',
-                        help='Column designating sample include/skip? (default: %(default)s)')
+                        help='Name of column designating sample include/skip (default: %(default)s)')
     filef.add_argument('--sample_labware_name', type=str, default='labware_name',
-                        help='Column designating the sample labware name  (default: %(default)s)')
+                        help='Name of column designating the sample labware name  (default: %(default)s)')
     filef.add_argument('--sample_labware_type', type=str, default='labware_type',
-                        help='Column designating the sample labware type (default: %(default)s)')
-    filef.add_argument('--pos_col', type=str, default='Well',
-                        help='Column designating sample location in the plate')
+                        help='Name of column designating the sample labware type (default: %(default)s)')
+    filef.add_argument('--position_col', type=str, default='Well',
+                        help='Name of column designating sample location in the plate (default: %(default)s)')
     ### mapping file
     filef.add_argument('--map_format', type=str, default=None,
                         help='File format (excel or tab). If not provided, the format is determined from the file extension') 
@@ -92,15 +93,15 @@ def parse_args(test_args=None, subparsers=None):
     pooling.add_argument('--liqcls', type=str, default='Water Free Multi No-cLLD',
                          help='Liquid class for pooling (default: %(default)s)')
     pooling.add_argument('--new_tips',  action='store_true', default=False,
-                        help='Re-use tips among sample replicates? (default: %(default)s)')
+                        help='Use new tips between sample replicates? (default: %(default)s)')
 
     ## destination plate
     dest = parser.add_argument_group('Destination labware')
-    dest.add_argument('--destname', type=str, default='Diluted DNA plate',
+    dest.add_argument('--destname', type=str, default='Pooled DNA plate',
                       help='Destination labware name (default: %(default)s)')
     dest.add_argument('--desttype', type=str, default='96 Well Eppendorf TwinTec PCR',
                       choices=['96 Well Eppendorf TwinTec PCR', '384 Well Biorad PCR'],                          
-                      help='Destination labware type  on TECAN worktable (default: %(default)s)')
+                      help='Destination labware type (default: %(default)s)')
     dest.add_argument('--deststart', type=int, default=1,
                       help='Starting position (well) on the destination labware (default: %(default)s)')
 
@@ -128,7 +129,7 @@ def main(args=None):
                             include_col=args.include_col,
                             labware_name_col=args.sample_labware_name,
                             labware_type_col=args.sample_labware_type,
-                            position_col=args.pos_col,
+                            position_col=args.position_col,
                             file_format=args.sample_format,
                             row_select=args.sample_rows, 
                             header=args.sample_header)
@@ -147,7 +148,7 @@ def main(args=None):
     df_samp = add_dest(df_samp,
                        args.destname,
                        args.sample_col,
-                       args.pos_col,
+                       args.position_col,
                        dest_type=args.desttype,
                        dest_start=args.deststart)
     
@@ -159,7 +160,7 @@ def main(args=None):
         msg = 'Labware type "{}" does not have "wells" attribute'
         raise KeyError(msg.format(args.desttype))
     if n_wells == '384':
-        df_samp = reorder_384well(df_samp, args.pos_col)
+        df_samp = reorder_384well(df_samp, args.position_col)
 
     # Writing out gwl file
     lw_tracker = Labware.labware_tracker()
@@ -171,7 +172,7 @@ def main(args=None):
                      sample_col=args.sample_col,
                      labware_name_col=args.sample_labware_name,
                      labware_type_col=args.sample_labware_type,
-                     position_col=args.pos_col,                     
+                     position_col=args.position_col,                     
                      dest_labware_name=args.destname,
                      dest_labware_type=args.desttype,
                      volume=args.volume,
