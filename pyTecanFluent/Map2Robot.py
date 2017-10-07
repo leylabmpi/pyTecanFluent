@@ -113,6 +113,17 @@ def parse_args(test_args=None, subparsers=None):
     liq.add_argument('--water-liq', type=str, default='Water Contact Wet Single No-cLLD',
                       help='Water liquid class (default: %(default)s)')
 
+    ## tip type
+    tips = parser.add_argument_group('Tip type')
+    tips.add_argument('--tip1000_type', type=str, default='FCA, 1000ul SBS High',
+                      help='1000ul tip type (default: %(default)s)')
+    tips.add_argument('--tip200_type', type=str, default='FCA, 200ul SBS High',
+                      help='200ul tip type (default: %(default)s)')
+    tips.add_argument('--tip50_type', type=str, default='FCA, 50ul SBS High',
+                      help='50ul tip type (default: %(default)s)')
+    tips.add_argument('--tip10_type', type=str, default='FCA, 10ul SBS High',
+                      help='10ul tip type (default: %(default)s)')
+    
     ## Misc
     misc = parser.add_argument_group('Misc')
     misc.add_argument('--pcrvolume', type=float, default=25.0,
@@ -149,7 +160,12 @@ def main(args=None):
         df_map = reorder_384well(df_map, 'TECAN_dest_target_position')
 
     # GWL file construction
-    lw_tracker = Labware.labware_tracker()
+    tip_types = tip_types={1000 : args.tip1000_type,
+                           200 : args.tip200_type,
+                           50 : args.tip50_type,
+                           10 : args.tip10_type}
+    lw_tracker = Labware.labware_tracker(tip_types=tip_types)
+    
     ## gwl open
     gwl_file = args.prefix + '.gwl'
     with open(gwl_file, 'w') as gwlFH:

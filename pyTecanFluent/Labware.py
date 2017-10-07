@@ -13,17 +13,42 @@ import collections
 # worktable-specific variables (move to config file?)
 ## all labware definitions used 
 LABWARE_DB = {
-    'FCA, 50ul Filtered SBS' : {
+    'FCA, 10ul SBS High' : {
         'target_location' : 'Nest7mm_Pos',
         'category' : 'tip',
         'wells' : 96,
         'max_volume' : None},
-    'FCA, 200ul Filtered SBS' : {
+    'FCA, 50ul SBS High' : {
         'target_location' : 'Nest7mm_Pos',
         'category' : 'tip',
         'wells' : 96,
         'max_volume' : None},
-    'FCA, 1000ul Filtered SBS' : {
+    'FCA, 200ul SBS High' : {
+        'target_location' : 'Nest7mm_Pos',
+        'category' : 'tip',
+        'wells' : 96,
+        'max_volume' : None},
+    'FCA, 1000ul SBS High' : {
+        'target_location' : 'Nest7mm_Pos',
+        'category' : 'tip',
+        'wells' : 96,
+        'max_volume' : None},
+    'FCA, 10ul Filtered SBS High' : {
+        'target_location' : 'Nest7mm_Pos',
+        'category' : 'tip',
+        'wells' : 96,
+        'max_volume' : None},
+    'FCA, 50ul Filtered SBS High' : {
+        'target_location' : 'Nest7mm_Pos',
+        'category' : 'tip',
+        'wells' : 96,
+        'max_volume' : None},
+    'FCA, 200ul Filtered SBS High' : {
+        'target_location' : 'Nest7mm_Pos',
+        'category' : 'tip',
+        'wells' : 96,
+        'max_volume' : None},
+    'FCA, 1000ul Filtered SBS High' : {
         'target_location' : 'Nest7mm_Pos',
         'category' : 'tip',
         'wells' : 96,
@@ -168,6 +193,8 @@ class worktable_tracker():
         
     def add(self, target_location, n=1):
         """Adding item to worktable
+        target_location : int, target location
+        n : int, how much to add
         """
         try:
             self._tp_counter[target_location] += n
@@ -248,7 +275,6 @@ class worktable_tracker():
         return self._tp_counter.keys()
 
 
-    
 class labware_tracker():
     """Class for tracking which labware is needed for the worklist commands.
     The number of tips are counted.
@@ -260,8 +286,8 @@ class labware_tracker():
     *) target_location = location type on worktable
     *) target_position = location position on worktable
     """
-    def __init__(self):
-        self.tip_type = 'Filtered SBS'
+    def __init__(self, tip_types={}):
+        self.tip_types = tip_types
         self._tip_cnt = collections.Counter()
         self._labware = collections.defaultdict(dict)
         self._tip_boxes = collections.defaultdict(dict)
@@ -283,7 +309,7 @@ class labware_tracker():
                 msg = 'WARNING: Labware type "{}" not recognized'
                 print(msg.format(x.RackType), file=sys.stderr)
                 self._labware[x.RackLabel]['target_location'] = None
-
+        # adding tip
         if add_tip == True:
             # adding tips
             if x.Volume < 45:
@@ -292,6 +318,7 @@ class labware_tracker():
                 tip_size = 200
             else:
                 tip_size = 1000
+            
             self._tip_cnt[self._tip_labware_type(tip_size)] += 1
 
     def next_target_position(self, labware_type, boarder_check=False):
@@ -325,13 +352,16 @@ class labware_tracker():
                 msg = 'Note enough target_positions for target_location: {}!'
                 raise ValueError(msg.format(target_location))
         return i
-            
-            
+                        
     def _tip_labware_type(self, tip_size):
         """Getting tip box labware type
         tip_size: size of tip (in ul)
         """
-        return 'FCA, {}ul {}'.format(tip_size, self.tip_type)
+        try:
+            return self.tip_types[tip_size]
+        except KeyError:
+            msg = 'ERROR: no tip type for tip size: {}'
+            raise KeyError(msg.format(tip_size))                       
 
     def _n_tip_boxes(self):
         """Counting number of tip boxes and adding tips boxes to labware
