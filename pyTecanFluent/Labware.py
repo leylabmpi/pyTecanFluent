@@ -73,6 +73,11 @@ LABWARE_DB = {
         'category' : 'plate',
         'wells' : 96,
         'max_volume' : 300},
+    '96 Well Axygen semi skirted and adapter' : {
+        'target_location' : 'Nest7mm_Pos',
+        'category' : 'plate',
+        'wells' : 96,
+        'max_volume' : 200},
     '1.5ml Eppendorf' : {
         'target_location' : 'eppendorf',
         'category' : 'tube',

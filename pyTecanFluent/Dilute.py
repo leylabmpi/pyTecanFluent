@@ -167,23 +167,22 @@ def main(args=None):
     df_conc.round(1).to_csv(conc_file, sep='\t', index=False)
 
     # Create windows-line breaks formatted versions
-    gwl_file_win = Utils.to_win(gwl_file)
-    conc_file_win = Utils.to_win(conc_file)
-    lw_file_win = Utils.to_win(lw_file)
+    #gwl_file_win = Utils.to_win(gwl_file)
+    #conc_file_win = Utils.to_win(conc_file)
+    #lw_file_win = Utils.to_win(lw_file)
 
     # status
     Utils.file_written(gwl_file)
     Utils.file_written(conc_file)
     Utils.file_written(lw_file)
-    Utils.file_written(gwl_file_win)
-    Utils.file_written(conc_file_win)    
-    Utils.file_written(lw_file_win)
+    #Utils.file_written(gwl_file_win)
+    #Utils.file_written(conc_file_win)    
+    #Utils.file_written(lw_file_win)
 
     
     # end
-    return (gwl_file, gwl_file_win, 
-            conc_file, conc_file_win, 
-            lw_file, lw_file_win)
+    return (gwl_file, conc_file, lw_file)
+            #gwl_file_win, conc_file_win, lw_file_win)
 
 
 def check_args(args):
@@ -472,7 +471,7 @@ def pip_samples(df_conc, outFH, lw_tracker=None):
         asp.RackType = df_conc.ix[i,'TECAN_labware_type']
         asp.Position = df_conc.ix[i,'TECAN_target_position']
         asp.Volume = round(df_conc.ix[i,'TECAN_sample_volume'], 2)
-        asp.LiquidClass = 'Water Contact Wet Single No-cLLD'
+        asp.LiquidClass = 'Water Free Single No-cLLD'
         outFH.write(asp.cmd() + '\n')
         
         # dispensing
@@ -481,7 +480,7 @@ def pip_samples(df_conc, outFH, lw_tracker=None):
         disp.RackType = df_conc.ix[i,'TECAN_dest_labware_type']        
         disp.Position = df_conc.ix[i,'TECAN_dest_target_position']
         disp.Volume = round(df_conc.ix[i,'TECAN_sample_volume'], 2)
-        disp.LiquidClass = 'Water Contact Wet Single No-cLLD'
+        disp.LiquidClass = 'Water Free Single No-cLLD'
         outFH.write(disp.cmd() + '\n')
 
         # tip to waste
