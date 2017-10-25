@@ -129,7 +129,7 @@ def main(args=None):
                        dest_name=args.destname,
                        dest_type=args.desttype,
                        dest_start=args.deststart)
-
+    
     # Reordering dest if plate type is 384-well
     try:
         n_wells = Labware.LABWARE_DB[args.desttype]['wells']
@@ -275,7 +275,6 @@ def check_df_conc(df_conc):
     # adding target position
     df_conc['TECAN_target_location'] = df_conc.apply(add_target_location, axis=1)
 
-
 def add_target_location(row):
     labware_type = row['TECAN_labware_type']
     try:
@@ -295,9 +294,9 @@ def calc_sample_volume(row, dilute_conc, min_vol, max_vol):
     (v1 = c2*v2/c1)
     If sample_volume > max possibl volume to use, then just use max
     """
-    # use all if very low conc
+    # return 0 if conc <= 0 (this will be skipped)
     if row['TECAN_sample_conc'] <= 0:
-        return max_vol
+        return 0
     # calc volume to use
     x = dilute_conc * row['TECAN_total_volume'] / row['TECAN_sample_conc']
     # ceiling
@@ -311,6 +310,8 @@ def calc_sample_volume(row, dilute_conc, min_vol, max_vol):
 def calc_dilutant_volume(row):
     """ dilutatant volume = total_volume - sample_volume
     """
+    if row['TECAN_sample_volume'] <= 0:
+        return 0
     x = row['TECAN_total_volume'] - row['TECAN_sample_volume']
     if x < 0:
         x = 0
@@ -323,6 +324,17 @@ def calc_total_volume(row, min_vol, max_vol, dilute_conc):
     if x > max_vol:
         x = max_vol
     return x    
+
+def calc_final_conc(row):
+    """Calculating final conc (post-dilution sample conc.
+    """
+    if row['TECAN_sample_volume'] <= 0:
+        return 0
+    x = row['TECAN_sample_conc'] * row['TECAN_sample_volume']
+    x = x / row['TECAN_total_volume']
+    return x
+    
+
 
 def dilution_volumes(df_conc, dilute_conc, min_vol, max_vol, 
                      min_total, dest_type):
@@ -379,8 +391,7 @@ def dilution_volumes(df_conc, dilute_conc, min_vol, max_vol,
     f = lambda row: row['TECAN_sample_volume'] + row['TECAN_dilutant_volume']
     df_conc['TECAN_total_volume'] = df_conc.apply(f, axis=1)
     # calculating final conc
-    f = lambda row: row['TECAN_sample_conc'] * row['TECAN_sample_volume'] / row['TECAN_total_volume']
-    df_conc['TECAN_final_conc'] = df_conc.apply(f, axis=1)
+    df_conc['TECAN_final_conc'] = df_conc.apply(calc_final_conc, axis=1)
     ## target conc hit?
     msg_low = 'WARNING: (concfile, line{}): final concentration is low: {}'
     msg_high = 'WARNING: (concfile, line{}): final concentration is high: {}'
@@ -390,7 +401,7 @@ def dilution_volumes(df_conc, dilute_conc, min_vol, max_vol,
             print(msg_low.format(i, fc), file=sys.stderr)
         if fc > round(dilute_conc, 1):
             print(msg_high.format(i, fc), file=sys.stderr)
-        
+
     # return
     return df_conc
         
@@ -465,6 +476,9 @@ def pip_samples(df_conc, outFH, lw_tracker=None):
     outFH.write('C;Samples\n')
     # for each Sample-PCR_rxn_rep, write out asp/dispense commands
     for i in range(df_conc.shape[0]):
+        # skipping no-volume
+        if df_conc.ix[i,'TECAN_sample_volume'] <= 0:
+            continue
         # aspiration
         asp = Fluent.aspirate()
         asp.RackLabel = df_conc.ix[i,'TECAN_labware_name']
