@@ -87,13 +87,13 @@ def parse_args(test_args=None, subparsers=None):
 
     ## tip type
     tips = parser.add_argument_group('Tip type')
-    tips.add_argument('--tip1000_type', type=str, default='FCA, 1000ul SBS High',
+    tips.add_argument('--tip1000_type', type=str, default='FCA, 1000ul SBS',
                       help='1000ul tip type (default: %(default)s)')
-    tips.add_argument('--tip200_type', type=str, default='FCA, 200ul SBS High',
+    tips.add_argument('--tip200_type', type=str, default='FCA, 200ul SBS',
                       help='200ul tip type (default: %(default)s)')
-    tips.add_argument('--tip50_type', type=str, default='FCA, 50ul SBS High',
+    tips.add_argument('--tip50_type', type=str, default='FCA, 50ul SBS',
                       help='50ul tip type (default: %(default)s)')
-    tips.add_argument('--tip10_type', type=str, default='FCA, 10ul SBS High',
+    tips.add_argument('--tip10_type', type=str, default='FCA, 10ul SBS',
                       help='10ul tip type (default: %(default)s)')
         
     # parse & return
