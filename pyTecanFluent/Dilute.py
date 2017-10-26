@@ -145,6 +145,7 @@ def main(args=None):
                            50 : args.tip50_type,
                            10 : args.tip10_type}
     lw_tracker = Labware.labware_tracker(tip_types=tip_types)
+    lw_tracker.tip_types = tip_types
     
     gwl_file = args.prefix + '.gwl'
     with open(gwl_file, 'w') as gwlFH:
@@ -422,7 +423,6 @@ def add_dest(df_conc, dest_name, dest_type, dest_start=1):
     # return
     return df_conc
 
-
 def reorder_384well(df, reorder_col):
     """Reorder values so that the odd, then the even locations are
     transferred. This is faster for a 384-well plate
@@ -448,7 +448,7 @@ def pip_dilutant(df_conc, outFH, src_labware_name,
     if max_vol > 900:
         raise ValueError('Max dilutant volume >900ul')
     if max_vol * 2 < 45:
-        n_disp= int(np.floor(45 / max_vol))   # using 50 ul tips
+        n_disp = int(np.floor(45 / max_vol))   # using 50 ul tips
     elif max_vol * 2 < 180:
         n_disp = int(np.floor(180 / max_vol))  # using 200 ul tips
     else:
@@ -469,7 +469,6 @@ def pip_dilutant(df_conc, outFH, src_labware_name,
     # writing
     outFH.write(MD.cmd() + '\n')
 
-    
 def pip_samples(df_conc, outFH, lw_tracker=None):
     """Commands for aliquoting samples into dilutant
     """
@@ -479,6 +478,7 @@ def pip_samples(df_conc, outFH, lw_tracker=None):
         # skipping no-volume
         if df_conc.ix[i,'TECAN_sample_volume'] <= 0:
             continue
+        
         # aspiration
         asp = Fluent.aspirate()
         asp.RackLabel = df_conc.ix[i,'TECAN_labware_name']
@@ -486,6 +486,7 @@ def pip_samples(df_conc, outFH, lw_tracker=None):
         asp.Position = df_conc.ix[i,'TECAN_target_position']
         asp.Volume = round(df_conc.ix[i,'TECAN_sample_volume'], 2)
         asp.LiquidClass = 'Water Free Single No-cLLD'
+        asp.TipType = lw_tracker.tip_for_volume(asp.Volume)
         outFH.write(asp.cmd() + '\n')
         
         # dispensing
@@ -494,6 +495,7 @@ def pip_samples(df_conc, outFH, lw_tracker=None):
         disp.RackType = df_conc.ix[i,'TECAN_dest_labware_type']        
         disp.Position = df_conc.ix[i,'TECAN_dest_target_position']
         disp.Volume = round(df_conc.ix[i,'TECAN_sample_volume'], 2)
+        disp.TipType = lw_tracker.tip_for_volume(asp.Volume)
         disp.LiquidClass = 'Water Free Single No-cLLD'
         outFH.write(disp.cmd() + '\n')
 

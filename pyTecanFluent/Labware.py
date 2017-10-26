@@ -292,7 +292,7 @@ class labware_tracker():
     *) target_position = location position on worktable
     """
     def __init__(self, tip_types={}):
-        self.tip_types = tip_types
+        self.tip_types = self.tip_type_setter(tip_types)
         self._tip_cnt = collections.Counter()
         self._labware = collections.defaultdict(dict)
         self._tip_boxes = collections.defaultdict(dict)
@@ -314,17 +314,17 @@ class labware_tracker():
                 msg = 'WARNING: Labware type "{}" not recognized'
                 print(msg.format(x.RackType), file=sys.stderr)
                 self._labware[x.RackLabel]['target_location'] = None
-        # adding tip
+        # adding tip to tip count; must have tip types
         if add_tip == True:
-            # adding tips
-            if x.Volume < 45:
-                tip_size = 50
-            elif x.Volume < 180:
-                tip_size = 200
-            else:
-                tip_size = 1000
-            
-            self._tip_cnt[self._tip_labware_type(tip_size)] += 1
+            tip_size = None
+            for k,v in self.tip_types.items():
+                try:
+                    if x.Volume < k * 1.05 and v is not None:
+                        tip_size = k
+                except KeyError:
+                    pass
+            if tip_size is not None:
+                self._tip_cnt[self._tip_labware_type(tip_size)] += 1
 
     def next_target_position(self, labware_type, boarder_check=False):
         """Getting the next target position for the labware type
@@ -368,6 +368,15 @@ class labware_tracker():
             msg = 'ERROR: no tip type for tip size: {}'
             raise KeyError(msg.format(tip_size))                       
 
+    def tip_for_volume(self, volume):
+        """Return available tip type for volume (ul).
+        Using smallest available tip type for volume.
+        """
+        for k in sorted(self.tip_types.keys()):
+            if k > volume * 1.05 and self.tip_types[k] is not None:
+                return self.tip_types[k]
+        return ''            
+        
     def _n_tip_boxes(self):
         """Counting number of tip boxes and adding tips boxes to labware
         """
@@ -439,9 +448,16 @@ class labware_tracker():
         # convert to pandas data.frame
         labels = ['labware_name', 'labware_type', 'target_location', 'target_position']
         df = pd.DataFrame.from_records(tbl, columns=labels)
-                                
+        # return
         return df
-        
+
+
+    def tip_type_setter(self, value):
+        for k,v in value.items():
+            if v.lower() == 'none':
+                value[k] = None
+        self.tip_type = value
+                        
 
 # main
 if __name__ == '__main__':

@@ -96,7 +96,7 @@ class asp_disp():
             msg = 'Liquid class "{}" not allowed'
             raise TypeError(msg.format(value))
         self._LiquidClass = value
-
+        
 
 
 class aspirate(asp_disp):
@@ -149,6 +149,7 @@ class multi_disp():
         self._DestPositions = [1]
         # other
         self.Volume = 1.0
+        self.TipType = None
         self._LiquidClass = 'Water Free Multi'
         self.NoOfMultiDisp = 2
         self.psbl_liq_cls = _psbl_liq_cls()
@@ -177,6 +178,26 @@ class multi_disp():
             asp.RackType = self.SrcRackType
             asp.Position = self.SrcPosition
             asp.LiquidClass = self.LiquidClass
+            # determining total volume for this asp            
+            dispenses_tmp = 0
+            sample_cnt_tmp = sample_cnt
+            total_asp_volume = 0
+            while 1:
+                sample_cnt_tmp += 1
+                # Total samples reached
+                if sample_cnt_tmp > len(self.DestPositions):
+                    break
+                # Number of multi-disp reached
+                if dispenses_tmp >= self.NoOfMultiDisp:
+                    sample_cnt_tmp -= 1 
+                    break
+                # Skipping 0-volumes
+                if self.Volumes[sample_cnt_tmp-1] <= 0:
+                    continue
+                disp_volume = round(self.Volumes[sample_cnt_tmp-1], 2)
+                if disp_volume > 0:
+                    total_asp_volume += disp_volume
+                    dispenses_tmp += 1
             # loading dispenses
             dispenses = []
             while 1:
@@ -197,6 +218,8 @@ class multi_disp():
                 disp.Position = self.DestPositions[sample_cnt-1]
                 disp.Volume = round(self.Volumes[sample_cnt-1], 2)
                 disp.LiquidClass = self.LiquidClass
+                if self.Labware_tracker is not None:
+                    disp.TipType = self.Labware_tracker.tip_for_volume(total_asp_volume)
                 if disp.Volume > 0:
                     dispenses.append(disp)
             # break if no more dispenses
@@ -204,6 +227,8 @@ class multi_disp():
                 break
             # adding asp-disp cycle
             asp.Volume = round(sum([x.Volume for x in dispenses]) * 1.05, 1)
+            if self.Labware_tracker is not None:
+                asp.TipType = self.Labware_tracker.tip_for_volume(total_asp_volume)
             steps.append(asp.cmd())
             steps = steps + [x.cmd() for x in dispenses]
             steps.append('W;')
