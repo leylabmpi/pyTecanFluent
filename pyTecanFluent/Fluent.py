@@ -4,6 +4,7 @@ from __future__ import print_function
 import os
 import sys
 import json
+import collections
 import pkg_resources
 import numpy as np
 
@@ -62,6 +63,20 @@ class db(object):
             msg = 'Cannot find tip type "{}"'
             raise KeyError(msg.format(value))            
 
+    def get_tip_volume(self, value):
+        try:
+            return self.tip_type[value]['volume']
+        except KeyError:
+            msg = 'Cannot find volume for tip type "{}"'
+            raise KeyError(msg.format(value))            
+
+    def get_tip_box(self, value):
+        try:
+            return self.tip_type[value]['tip_box']
+        except KeyError:
+            msg = 'Cannot find tip-box for tip type "{}"'
+            raise KeyError(msg.format(value))            
+        
     def get_liquid_class(self, value):
         try:
             return self.liquid_class[value]
@@ -69,6 +84,63 @@ class db(object):
             msg = 'Cannot find liquid class "{}"'
             raise KeyError(msg.format(value))            
         
+
+class labware(object):
+    """Class for summarizing labware in a gwl object
+    """
+    def __init__(self):
+        self.tip_count = {}
+        self.tip_boxes = {}
+        self.labware = collections.OrderedDict()
+        
+    def add_gwl(self, gwl):
+        """Generating a pandas dataframe of all needed labware
+        columns: labware_name, labware_type,target_location,target_position
+        """
+        for cmd in gwl.commands:
+            # counting tips
+            self._count_tips(cmd)
+            # labware IDs
+            self._add_labware(cmd)
+        # summing up tip boxes        
+        self._add_tip_boxes(gwl)
+        
+    def _add_tip_boxes(self, gwl):
+        """Adding tip boxes to labware
+        """
+        # getting tip boxes from count
+        for k in self.tip_count.keys():
+            tip_box = gwl._db.get_tip_box(k)
+            self.tip_boxes[tip_box] = 1
+
+    def _add_labware(self, cmd):
+        try:
+            RackLabel = cmd.RackLabel
+        except AttributeError:
+            return None
+        try:
+            RackType = cmd.RackType
+        except AttributeError:
+            return None
+        self.labware[RackLabel] = RackType
+            
+    def _count_tips(self, cmd):
+        """Counting all tips in gwl commands
+        """
+        # Just count aspirations
+        if not isinstance(cmd, aspirate):
+            return None
+        # Tip type count
+        try:
+            TipType = cmd.TipType
+        except AttributeError:
+            return None
+        try:
+            self.tip_count[TipType] += 1
+        except KeyError:
+            self.tip_count[TipType] = 1
+    
+
         
 class gwl(object):
     """Class for storing gwl commands
@@ -80,6 +152,12 @@ class gwl(object):
         self.commands = []
 
     def add(self, obj, force_tip=True):
+        """Adding gwl commands ('obj') to list of commands
+        """
+        # assertions
+        if isinstance(obj, aspirate) or isinstance(obj, dispense):
+            assert obj.RackType is not None
+        # forcing usage of particular tip type
         if force_tip is True:
             if isinstance(obj, dispense):
                 assert self._last_asp_TipType is not None
@@ -87,9 +165,13 @@ class gwl(object):
             elif isinstance(obj, aspirate):
                 obj.TipType = self.set_TipType(obj.Volume)
                 self._last_asp_TipType = obj.TipType
+        # appending to list of commands
         self.commands.append(obj)
 
     def write(self, file_obj):
+        """Writing out gwl fileC
+        Commands written in the order of addition
+        """
         try:
             outF = open(file_obj, 'w')
         except IOError:
@@ -98,15 +180,17 @@ class gwl(object):
         for x in self.commands:
             outF.write(x.cmd() + '\n')
         outF.close()
-
+                    
     def set_TipType(self, volume):
+        """Setting which tip is used for the command
+        """
         if self.TipTypes is None:
             return None
         for k in sorted(self.TipTypes.keys()):
             if k > volume * 1.05 and self.TipTypes[k] is not None:
                 return self.TipTypes[k]
         return None
-        
+    
     @property
     def TipTypes(self):
         return self._TipTypes
@@ -162,6 +246,9 @@ class asp_disp(object):
                             'ForceRackType']
         
     def cmd(self):
+        # assertions
+        assert self.RackLabel is not None, 'RackLabel cannot be None'
+        assert self.RackType is not None, 'RackType cannot be None'
         # list of values in correct order
         vals = [getattr(self, x) for x in self.field_order]
         # None to blank string

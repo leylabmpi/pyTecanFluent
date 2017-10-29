@@ -1,26 +1,34 @@
 {
     "FCA, 1000ul SBS" : {
-        "tip_box" : "FCA, 1000ul SBS High"
+        "tip_box" : "FCA, 1000ul SBS High",
+	"volume" : 1000
     },
     "FCA, 200ul SBS" : {
-        "tip_box" : "FCA, 200ul SBS High"
+        "tip_box" : "FCA, 200ul SBS High",
+	"volume" : 200
     },
     "FCA, 50ul SBS" : {
-        "tip_box" : "FCA, 50ul SBS High"
+        "tip_box" : "FCA, 50ul SBS High",
+	"volume" : 50	
     },
     "FCA, 10ul SBS" : {
-        "tip_box" : "FCA, 10ul SBS High"
+        "tip_box" : "FCA, 10ul SBS High",
+	"volume" : 10
     },
     "FCA, 1000ul Filtered SBS" : {
-        "tip_box" : "FCA, 1000ul SBS High"
+        "tip_box" : "FCA, 1000ul SBS High",
+	"volume" : 1000
     },
     "FCA, 200ul Filtered SBS" : {
-        "tip_box" : "FCA, 200ul SBS High"
+        "tip_box" : "FCA, 200ul SBS High",
+	"volume" : 200	
     },
     "FCA, 50ul Filtered SBS" : {
-        "tip_box" : "FCA, 50ul SBS High"
+        "tip_box" : "FCA, 50ul SBS High",
+	"volume" : 50
     },
     "FCA, 10ul Filtered SBS" : {
-        "tip_box" : "FCA, 10ul SBS High"
+        "tip_box" : "FCA, 10ul SBS High",
+	"volume" : 10
     }    
 }

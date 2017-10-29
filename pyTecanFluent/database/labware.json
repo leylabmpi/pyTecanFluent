@@ -3,49 +3,49 @@
         "target_location" : "Nest7mm_Pos",
         "category" : "tip",
         "wells" : 96,
-        "max_volume" : null
+        "max_volume" : 10
     },
     "FCA, 50ul SBS High" : {
         "target_location" : "Nest7mm_Pos",
         "category" : "tip",
         "wells" : 96,
-        "max_volume" : null
+        "max_volume" : 50
     },
     "FCA, 200ul SBS High" : {
         "target_location" : "Nest7mm_Pos",
         "category" : "tip",
         "wells" : 96,
-        "max_volume" : null
+        "max_volume" : 200
     },
     "FCA, 1000ul SBS High" : {
         "target_location" : "Nest7mm_Pos",
         "category" : "tip",
         "wells" : 96,
-        "max_volume" : null
+        "max_volume" : 1000
     },
     "FCA, 10ul Filtered SBS High" : {
         "target_location" : "Nest7mm_Pos",
         "category" : "tip",
         "wells" : 96,
-        "max_volume" : null
+        "max_volume" : 10
     },
     "FCA, 50ul Filtered SBS High" : {
         "target_location" : "Nest7mm_Pos",
         "category" : "tip",
         "wells" : 96,
-        "max_volume" : null
+        "max_volume" : 50
     },
     "FCA, 200ul Filtered SBS High" : {
         "target_location" : "Nest7mm_Pos",
         "category" : "tip",
         "wells" : 96,
-        "max_volume" : null
+        "max_volume" : 200
     },
     "FCA, 1000ul Filtered SBS High" : {
         "target_location" : "Nest7mm_Pos",
         "category" : "tip",
         "wells" : 96,
-        "max_volume" : null
+        "max_volume" : 1000
     },
     "100ml_1" : {
         "target_location" : "Trough_100ml_Wash_1",

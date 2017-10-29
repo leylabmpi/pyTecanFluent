@@ -158,6 +158,9 @@ def main(args=None):
 
     
     # making labware table
+    lw = Fluent.labware()
+    lw.add_gwl(gwl)
+    
     #df_labware = lw_tracker.labware_table()
     #lw_file = args.prefix + '_labware.txt'
     #df_labware.to_csv(lw_file, sep='\t', index=False)
