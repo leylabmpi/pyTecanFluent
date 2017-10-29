@@ -109,6 +109,9 @@ def main(args=None):
     if args is None:
         args = parse_args()
     check_args(args)
+
+    db = Fluent.db()
+    print(db.labware); sys.exit()
     
     # Import
     df_conc = conc2df(args.concfile, 

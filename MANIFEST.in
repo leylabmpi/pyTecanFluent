@@ -1,0 +1,4 @@
+include pyTecanFluent/database/labware.json
+include pyTecanFluent/database/target_position.json
+include pyTecanFluent/database/tip_type.json
+include pyTecanFluent/database/liquid_class.json

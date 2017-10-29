@@ -3,8 +3,16 @@ from __future__ import print_function
 # import
 import os
 import sys
+import json
+import pkg_resources
 import numpy as np
 
+
+#-- notes on gwl file format --#
+# A;RackLabel;RackID;RackType;Position;TubeID;Volume;LiquidClass;Tip Type;TipMask;ForcedRackType
+## 11 fields; 10 semicolons
+# D;RackLabel;RackID;RackType;Position;TubeID;Volume;LiquidClass;Tip Type;TipMask;ForcedRackType
+## 11 fields; 10 semicolons
 
 def xstr(x):
     if x is None:
@@ -30,6 +38,29 @@ def _psbl_liq_cls():
          'Water Mix', 'Water Mix No-cLLD')
     return x
 
+class db():
+    def __init__(self):
+        d = os.path.split(__file__)[0]
+        self.database_dir = os.path.join(d, 'database')
+        # labware
+        f = os.path.join(self.database_dir, 'labware.json')
+        with open(f) as inF:
+            self.labware = json.load(inF)
+        # target position
+        f = os.path.join(self.database_dir, 'target_position.json')
+        with open(f) as inF:
+            self.target_position = json.load(inF)
+        # tip type
+        f = os.path.join(self.database_dir, 'tip_type.json')
+        with open(f) as inF:
+            self.tip_type = json.load(inF)
+        # liquid class
+        f = os.path.join(self.database_dir, 'liquid_class.json')
+        with open(f) as inF:
+            self.liquid_class = json.load(inF)
+        
+
+            
 class asp_disp():
     """Commands for aliquoting mastermix
     *Parameters*
@@ -46,7 +77,8 @@ class asp_disp():
     MinDetected
     """
 
-    def __init__(self):
+    def __init__(self, RackLabel, RackID, RackType,
+                 Position, TubeID, Volume):
         self._ID = ''
         # aspirate parameters
         self.RackLabel = None
@@ -97,7 +129,6 @@ class asp_disp():
             raise TypeError(msg.format(value))
         self._LiquidClass = value
         
-
 
 class aspirate(asp_disp):
     def __init__(self):
