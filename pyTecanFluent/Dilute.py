@@ -160,6 +160,7 @@ def main(args=None):
     # making labware table
     lw = Fluent.labware()
     lw.add_gwl(gwl)
+    lw.table()
     
     #df_labware = lw_tracker.labware_table()
     #lw_file = args.prefix + '_labware.txt'

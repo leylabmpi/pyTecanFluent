@@ -7,6 +7,7 @@ import json
 import collections
 import pkg_resources
 import numpy as np
+import pandas as pd
 
 
 #-- notes on gwl file format --#
@@ -33,10 +34,6 @@ class db(object):
         f = os.path.join(self.database_dir, 'labware.json')
         with open(f) as inF:
             self.labware = json.load(inF)
-        # target position
-        f = os.path.join(self.database_dir, 'target_position.json')
-        with open(f) as inF:
-            self.target_position = json.load(inF)
         # tip type
         f = os.path.join(self.database_dir, 'tip_type.json')
         with open(f) as inF:
@@ -56,6 +53,13 @@ class db(object):
             msg = 'Cannot find labware "{}"'
             raise KeyError(msg.format(value))
 
+    def get_labware_max_volume(self, value):
+        try:
+            return self.labware[value]['max_volume']
+        except KeyError:
+            msg = 'Cannot find max_volume for labware "{}"'
+            raise KeyError(msg.format(value))        
+        
     def get_tip_type(self, value):
         try:
             return self.tip_type[value]
@@ -76,7 +80,7 @@ class db(object):
         except KeyError:
             msg = 'Cannot find tip-box for tip type "{}"'
             raise KeyError(msg.format(value))            
-        
+
     def get_liquid_class(self, value):
         try:
             return self.liquid_class[value]
@@ -92,18 +96,73 @@ class labware(object):
         self.tip_count = {}
         self.tip_boxes = {}
         self.labware = collections.OrderedDict()
-        
+        # target position
+        d = os.path.join(os.path.split(__file__)[0],  'database')
+        f = os.path.join(d, 'target_position.json')
+        with open(f) as inF:
+            self.target_position = json.load(inF)
+                
     def add_gwl(self, gwl):
-        """Generating a pandas dataframe of all needed labware
-        columns: labware_name, labware_type,target_location,target_position
+        """Adding labware from gwl object to labware object.
+        Note: this can be used to sum up labware from multiple gwl objects.
         """
         for cmd in gwl.commands:
             # counting tips
             self._count_tips(cmd)
             # labware IDs
-            self._add_labware(cmd)
+            self._add_labware(cmd, gwl)
         # summing up tip boxes        
         self._add_tip_boxes(gwl)
+
+    def table(self):
+        """Creating pandas dataframe of labware
+        columns: labware_name, labware_type,target_location,target_position
+        """
+        #print(self.tip_boxes)
+        #print(self.labware)
+        #print(self.target_position)
+
+        # init target position counters
+        loc_tracker = {}
+        
+        # init dataframe
+        cols = ['labware_name', 'labware_type',
+                'target_location', 'target_position']
+        df = pd.DataFrame(columns=cols)
+        
+        # adding tip boxes
+        #for k,v in sorted(self.tip_boxes.iteritems(),
+        #                  key=lambda (k,v): (v,k),
+        #                  reverse=True):
+        for k,v in sorted(self.tip_boxes.items()):
+            loc = self._next_location(v, loc_tracker)
+            if loc is None:
+                msg = 'No possible target location for labware: "{}"'
+                raise ValueError(msg.format(k))
+            print(loc)
+
+    def _next_location(self, labware, loc_tracker):
+        # what the possible 
+        psbl_targets = labware['target_location']
+        # which of the possible target positions to use?
+        target = None
+        for x in psbl_targets:
+            try:                
+                target = self.target_position[x]
+                target = [x, target]
+            except KeyError:
+                continue
+        if target is None:
+            return None
+        # setting target location
+        ## TODO: use while loop to account for boards and running out of positions
+        try:
+            loc_tracker[target[0]] += 1
+        except KeyError:
+            loc_tracker[target[0]] = 1
+        
+        return loc_tracker[target[0]]
+                    
         
     def _add_tip_boxes(self, gwl):
         """Adding tip boxes to labware
@@ -111,9 +170,9 @@ class labware(object):
         # getting tip boxes from count
         for k in self.tip_count.keys():
             tip_box = gwl._db.get_tip_box(k)
-            self.tip_boxes[tip_box] = 1
+            self.tip_boxes[tip_box] = gwl._db.get_labware(tip_box)
 
-    def _add_labware(self, cmd):
+    def _add_labware(self, cmd, gwl):
         try:
             RackLabel = cmd.RackLabel
         except AttributeError:
@@ -122,7 +181,7 @@ class labware(object):
             RackType = cmd.RackType
         except AttributeError:
             return None
-        self.labware[RackLabel] = RackType
+        self.labware[RackLabel] = gwl._db.get_labware(RackType)
             
     def _count_tips(self, cmd):
         """Counting all tips in gwl commands
@@ -139,9 +198,8 @@ class labware(object):
             self.tip_count[TipType] += 1
         except KeyError:
             self.tip_count[TipType] = 1
-    
 
-        
+            
 class gwl(object):
     """Class for storing gwl commands
     """
@@ -350,12 +408,6 @@ class multi_disp(object):
         self.NoOfMultiDisp = 2
         #self.psbl_liq_cls = _psbl_liq_cls()
 
-    def xstr(self, x):
-        if x is None:
-            return ''
-        else:
-            return x
-
     def add(self, gwl):
         # volume as iterable
         if hasattr(self.Volume, '__iter__'):
@@ -513,12 +565,6 @@ class reagent_distribution(object):
                           'DestPosStart', 'DestPosEnd',
                           'Volume', 'LiquidClass', 'NoOfDiTiReuses',
                           'NoOfMultiDisp', 'Direction', 'ExcludedDestWell']
-
-    def xstr(self, x):
-        if x is None:
-            return ''
-        else:
-            return x
 
     def cmd(self):
         # list of values in correct order

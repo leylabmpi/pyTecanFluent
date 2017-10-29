@@ -1,15 +1,14 @@
 {
     "Nest7mm_Pos": {
-        "position_count" : 36, 
-        "boarders" : [1,2,3,4,5,6,7,8,9,10,11,12,
-                      13,18,19,24,25,30,31,36]
+        "position_count" : 36,
+        "keep_empty" : [1,6,7,12,13,18,19,24,25,30,31,36]
     }, 
     "eppendorf" : {
         "position_count" : 96, 
-        "boarders" : []
+        "keep_empty" : []
     },
     "Trough_100ml_Wash_1" : {
         "position_count" : 8,
-        "boarders" : []
+        "keep_empty" : []
     }
 }

@@ -1,90 +1,90 @@
 {
     "FCA, 10ul SBS High" : {
-        "target_location" : "Nest7mm_Pos",
+        "target_location" : ["Nest7mm_Pos"],
         "category" : "tip",
         "wells" : 96,
         "max_volume" : 10
     },
     "FCA, 50ul SBS High" : {
-        "target_location" : "Nest7mm_Pos",
+        "target_location" : ["Nest7mm_Pos"],
         "category" : "tip",
         "wells" : 96,
         "max_volume" : 50
     },
     "FCA, 200ul SBS High" : {
-        "target_location" : "Nest7mm_Pos",
+        "target_location" : ["Nest7mm_Pos"],
         "category" : "tip",
         "wells" : 96,
         "max_volume" : 200
     },
     "FCA, 1000ul SBS High" : {
-        "target_location" : "Nest7mm_Pos",
+        "target_location" : ["Nest7mm_Pos"],
         "category" : "tip",
         "wells" : 96,
         "max_volume" : 1000
     },
     "FCA, 10ul Filtered SBS High" : {
-        "target_location" : "Nest7mm_Pos",
+        "target_location" : ["Nest7mm_Pos"],
         "category" : "tip",
         "wells" : 96,
         "max_volume" : 10
     },
     "FCA, 50ul Filtered SBS High" : {
-        "target_location" : "Nest7mm_Pos",
+        "target_location" : ["Nest7mm_Pos"],
         "category" : "tip",
         "wells" : 96,
         "max_volume" : 50
     },
     "FCA, 200ul Filtered SBS High" : {
-        "target_location" : "Nest7mm_Pos",
+        "target_location" : ["Nest7mm_Pos"],
         "category" : "tip",
         "wells" : 96,
         "max_volume" : 200
     },
     "FCA, 1000ul Filtered SBS High" : {
-        "target_location" : "Nest7mm_Pos",
+        "target_location" : ["Nest7mm_Pos"],
         "category" : "tip",
         "wells" : 96,
         "max_volume" : 1000
     },
     "100ml_1" : {
-        "target_location" : "Trough_100ml_Wash_1",
+        "target_location" : ["Trough_100ml_Wash_1"],
         "category" : "trough",
         "wells" : 1,
         "max_volume" : 100000
     },
     "96 Well Eppendorf TwinTec PCR" : {
-        "target_location" : "Nest7mm_Pos",
+        "target_location" : ["Nest7mm_Pos", "Nest61mm_Pos"],
         "category" : "plate",
         "wells" : 96,
         "max_volume" : 200
     },
     "384 Well Biorad PCR" : {
-        "target_location" : "Nest7mm_Pos",
+        "target_location" : ["Nest7mm_Pos", "Nest61mm_Pos"],
         "category" : "plate",
         "wells" : 384,
         "max_volume" : 40
     },
     "OptiPlate_96F" : {
-        "target_location" : "Nest7mm_Pos",
+        "target_location" : ["Nest7mm_Pos", "Nest61mm_Pos"],
         "category" : "plate",
         "wells" : 96,
         "max_volume" : 300
     },
     "96 Well Axygen semi skirted and adapter" : {
-        "target_location" : "Nest7mm_Pos",
+        "target_location" : ["Nest7mm_Pos", "Nest61mm_Pos"],
         "category" : "plate",
         "wells" : 96,
         "max_volume" : 200
     },
     "1.5ml Eppendorf" : {
-        "target_location" : "eppendorf",
+        "target_location" : ["eppendorf"],
         "category" : "tube",
         "wells" : 1,
         "max_volume" : 145000
     },
     "2.0ml Eppendorf" : {
-        "target_location" : "eppendorf",
+        "target_location" : ["eppendorf"],
         "category" : "tube",
         "wells" : 1,
         "max_volume" : 195000
