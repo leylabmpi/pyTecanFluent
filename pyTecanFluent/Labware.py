@@ -104,6 +104,34 @@ TARGET_POSITIONS = {
         'boarders' : ()}
 }
 
+## Tip Type DB
+TIP_TYPE_DB = {
+    'FCA, 1000ul SBS' : {
+        'tip_box' : 'FCA, 1000ul SBS High'
+    },
+    'FCA, 200ul SBS' : {
+        'tip_box' : 'FCA, 200ul SBS High'
+    },
+    'FCA, 50ul SBS' : {
+        'tip_box' : 'FCA, 50ul SBS High'
+    },
+    'FCA, 10ul SBS' : {
+        'tip_box' : 'FCA, 10ul SBS High'
+    },
+    'FCA, 1000ul Filtered SBS' : {
+        'tip_box' : 'FCA, 1000ul SBS High'
+    },
+    'FCA, 200ul Filtered SBS' : {
+        'tip_box' : 'FCA, 200ul SBS High'
+    },
+    'FCA, 50ul Filtered SBS' : {
+        'tip_box' : 'FCA, 50ul SBS High'
+    },
+    'FCA, 10ul Filtered SBS' : {
+        'tip_box' : 'FCA, 10ul SBS High'
+    }    
+}
+
 def total_positions(labware_type):
     """Getting total number of positions for the labware type
     """
@@ -150,7 +178,6 @@ def position2well(position, wells=96, just_row=False, just_col=False):
         return col
     else:
         return [row,col]
-
 
 def well2position(well, wells=96, labware_type=None):
     """well ID to column-wise position
@@ -456,6 +483,13 @@ class labware_tracker():
         for k,v in value.items():
             if v.lower() == 'none':
                 value[k] = None
+            else:
+                try:
+                    TIP_TYPE_DB[v]
+                except KeyError:
+                    msg = 'ERROR: tip type "{}" not recognized'
+                    print(msg.format(v), file=sys.stderr)
+                    sys.exit(1)
         self.tip_type = value
                         
 
