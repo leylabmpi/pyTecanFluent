@@ -20,25 +20,11 @@ def xstr(x):
     else:
         return x
 
-def _psbl_liq_cls():
-    """Returns a set of possible liquid classes available for Fluent
-    """
-    x = ('Water Free Multi', 'Water Free Multi No-cLLD',
-         'Water Free Single', 'Water Free Single No-cLLD',
-         'MasterMix Free Multi', 'MasterMix Free Multi No-cLLD',
-         'MasterMix Free Single', 'MasterMix Free Single No-cLLD', 
-         'Ethanol Free Multi',
-         'Ethanol Free Single', 
-         'DMSO Free Multi',
-         'DMSO Free Single', 
-         'Serum Free Multi',
-         'Serum Free Single',
-         'Water Contact Wet Multi', 'Water Contact Wet Multi No-cLLD',
-         'Water Contact Wet Single', 'Water Contact Wet Single No-cLLD',
-         'Water Mix', 'Water Mix No-cLLD')
-    return x
 
-class db():
+class db(object):
+    """
+    Database of FluentControl labware, tip types, liquid classes, etc
+    """
     def __init__(self):
         d = os.path.split(__file__)[0]
         self.database_dir = os.path.join(d, 'database')
@@ -58,10 +44,87 @@ class db():
         f = os.path.join(self.database_dir, 'liquid_class.json')
         with open(f) as inF:
             self.liquid_class = json.load(inF)
-        
 
-            
-class asp_disp():
+    def labware_keys(self):
+        return self.labware.keys()
+    
+    def get_labware(self, value):
+        try:
+            return self.labware[value]
+        except KeyError:
+            msg = 'Cannot find labware "{}"'
+            raise KeyError(msg.format(value))
+
+    def get_tip_type(self, value):
+        try:
+            return self.tip_type[value]
+        except KeyError:
+            msg = 'Cannot find tip type "{}"'
+            raise KeyError(msg.format(value))            
+
+    def get_liquid_class(self, value):
+        try:
+            return self.liquid_class[value]
+        except KeyError:
+            msg = 'Cannot find liquid class "{}"'
+            raise KeyError(msg.format(value))            
+        
+        
+class gwl(object):
+    """Class for storing gwl commands
+    """
+    def __init__(self, TipTypes=None):
+        self._db = db()
+        self.TipTypes = TipTypes
+        self._last_asp_TipType = None
+        self.commands = []
+
+    def add(self, obj, force_tip=True):
+        if force_tip is True:
+            if isinstance(obj, dispense):
+                assert self._last_asp_TipType is not None
+                obj.TipType = self._last_asp_TipType
+            elif isinstance(obj, aspirate):
+                obj.TipType = self.set_TipType(obj.Volume)
+                self._last_asp_TipType = obj.TipType
+        self.commands.append(obj)
+
+    def write(self, file_obj):
+        try:
+            outF = open(file_obj, 'w')
+        except IOError:
+            outF = file_obj
+        
+        for x in self.commands:
+            outF.write(x.cmd() + '\n')
+        outF.close()
+
+    def set_TipType(self, volume):
+        if self.TipTypes is None:
+            return None
+        for k in sorted(self.TipTypes.keys()):
+            if k > volume * 1.05 and self.TipTypes[k] is not None:
+                return self.TipTypes[k]
+        return None
+        
+    @property
+    def TipTypes(self):
+        return self._TipTypes
+    @TipTypes.setter
+    def TipTypes(self, value):
+        for k,v in value.items():
+            # key should be integer or float
+            try:
+                k = float(k)
+            except ValueError:
+                msg = 'TypeType key "{}" cannot be converted to float'
+                raise ValueError(msg.format(k))
+            # values should be valid tip type            
+            self._db.get_tip_type(v)                
+        self._TipTypes = value
+
+                
+class asp_disp(object):
     """Commands for aliquoting mastermix
     *Parameters*
     RackLabel
@@ -73,42 +136,40 @@ class asp_disp():
     LiquidClass 
     TipType
     TipMask
-    ForceRack
-    MinDetected
+    ForceRackType
     """
-
-    def __init__(self, RackLabel, RackID, RackType,
-                 Position, TubeID, Volume):
+    def __init__(self, RackLabel=None, RackID=None, RackType=None,
+                 Position=1, TubeID=None, Volume=None,
+                 LiquidClass = 'Water Free Single', TipType=None,
+                 TipMask=None, ForceRack=None):
         self._ID = ''
+        self._db = db()
         # aspirate parameters
-        self.RackLabel = None
-        self.RackID = None
-        self.RackType = None
-        self._Position = 1
-        self.TubeID = None
-        self.Volume = None
-        self._LiquidClass = 'Water Free Single'
-        self.TipType = None
-        self.TipMask = None
-        self.key_order = ['_ID',
-                          'RackLabel', 'RackID', 'RackType',
-                          'Position', 'TubeID', 'Volume',
-                          'LiquidClass', 'TipType', 'TipMask']
-        self.psbl_liq_cls = _psbl_liq_cls()
-
+        self.RackLabel = RackLabel
+        self.RackID = RackID
+        self.RackType = RackType
+        self.Position = Position
+        self.TubeID = TubeID
+        self.Volume = Volume
+        self.LiquidClass = LiquidClass
+        self.TipType = TipType
+        self.TipMask = TipMask
+        self.ForceRackType = ForceRack
+        self.field_order = ['_ID',
+                            'RackLabel', 'RackID', 'RackType',
+                            'Position', 'TubeID', 'Volume',
+                            'LiquidClass', 'TipType', 'TipMask',
+                            'ForceRackType']
+        
     def cmd(self):
         # list of values in correct order
-        vals = [getattr(self, x) for x in self.key_order]
+        vals = [getattr(self, x) for x in self.field_order]
         # None to blank string
         vals = [xstr(x) for x in vals]
         # convert all to strings
         vals = [str(x) for x in vals]
         # return
         return ';'.join(vals)
-
-    def liquid_classes(self):
-        x = '\n,'.join(list(self.psbl_liq_cls))
-        print(x)        
 
     @property
     def Position(self):
@@ -124,25 +185,42 @@ class asp_disp():
 
     @LiquidClass.setter
     def LiquidClass(self, value):
-        if value not in self.psbl_liq_cls:
-            msg = 'Liquid class "{}" not allowed'
-            raise TypeError(msg.format(value))
+        self._db.get_liquid_class(value)
         self._LiquidClass = value
         
-
 class aspirate(asp_disp):
+    """gwl aspirate command: "A;"
+    """
     def __init__(self):
         asp_disp.__init__(self)
         self._ID = 'A'
 
-
 class dispense(asp_disp):
+    """gwl dispense command: "D;"
+    """
     def __init__(self):
         asp_disp.__init__(self)
         self._ID = 'D'
 
+class comment():
+    """gwl comment command: "C;"
+    """
+    def __init__(self, comment=''):
+        self.comment = comment
 
-class multi_disp():
+    def cmd(self):
+        return 'C;' + self.comment.lstrip('C;')
+
+class waste():
+    """gwl waste command: "W;"
+    """
+    def __init__(self):
+        pass
+
+    def cmd(self):
+        return 'W;'
+    
+class multi_disp(object):
     """Commands for aliquoting reagent to multiple labware positions
     *AspirateParameters*
     SrcRackLabel
@@ -166,7 +244,7 @@ class multi_disp():
     * string of commands
     """
 
-    def __init__(self, labware_tracker=None):
+    def __init__(self):
         self._ID = 'R'
         # aspirate parameters
         self.SrcRackLabel = None
@@ -183,8 +261,7 @@ class multi_disp():
         self.TipType = None
         self._LiquidClass = 'Water Free Multi'
         self.NoOfMultiDisp = 2
-        self.psbl_liq_cls = _psbl_liq_cls()
-        self.Labware_tracker = labware_tracker
+        #self.psbl_liq_cls = _psbl_liq_cls()
 
     def xstr(self, x):
         if x is None:
@@ -192,15 +269,14 @@ class multi_disp():
         else:
             return x
 
-    def cmd(self):
-        # volume as interable
+    def add(self, gwl):
+        # volume as iterable
         if hasattr(self.Volume, '__iter__'):
             self.Volumes = self.Volume
         else:
             self.Volumes = [self.Volume] * len(self.DestPositions)
                     
         # each multi-disp
-        steps = []
         sample_cnt = 0
         while 1:
             # single-asp
@@ -249,8 +325,6 @@ class multi_disp():
                 disp.Position = self.DestPositions[sample_cnt-1]
                 disp.Volume = round(self.Volumes[sample_cnt-1], 2)
                 disp.LiquidClass = self.LiquidClass
-                if self.Labware_tracker is not None:
-                    disp.TipType = self.Labware_tracker.tip_for_volume(total_asp_volume)
                 if disp.Volume > 0:
                     dispenses.append(disp)
             # break if no more dispenses
@@ -258,18 +332,12 @@ class multi_disp():
                 break
             # adding asp-disp cycle
             asp.Volume = round(sum([x.Volume for x in dispenses]) * 1.05, 1)
-            if self.Labware_tracker is not None:
-                asp.TipType = self.Labware_tracker.tip_for_volume(total_asp_volume)
-            steps.append(asp.cmd())
-            steps = steps + [x.cmd() for x in dispenses]
-            steps.append('W;')
-            # labware tracking
-            if self.Labware_tracker is not None:
-                self.Labware_tracker.add(asp)
-                self.Labware_tracker.add(disp, add_tip=False)
-                
-        # return string of commands
-        return '\n'.join(steps)
+
+            # appending to gwl-obj
+            gwl.add(asp)
+            for x in dispenses:
+                gwl.add(x)
+            gwl.add(waste())                       
 
     @property
     def LiquidClass(self):
@@ -277,9 +345,7 @@ class multi_disp():
 
     @LiquidClass.setter
     def LiquidClass(self, value):
-        if value not in self.psbl_liq_cls:
-            msg = 'Liquid class "{}" not allowed'
-            raise TypeError(msg.format(value))
+        self._db.get_liquid_class(value)
         self._LiquidClass = value
 
     @property
@@ -301,8 +367,11 @@ class multi_disp():
         return len(self._DestPositions)
 
     
-class reagent_distribution():
-    """Commands for aliquoting mastermix
+class reagent_distribution(object):
+    """
+    # NOTE: depreciated 
+
+    Commands for aliquoting mastermix
     *AspirateParameters*
     SrcRackLabel
     SrcRackID

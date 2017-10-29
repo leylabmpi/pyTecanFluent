@@ -110,9 +110,6 @@ def main(args=None):
         args = parse_args()
     check_args(args)
 
-    db = Fluent.db()
-    print(db.labware); sys.exit()
-    
     # Import
     df_conc = conc2df(args.concfile, 
                       file_format=args.format,
@@ -143,49 +140,43 @@ def main(args=None):
         df_conc = reorder_384well(df_conc, 'TECAN_dest_target_position')
 
     # Writing out gwl file
-    tip_types = tip_types={1000 : args.tip1000_type,
-                           200 : args.tip200_type,
-                           50 : args.tip50_type,
-                           10 : args.tip10_type}
-    lw_tracker = Labware.labware_tracker(tip_types=tip_types)
-    lw_tracker.tip_types = tip_types
-    
+    TipTypes = TipTypes={1000 : args.tip1000_type,
+                         200 : args.tip200_type,
+                         50 : args.tip50_type,
+                         10 : args.tip10_type}    
+    gwl = Fluent.gwl(TipTypes)
+    gwl.TipTypes = TipTypes
+    ## Dilutant
+    pip_dilutant(df_conc, gwl=gwl,
+                 src_labware_name=args.dlabware_name,
+                 src_labware_type=args.dlabware_type)
+    ## Sample
+    pip_samples(df_conc, gwl=gwl)
+    ## writing out file
     gwl_file = args.prefix + '.gwl'
-    with open(gwl_file, 'w') as gwlFH:
-        ## Dilutant
-        pip_dilutant(df_conc, outFH=gwlFH,
-                     src_labware_name=args.dlabware_name,
-                     src_labware_type=args.dlabware_type,
-                     lw_tracker=lw_tracker)
-        ## Sample
-        pip_samples(df_conc, outFH=gwlFH,
-                    lw_tracker=lw_tracker)
+    gwl.write(gwl_file)
 
+    
     # making labware table
-    df_labware = lw_tracker.labware_table()
-    lw_file = args.prefix + '_labware.txt'
-    df_labware.to_csv(lw_file, sep='\t', index=False)
+    #df_labware = lw_tracker.labware_table()
+    #lw_file = args.prefix + '_labware.txt'
+    #df_labware.to_csv(lw_file, sep='\t', index=False)
 
     # Writing out table
-    conc_file = args.prefix + '_conc.txt'
-    df_conc.round(1).to_csv(conc_file, sep='\t', index=False)
-
-    # Create windows-line breaks formatted versions
-    #gwl_file_win = Utils.to_win(gwl_file)
-    #conc_file_win = Utils.to_win(conc_file)
-    #lw_file_win = Utils.to_win(lw_file)
+    #conc_file = args.prefix + '_conc.txt'
+    #df_conc.round(1).to_csv(conc_file, sep='\t', index=False)
 
     # status
     Utils.file_written(gwl_file)
-    Utils.file_written(conc_file)
-    Utils.file_written(lw_file)
+    #Utils.file_written(conc_file)
+    #Utils.file_written(lw_file)
     #Utils.file_written(gwl_file_win)
     #Utils.file_written(conc_file_win)    
     #Utils.file_written(lw_file_win)
 
     
     # end
-    return (gwl_file, conc_file, lw_file)
+    #return (gwl_file, conc_file, lw_file)
             #gwl_file_win, conc_file_win, lw_file_win)
 
 
@@ -439,7 +430,7 @@ def reorder_384well(df, reorder_col):
     return df
 
 
-def pip_dilutant(df_conc, outFH, src_labware_name, 
+def pip_dilutant(df_conc, gwl, src_labware_name, 
                  src_labware_type=None, lw_tracker=None):
     """Writing worklist commands for aliquoting dilutant.
     Using 1-asp-multi-disp with 200 ul tips.
@@ -458,7 +449,8 @@ def pip_dilutant(df_conc, outFH, src_labware_name,
         n_disp = int(np.floor(900 / max_vol))  # using 1000 ul tips
         
     # making multi-disp object
-    outFH.write('C;Dilutant\n')
+    gwl.add(Fluent.comment('Dilutant'))
+    
     MD = Fluent.multi_disp()
     MD.SrcRackLabel = src_labware_name
     MD.SrcRackType = src_labware_type
@@ -468,14 +460,13 @@ def pip_dilutant(df_conc, outFH, src_labware_name,
     MD.DestPositions = df_conc.TECAN_dest_target_position
     MD.Volume = df_conc.TECAN_dilutant_volume             
     MD.NoOfMultiDisp = n_disp
-    MD.Labware_tracker = lw_tracker
-    # writing
-    outFH.write(MD.cmd() + '\n')
+    MD.add(gwl)
+    
 
-def pip_samples(df_conc, outFH, lw_tracker=None):
+def pip_samples(df_conc, gwl):
     """Commands for aliquoting samples into dilutant
     """
-    outFH.write('C;Samples\n')
+    gwl.add(Fluent.comment('Samples'))
     # for each Sample-PCR_rxn_rep, write out asp/dispense commands
     for i in range(df_conc.shape[0]):
         # skipping no-volume
@@ -489,8 +480,9 @@ def pip_samples(df_conc, outFH, lw_tracker=None):
         asp.Position = df_conc.ix[i,'TECAN_target_position']
         asp.Volume = round(df_conc.ix[i,'TECAN_sample_volume'], 2)
         asp.LiquidClass = 'Water Free Single No-cLLD'
-        asp.TipType = lw_tracker.tip_for_volume(asp.Volume)
-        outFH.write(asp.cmd() + '\n')
+        #asp.TipType = lw_tracker.tip_for_volume(asp.Volume)
+        #outFH.write(asp.cmd() + '\n')
+        gwl.add(asp)
         
         # dispensing
         disp = Fluent.dispense()
@@ -498,14 +490,16 @@ def pip_samples(df_conc, outFH, lw_tracker=None):
         disp.RackType = df_conc.ix[i,'TECAN_dest_labware_type']        
         disp.Position = df_conc.ix[i,'TECAN_dest_target_position']
         disp.Volume = round(df_conc.ix[i,'TECAN_sample_volume'], 2)
-        disp.TipType = lw_tracker.tip_for_volume(asp.Volume)
+        #disp.TipType = lw_tracker.tip_for_volume(asp.Volume)
         disp.LiquidClass = 'Water Free Single No-cLLD'
-        outFH.write(disp.cmd() + '\n')
+        #outFH.write(disp.cmd() + '\n')
+        gwl.add(disp)
+        gwl.add(Fluent.waste())
 
         # tip to waste
-        outFH.write('W;\n')
-        lw_tracker.add(asp)
-        lw_tracker.add(disp, add_tip=False)
+        #outFH.write('W;\n')
+        #lw_tracker.add(asp)
+        #lw_tracker.add(disp, add_tip=False)
 
 # main
 if __name__ == '__main__':
