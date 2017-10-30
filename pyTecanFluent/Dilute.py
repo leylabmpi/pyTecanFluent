@@ -480,8 +480,6 @@ def pip_samples(df_conc, gwl):
         asp.Position = df_conc.ix[i,'TECAN_target_position']
         asp.Volume = round(df_conc.ix[i,'TECAN_sample_volume'], 2)
         asp.LiquidClass = 'Water Free Single No-cLLD'
-        #asp.TipType = lw_tracker.tip_for_volume(asp.Volume)
-        #outFH.write(asp.cmd() + '\n')
         gwl.add(asp)
         
         # dispensing
@@ -490,16 +488,10 @@ def pip_samples(df_conc, gwl):
         disp.RackType = df_conc.ix[i,'TECAN_dest_labware_type']        
         disp.Position = df_conc.ix[i,'TECAN_dest_target_position']
         disp.Volume = round(df_conc.ix[i,'TECAN_sample_volume'], 2)
-        #disp.TipType = lw_tracker.tip_for_volume(asp.Volume)
         disp.LiquidClass = 'Water Free Single No-cLLD'
-        #outFH.write(disp.cmd() + '\n')
         gwl.add(disp)
         gwl.add(Fluent.waste())
 
-        # tip to waste
-        #outFH.write('W;\n')
-        #lw_tracker.add(asp)
-        #lw_tracker.add(disp, add_tip=False)
 
 # main
 if __name__ == '__main__':

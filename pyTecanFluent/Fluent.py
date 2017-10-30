@@ -43,7 +43,7 @@ class db(object):
         with open(f) as inF:
             self.liquid_class = json.load(inF)
 
-    def labware_keys(self):
+    def RackTypes(self):
         return self.labware.keys()
     
     def get_labware(self, value):
@@ -90,7 +90,6 @@ class db(object):
             msg = 'Cannot find liquid class "{}"'
             raise KeyError(msg.format(value))            
         
-
 class labware(object):
     """Class for summarizing labware in a gwl object.
     Note: tip boxes are considered separate from labware
@@ -255,7 +254,6 @@ class labware(object):
             self.tip_count[TipType] += 1
         except KeyError:
             self.tip_count[TipType] = 1
-
             
 class gwl(object):
     """Class for storing gwl commands
@@ -314,16 +312,19 @@ class gwl(object):
         return self._TipTypes
     @TipTypes.setter
     def TipTypes(self, value):
-        for k,v in value.items():
-            # key should be integer or float
-            try:
-                k = float(k)
-            except ValueError:
-                msg = 'TypeType key "{}" cannot be converted to float'
-                raise ValueError(msg.format(k))
-            # values should be valid tip type            
-            self._db.get_tip_type(v)                
-        self._TipTypes = value
+        if value is None:
+            self._Tiptypes = None
+        else:
+            for k,v in value.items():
+                # key should be integer or float
+                try:
+                    k = float(k)
+                except ValueError:
+                    msg = 'TypeType key "{}" cannot be converted to float'
+                    raise ValueError(msg.format(k))
+                # values should be valid tip type            
+                self._db.get_tip_type(v)                
+            self._TipTypes = value
 
                 
 class asp_disp(object):
