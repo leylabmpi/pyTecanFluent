@@ -263,7 +263,6 @@ class gwl(object):
     def __init__(self, TipTypes=None):
         self._db = db()
         self.TipTypes = TipTypes
-        self._last_asp_TipType = None
         self.commands = []
 
     def add(self, obj, force_tip=True):
@@ -273,13 +272,8 @@ class gwl(object):
         if isinstance(obj, aspirate) or isinstance(obj, dispense):
             assert obj.RackType is not None
         # forcing usage of particular tip type
-        if force_tip is True:
-            if isinstance(obj, dispense):
-                assert self._last_asp_TipType is not None
-                obj.TipType = self._last_asp_TipType
-            elif isinstance(obj, aspirate):
-                obj.TipType = self.set_TipType(obj.Volume)
-                self._last_asp_TipType = obj.TipType
+        if force_tip is True and isinstance(obj, aspirate):
+            obj.TipType = self.set_TipType(obj.Volume)
         # appending to list of commands
         self.commands.append(obj)
 
