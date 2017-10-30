@@ -42,7 +42,7 @@ class db(object):
         f = os.path.join(self.database_dir, 'liquid_class.json')
         with open(f) as inF:
             self.liquid_class = json.load(inF)
-
+            
     def RackTypes(self):
         return self.labware.keys()
     
@@ -54,6 +54,13 @@ class db(object):
         except KeyError:
             msg = 'Cannot find labware "{}"'
             raise KeyError(msg.format(value))
+
+    def get_labware_wells(self, value):
+        try:
+            return self.labware[value]['wells']
+        except KeyError:
+            msg = 'Cannot find wells for labware "{}"'
+            raise KeyError(msg.format(value))                
 
     def get_labware_max_volume(self, value):
         try:
