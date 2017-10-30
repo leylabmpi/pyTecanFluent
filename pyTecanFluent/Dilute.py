@@ -155,33 +155,28 @@ def main(args=None):
     ## writing out file
     gwl_file = args.prefix + '.gwl'
     gwl.write(gwl_file)
-
     
     # making labware table
     lw = Fluent.labware()
     lw.add_gwl(gwl)
-    lw.table()
+    lw_df = lw.table()
+    lw_file = args.prefix + '_labware.txt'
+    lw_df.to_csv(lw_file, sep='\t', index=False)
     
-    #df_labware = lw_tracker.labware_table()
-    #lw_file = args.prefix + '_labware.txt'
-    #df_labware.to_csv(lw_file, sep='\t', index=False)
-
-    # Writing out table
-    #conc_file = args.prefix + '_conc.txt'
-    #df_conc.round(1).to_csv(conc_file, sep='\t', index=False)
+    # Writing conc. out table
+    conc_file = args.prefix + '_conc.txt'
+    df_conc.round(1).to_csv(conc_file, sep='\t', index=False)
 
     # status
     Utils.file_written(gwl_file)
-    #Utils.file_written(conc_file)
-    #Utils.file_written(lw_file)
+    Utils.file_written(conc_file)
+    Utils.file_written(lw_file)
     #Utils.file_written(gwl_file_win)
     #Utils.file_written(conc_file_win)    
     #Utils.file_written(lw_file_win)
 
-    
     # end
-    #return (gwl_file, conc_file, lw_file)
-            #gwl_file_win, conc_file_win, lw_file_win)
+    return gwl_file, conc_file, lw_file
 
 
 def check_args(args):

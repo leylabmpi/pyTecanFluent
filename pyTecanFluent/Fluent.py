@@ -24,8 +24,8 @@ def xstr(x):
 
 
 class db(object):
-    """
-    Database of FluentControl labware, tip types, liquid classes, etc
+    """Database of FluentControl labware, tip types, liquid classes, etc.
+    Database files are stored in JSON format
     """
     def __init__(self):
         d = os.path.split(__file__)[0]
@@ -48,7 +48,9 @@ class db(object):
     
     def get_labware(self, value):
         try:
-            return self.labware[value]
+            d = self.labware[value]
+            d['RackType'] = value
+            return d
         except KeyError:
             msg = 'Cannot find labware "{}"'
             raise KeyError(msg.format(value))
@@ -90,7 +92,8 @@ class db(object):
         
 
 class labware(object):
-    """Class for summarizing labware in a gwl object
+    """Class for summarizing labware in a gwl object.
+    Note: tip boxes are considered separate from labware
     """
     def __init__(self):
         self.tip_count = {}
@@ -118,30 +121,56 @@ class labware(object):
         """Creating pandas dataframe of labware
         columns: labware_name, labware_type,target_location,target_position
         """
-        #print(self.tip_boxes)
-        #print(self.labware)
-        #print(self.target_position)
-
         # init target position counters
         loc_tracker = {}
         
-        # init dataframe
+        # init liist of dicts (will be coverted to dataframe)
         cols = ['labware_name', 'labware_type',
                 'target_location', 'target_position']
-        df = pd.DataFrame(columns=cols)
+        df = []
         
         # adding tip boxes
-        #for k,v in sorted(self.tip_boxes.iteritems(),
-        #                  key=lambda (k,v): (v,k),
-        #                  reverse=True):
-        for k,v in sorted(self.tip_boxes.items()):
-            loc = self._next_location(v, loc_tracker)
+        for RackLabel,v in sorted(self.tip_boxes.items(), reverse=True):
+            # RackType
+            try:
+                RackType = v['RackType']
+            except KeyError:
+                msg = 'No RackType for labware: "{}"'
+                raise KeyError(msg.format(RackLabel))
+            # location & position
+            loc,pos = self._next(v, loc_tracker, keep_empty=False)
             if loc is None:
                 msg = 'No possible target location for labware: "{}"'
-                raise ValueError(msg.format(k))
-            print(loc)
+                raise ValueError(msg.format(RackLabel))
+            # creating table entry
+            df.append({'labware_name' : RackLabel,
+                       'labware_type' : RackType,
+                       'target_location' : loc,
+                       'target_position' : pos})
+        # adding other labware
+        for RackLabel,v in self.labware.items():
+            # RackType
+            try:
+                RackType = v['RackType']
+            except KeyError:
+                msg = 'No RackType for labware: "{}"'
+                raise KeyError(msg.format(RackLabel))
+            # location & position
+            loc,pos = self._next(v, loc_tracker, keep_empty=True)
+            if loc is None:
+                msg = 'No possible target location for labware: "{}"'
+                raise ValueError(msg.format(RackLabel))
+            # creating table entry
+            df.append({'labware_name' : RackLabel,
+                       'labware_type' : RackType,
+                       'target_location' : loc,
+                       'target_position' : pos})            
+        # covert to dataframe & return
+        return pd.DataFrame.from_dict(df)
 
-    def _next_location(self, labware, loc_tracker):
+    def _next(self, labware, loc_tracker, keep_empty=True):
+        """Getting nest target position for target location
+        """
         # what the possible 
         psbl_targets = labware['target_location']
         # which of the possible target positions to use?
@@ -150,29 +179,39 @@ class labware(object):
             try:                
                 target = self.target_position[x]
                 target = [x, target]
+                break
             except KeyError:
-                continue
+                continue            
         if target is None:
             return None
-        # setting target location
-        ## TODO: use while loop to account for boards and running out of positions
+        # target variables
         try:
-            loc_tracker[target[0]] += 1
+            position_count = target[1]['position_count']
         except KeyError:
-            loc_tracker[target[0]] = 1
-        
-        return loc_tracker[target[0]]
-                    
-        
-    def _add_tip_boxes(self, gwl):
-        """Adding tip boxes to labware
-        """
-        # getting tip boxes from count
-        for k in self.tip_count.keys():
-            tip_box = gwl._db.get_tip_box(k)
-            self.tip_boxes[tip_box] = gwl._db.get_labware(tip_box)
+            position_count = 1
+        try:
+            keep_empty = target[1]['keep_empy']
+        except KeyError:
+            keep_empty = None
+        # setting target location
+        while 1:
+            try:
+                loc_tracker[target[0]] += 1
+            except KeyError:
+                loc_tracker[target[0]] = 1
+            if loc_tracker[target[0]] >= position_count:  
+                msg = 'Not enough positions for target: "{}"'
+                raise ValueError(msg.format(target[0]))
+            elif (keep_empty == True and
+                  loc_tracker[target[0]] == keep_empty):
+                continue
+            else:
+                return target[0], loc_tracker[target[0]]                           
+        return None
 
     def _add_labware(self, cmd, gwl):
+        """Adding labware (no tip boxes) to self
+        """
         try:
             RackLabel = cmd.RackLabel
         except AttributeError:
@@ -182,9 +221,27 @@ class labware(object):
         except AttributeError:
             return None
         self.labware[RackLabel] = gwl._db.get_labware(RackType)
-            
+    
+    def _add_tip_boxes(self, gwl):
+        """Adding tip boxes to self
+        """
+        # getting tip boxes from count
+        for TipType,count in self.tip_count.items():
+            tip_box = gwl._db.get_tip_box(TipType)
+            d = gwl._db.get_labware(tip_box)
+            try:
+                wells = d['wells']
+            except KeyError:
+                msg = '"wells" key not found for labware: "{}"'
+                raise KeyError(msg.format(tip_box))
+            # number of tip boxes for the well
+            n_boxes = int(round(count / wells + 0.5,0))
+            for i in range(n_boxes):
+                tip_box_label = '{0}[{1:0>3}]'.format(tip_box, i + 1)
+                self.tip_boxes[tip_box_label] = gwl._db.get_labware(tip_box)
+                        
     def _count_tips(self, cmd):
-        """Counting all tips in gwl commands
+        """Counting all tips in gwl commands and adding to self
         """
         # Just count aspirations
         if not isinstance(cmd, aspirate):
