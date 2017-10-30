@@ -521,7 +521,7 @@ class multi_disp(object):
             if len(dispenses) <= 0:
                 break
             # adding asp-disp cycle
-            asp.Volume = round(sum([x.Volume for x in dispenses]) * 1.05, 1)
+            asp.Volume = round(sum([x.Volume for x in dispenses]) * 1.15, 2)
 
             # appending to gwl-obj
             gwl.add(asp)

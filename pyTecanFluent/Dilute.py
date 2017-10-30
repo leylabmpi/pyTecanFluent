@@ -440,12 +440,15 @@ def pip_dilutant(df_conc, gwl, src_labware_name,
     max_vol = max(df_conc.TECAN_dilutant_volume)
     if max_vol > 900:
         raise ValueError('Max dilutant volume >900ul')
-    if max_vol * 2 < 45:
-        n_disp = int(np.floor(45 / max_vol))   # using 50 ul tips
-    elif max_vol * 2 < 180:
-        n_disp = int(np.floor(180 / max_vol))  # using 200 ul tips
+    tip_frac = 0.85
+    if max_vol * 2 < 10 * tip_frac:
+        n_disp = int(np.floor(10 * tip_frac / max_vol))   # using 50 ul tips
+    if max_vol * 2 < 50 * tip_frac:
+        n_disp = int(np.floor(50 * tip_frac / max_vol))   # using 50 ul tips
+    elif max_vol * 2 < 200 * tip_frac:
+        n_disp = int(np.floor(200 * tip_frac / max_vol))  # using 200 ul tips
     else:
-        n_disp = int(np.floor(900 / max_vol))  # using 1000 ul tips
+        n_disp = int(np.floor(1000 * tip_frac / max_vol))  # using 1000 ul tips
         
     # making multi-disp object
     gwl.add(Fluent.comment('Dilutant'))
