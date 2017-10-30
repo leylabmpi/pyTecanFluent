@@ -306,15 +306,30 @@ class gwl(object):
                 return self.TipTypes[k]
         return None
 
-    def TipType_exists(self, volume):
+    def TipType_exists(self, volume, warn=False):
         """Does TipType exist?
         """
         try:
             self.TipTypes[volume]
             return True
         except KeyError:
+            if warn is True:
+                msg = 'No TipType exists for volume: "{}"'
+                print(msg.format(volume), file=sys.stderr)
             return False
-    
+
+    def LiquidClass_exists(self, liquid_class, warn=False):
+        """Check that liquid class exists in the database.
+        """
+        try:
+            self.db.liquid_class[liquid_class]
+            return True
+        except KeyError:
+            if warn is True:
+                msg = 'Liquid class does not exist: "{}"'
+                print(msg.format(liquid_class), file=sys.stderr)
+            return False
+        
     @property
     def TipTypes(self):
         return self._TipTypes
@@ -473,9 +488,8 @@ class multi_disp(object):
         # other
         self.Volume = 1.0
         self.TipType = None
-        self._LiquidClass = 'Water Free Multi'
+        self.LiquidClass = 'Water Free Multi'
         self.NoOfMultiDisp = 2
-        #self.psbl_liq_cls = _psbl_liq_cls()
 
     def add(self, gwl, disp_frac):
         # volume as iterable
@@ -546,15 +560,6 @@ class multi_disp(object):
             for x in dispenses:
                 gwl.add(x)
             gwl.add(waste())                       
-
-    @property
-    def LiquidClass(self):
-        return self._LiquidClass
-
-    @LiquidClass.setter
-    def LiquidClass(self, value):
-        self.db.get_liquid_class(value)
-        self._LiquidClass = value
 
     @property
     def DestPositions(self):

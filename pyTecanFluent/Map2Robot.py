@@ -144,9 +144,6 @@ def main(args=None):
     if args is None:
         args = parse_args()
     check_args(args)
-
-    db = Fluent.db();
-    print(db.Labware); exit();
     
     # Import
     df_map = map2df(args.mapfile, row_select=args.rows)
@@ -449,7 +446,8 @@ def pip_mastermix(df_map, gwl, mmvolume=13.1, mmtube=1,
     MD.DestRackType = df_map.ix[:,'TECAN_dest_labware_type']    
     MD.DestPositions = df_map.ix[:,'TECAN_dest_target_position']
     MD.Volume = mmvolume
-    MD.LiquidClass = liq_cls
+    if gwl.LiquidClass_exists(liq_cls):
+        MD.LiquidClass = liq_cls
     MD.NoOfMultiDisp = int(np.floor(160 / mmvolume))  # using 200 ul tips
     MD.add(gwl, 0.8)
 
