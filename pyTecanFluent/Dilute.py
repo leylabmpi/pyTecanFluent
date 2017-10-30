@@ -145,14 +145,14 @@ def main(args=None):
                          50 : args.tip50_type,
                          10 : args.tip10_type}    
     gwl = Fluent.gwl(TipTypes)
-    gwl.TipTypes = TipTypes
     ## Dilutant
     pip_dilutant(df_conc, gwl=gwl,
                  src_labware_name=args.dlabware_name,
                  src_labware_type=args.dlabware_type)
     ## Sample
     pip_samples(df_conc, gwl=gwl)
-    ## writing out file
+    
+    ## writing out worklist (gwl) file
     gwl_file = args.prefix + '.gwl'
     gwl.write(gwl_file)
     
@@ -171,9 +171,6 @@ def main(args=None):
     Utils.file_written(gwl_file)
     Utils.file_written(conc_file)
     Utils.file_written(lw_file)
-    #Utils.file_written(gwl_file_win)
-    #Utils.file_written(conc_file_win)    
-    #Utils.file_written(lw_file_win)
 
     # end
     return gwl_file, conc_file, lw_file
@@ -438,21 +435,22 @@ def pip_dilutant(df_conc, gwl, src_labware_name,
     """
     # determing how many multi-disp per tip
     max_vol = max(df_conc.TECAN_dilutant_volume)
-    if max_vol > 900:
-        raise ValueError('Max dilutant volume >900ul')
-    tip_frac = 0.85
-    if max_vol * 2 < 10 * tip_frac:
-        n_disp = int(np.floor(10 * tip_frac / max_vol))   # using 50 ul tips
-    if max_vol * 2 < 50 * tip_frac:
+    tip_frac = 0.80 
+    if max_vol > 1000 * tip_frac:
+        raise ValueError('Max dilutant volume >{}ul'.format(1000 & tip_frac))
+    if gwl.TipType_exists(10) and max_vol * 2 < 10 * tip_frac:
+        n_disp = int(np.floor(10 * tip_frac / max_vol))   # using 10 ul tips
+    elif gwl.TipType_exists(50) and max_vol * 2 < 50 * tip_frac:
         n_disp = int(np.floor(50 * tip_frac / max_vol))   # using 50 ul tips
-    elif max_vol * 2 < 200 * tip_frac:
+    elif gwl.TipType_exists(200) and max_vol * 2 < 200 * tip_frac:
         n_disp = int(np.floor(200 * tip_frac / max_vol))  # using 200 ul tips
-    else:
+    elif gwl.TipType_exists(1000):
         n_disp = int(np.floor(1000 * tip_frac / max_vol))  # using 1000 ul tips
+    else:
+        raise ValueError('No TipType available for volume: {}ul'.format(max_vol))
         
     # making multi-disp object
     gwl.add(Fluent.comment('Dilutant'))
-    
     MD = Fluent.multi_disp()
     MD.SrcRackLabel = src_labware_name
     MD.SrcRackType = src_labware_type
@@ -462,7 +460,7 @@ def pip_dilutant(df_conc, gwl, src_labware_name,
     MD.DestPositions = df_conc.TECAN_dest_target_position
     MD.Volume = df_conc.TECAN_dilutant_volume             
     MD.NoOfMultiDisp = n_disp
-    MD.add(gwl)
+    MD.add(gwl, tip_frac)
     
 
 def pip_samples(df_conc, gwl):

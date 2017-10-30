@@ -299,6 +299,15 @@ class gwl(object):
             if k > volume * 1.05 and self.TipTypes[k] is not None:
                 return self.TipTypes[k]
         return None
+
+    def TipType_exists(self, volume):
+        """Does TipType exist?
+        """
+        try:
+            self.TipTypes[volume]
+            return True
+        except KeyError:
+            return False
     
     @property
     def TipTypes(self):
@@ -459,7 +468,7 @@ class multi_disp(object):
         self.NoOfMultiDisp = 2
         #self.psbl_liq_cls = _psbl_liq_cls()
 
-    def add(self, gwl):
+    def add(self, gwl, disp_frac):
         # volume as iterable
         if hasattr(self.Volume, '__iter__'):
             self.Volumes = self.Volume
@@ -521,7 +530,7 @@ class multi_disp(object):
             if len(dispenses) <= 0:
                 break
             # adding asp-disp cycle
-            asp.Volume = round(sum([x.Volume for x in dispenses]) * 1.15, 2)
+            asp.Volume = round(sum([x.Volume for x in dispenses]) * (1-disp_frac+1), 2)
 
             # appending to gwl-obj
             gwl.add(asp)
