@@ -42,10 +42,11 @@ class db(object):
         f = os.path.join(self.database_dir, 'liquid_class.json')
         with open(f) as inF:
             self.liquid_class = json.load(inF)
-            
+
+    #@property
     def RackTypes(self):
         return self.labware.keys()
-    
+            
     def get_labware(self, value):
         try:
             d = self.labware[value]
@@ -226,15 +227,15 @@ class labware(object):
             RackType = cmd.RackType
         except AttributeError:
             return None
-        self.labware[RackLabel] = gwl._db.get_labware(RackType)
+        self.labware[RackLabel] = gwl.db.get_labware(RackType)
     
     def _add_tip_boxes(self, gwl):
         """Adding tip boxes to self
         """
         # getting tip boxes from count
         for TipType,count in self.tip_count.items():
-            tip_box = gwl._db.get_tip_box(TipType)
-            d = gwl._db.get_labware(tip_box)
+            tip_box = gwl.db.get_tip_box(TipType)
+            d = gwl.db.get_labware(tip_box)
             try:
                 wells = d['wells']
             except KeyError:
@@ -244,7 +245,7 @@ class labware(object):
             n_boxes = int(round(count / wells + 0.5,0))
             for i in range(n_boxes):
                 tip_box_label = '{0}[{1:0>3}]'.format(tip_box, i + 1)
-                self.tip_boxes[tip_box_label] = gwl._db.get_labware(tip_box)
+                self.tip_boxes[tip_box_label] = gwl.db.get_labware(tip_box)
                         
     def _count_tips(self, cmd):
         """Counting all tips in gwl commands and adding to self
@@ -266,7 +267,7 @@ class gwl(object):
     """Class for storing gwl commands
     """
     def __init__(self, TipTypes=None):
-        self._db = db()
+        self.db = db()
         self.TipTypes = TipTypes
         self.commands = []
 
@@ -330,7 +331,7 @@ class gwl(object):
                     msg = 'TypeType key "{}" cannot be converted to float'
                     raise ValueError(msg.format(k))
                 # values should be valid tip type            
-                self._db.get_tip_type(v)                
+                self.db.get_tip_type(v)                
             self._TipTypes = value
 
                 
@@ -353,7 +354,7 @@ class asp_disp(object):
                  LiquidClass = 'Water Free Single', TipType=None,
                  TipMask=None, ForceRack=None):
         self._ID = ''
-        self._db = db()
+        self.db = db()
         # aspirate parameters
         self.RackLabel = RackLabel
         self.RackID = RackID
@@ -398,7 +399,7 @@ class asp_disp(object):
 
     @LiquidClass.setter
     def LiquidClass(self, value):
-        self._db.get_liquid_class(value)
+        self.db.get_liquid_class(value)
         self._LiquidClass = value
         
 class aspirate(asp_disp):
@@ -552,7 +553,7 @@ class multi_disp(object):
 
     @LiquidClass.setter
     def LiquidClass(self, value):
-        self._db.get_liquid_class(value)
+        self.db.get_liquid_class(value)
         self._LiquidClass = value
 
     @property

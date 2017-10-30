@@ -12,7 +12,7 @@ import pandas as pd
 ## package
 from pyTecanFluent import Utils
 from pyTecanFluent import Fluent
-from pyTecanFluent import Labware
+#from pyTecanFluent import Labware
 
 
 # functions
@@ -115,13 +115,13 @@ def parse_args(test_args=None, subparsers=None):
 
     ## tip type
     tips = parser.add_argument_group('Tip type')
-    tips.add_argument('--tip1000_type', type=str, default='FCA, 1000ul SBS High',
+    tips.add_argument('--tip1000_type', type=str, default='FCA, 1000ul SBS',
                       help='1000ul tip type (default: %(default)s)')
-    tips.add_argument('--tip200_type', type=str, default='FCA, 200ul SBS High',
+    tips.add_argument('--tip200_type', type=str, default='FCA, 200ul SBS',
                       help='200ul tip type (default: %(default)s)')
-    tips.add_argument('--tip50_type', type=str, default='FCA, 50ul SBS High',
+    tips.add_argument('--tip50_type', type=str, default='FCA, 50ul SBS',
                       help='50ul tip type (default: %(default)s)')
-    tips.add_argument('--tip10_type', type=str, default='FCA, 10ul SBS High',
+    tips.add_argument('--tip10_type', type=str, default='FCA, 10ul SBS',
                       help='10ul tip type (default: %(default)s)')
     
     ## Misc
@@ -144,58 +144,59 @@ def main(args=None):
     if args is None:
         args = parse_args()
     check_args(args)
+
+    db = Fluent.db();
+    print(db.Labware); exit();
+    
     # Import
     df_map = map2df(args.mapfile, row_select=args.rows)
     check_df_map(df_map, args)
-
+    
     # Making destination dataframe
     df_map = add_dest(df_map, args.destname,
                       dest_type=args.desttype,
                       dest_start=args.deststart,
                       rxn_reps=args.rxns)
+    
+    # gwl construction
+    TipTypes = TipTypes={1000 : args.tip1000_type,
+                         200 : args.tip200_type,
+                         50 : args.tip50_type,
+                         10 : args.tip10_type}
+    gwl = Fluent.gwl(TipTypes)
 
-    positions = Labware.total_positions(args.desttype)
     # Reordering dest if plate type is 384-well
-    if positions == '384':
+    gwl.db.get_labware(args.desttype)
+    n_wells = gwl.db.get_labware_wells(args.desttype)
+    if n_wells == '384':
         df_map = reorder_384well(df_map, 'TECAN_dest_target_position')
 
-    # GWL file construction
-    tip_types = tip_types={1000 : args.tip1000_type,
-                           200 : args.tip200_type,
-                           50 : args.tip50_type,
-                           10 : args.tip10_type}
-    lw_tracker = Labware.labware_tracker(tip_types=tip_types)
-    
-    ## gwl open
-    gwl_file = args.prefix + '.gwl'
-    with open(gwl_file, 'w') as gwlFH:
-        ## mastermix
-        pip_mastermix(df_map, gwlFH,
+    ## mastermix
+    pip_mastermix(df_map, gwl,
                       mmtube=args.mmtube,
                       mmvolume=args.mmvolume, 
-                      liq_cls=args.mm_liq, 
-                      lw_tracker=lw_tracker)
-        ## primers
-        pip_primers(df_map, gwlFH,
+                      liq_cls=args.mm_liq)
+    exit()
+    ## primers
+    pip_primers(df_map, gwl,
                     fp_volume=args.fpvolume,
                     rp_volume=args.rpvolume,
                     fp_tube=args.fptube,
                     rp_tube=args.rptube, 
-                    liq_cls=args.primer_liq, 
-                    lw_tracker=lw_tracker)
-        ## samples
-        pip_samples(df_map, gwlFH, 
-                    liq_cls=args.sample_liq, 
-                    lw_tracker=lw_tracker)
-        ## water
-        pip_water(df_map, gwlFH,
+                    liq_cls=args.primer_liq)
+    ## samples
+    pip_samples(df_map, gwl, 
+                    liq_cls=args.sample_liq)
+    ## water
+    pip_water(df_map, gwl,
                   pcr_volume=args.pcrvolume,
                   mm_volume=args.mmvolume,
                   fp_volume=args.fpvolume,
                   rp_volume=args.rpvolume, 
-                  liq_cls=args.water_liq, 
-                  lw_tracker=lw_tracker)
+                  liq_cls=args.water_liq)
 
+    exit()
+    
     # Report (total volumes; sample truncation; samples)
     report_file = args.prefix + '_report.txt'
     with open(report_file, 'w') as repFH:
@@ -250,25 +251,24 @@ def main(args=None):
     Utils.file_written(report_file)
     [Utils.file_written(x) for x in biorad_files]
     Utils.file_written(df_file)
-    Utils.file_written(gwl_file_win)
-    Utils.file_written(lw_file_win)
-    Utils.file_written(report_file_win)
-    [Utils.file_written(x) for x in biorad_files_win]
-    Utils.file_written(df_file_win)
+    #Utils.file_written(gwl_file_win)
+    #Utils.file_written(lw_file_win)
+    #Utils.file_written(report_file_win)
+    #[Utils.file_written(x) for x in biorad_files_win]
+    #Utils.file_written(df_file_win)
     
     # Return
-    return (gwl_file, gwl_file_win,
-            report_file, report_file_win, 
-            df_file, df_file_win, 
-            lw_file, lw_file_win)
+    return (gwl_file, report_file, df_file, lw_file)
     
 
 def check_args(args):
     """Checking user input
     """
     # destination start
-    positions = Labware.total_positions(args.desttype)
-    if args.deststart < 1 or args.deststart > positions:
+    db = Fluent.db()
+    db.get_labware(args.desttype)
+    wells = db.get_labware_wells(args.desttype)
+    if args.deststart < 1 or args.deststart > wells:
         msg = 'Destination start well # must be in range: 1-{}'
         raise ValueError(msg.format(destlimit))
 
@@ -353,7 +353,8 @@ def check_df_map(df_map, args):
             raise ValueError('Sample volume < 0')
 
 
-def add_dest(df_map, dest_labware, dest_type='96 Well Eppendorf TwinTec PCR',
+def add_dest(df_map, dest_labware,
+             dest_type='96 Well Eppendorf TwinTec PCR',
              dest_start=1, rxn_reps=3):
     """Setting destination locations for samples & primers.
     Making a new dataframe with:
@@ -364,9 +365,12 @@ def add_dest(df_map, dest_labware, dest_type='96 Well Eppendorf TwinTec PCR',
         * well = i * (ii+1) + (ii+1) + start_offset
     Joining to df_map
     """
+    db = Fluent.db()    
     dest_start= int(dest_start)
+    
     # labware type found in DB?
-    positions = Labware.total_positions(dest_type)
+    db.get_labware(dest_type)
+    positions = db.get_labware_wells(dest_type)
 
     # init destination df
     sample_col = df_map.columns[0]
@@ -423,8 +427,8 @@ def reorder_384well(df, reorder_col):
     return df
 
 
-def pip_mastermix(df_map, outFH, mmvolume=13.1, mmtube=1, 
-                  liq_cls='Water Free Single', lw_tracker=None):
+def pip_mastermix(df_map, gwl, mmvolume=13.1, mmtube=1, 
+                  liq_cls='Water Free Single'):
     """Writing worklist commands for aliquoting mastermix.
     Using 1-asp-multi-disp with 200 ul tips.
     Method:
@@ -435,9 +439,9 @@ def pip_mastermix(df_map, outFH, mmvolume=13.1, mmtube=1,
       * calc total volume: n_disp * mmvolume
     """
     mmtube = int(mmtube)
-    outFH.write('C;MasterMix\n')
+    gwl.add(Fluent.comment('MasterMix'))
 
-    MD = Fluent.multi_disp(lw_tracker)
+    MD = Fluent.multi_disp()
     MD.SrcRackLabel = 'Mastermix tube[{0:0>3}]'.format(mmtube)
     MD.SrcRackType = '1.5ml Eppendorf'
     MD.SrcPosition = mmtube
@@ -447,12 +451,10 @@ def pip_mastermix(df_map, outFH, mmvolume=13.1, mmtube=1,
     MD.Volume = mmvolume
     MD.LiquidClass = liq_cls
     MD.NoOfMultiDisp = int(np.floor(160 / mmvolume))  # using 200 ul tips
+    MD.add(gwl, 0.8)
 
-    outFH.write(MD.cmd() + '\n')
-
-
-def pip_nonbarcode_primer(df_map, outFH, volume, tube, liq_cls='Water Free Single',
-                          lw_tracker=None):
+def pip_nonbarcode_primer(df_map, outFH, volume, tube,
+                          liq_cls='Water Free Single'):
     """Pipetting primers from tube.
     Assuming primer is aliquoted to all samples
     df_map : mapping file dataframe
@@ -492,7 +494,7 @@ def pip_nonbarcode_primer(df_map, outFH, volume, tube, liq_cls='Water Free Singl
 
 def pip_primer(i, outFH, df_map, primer_labware_name, 
                primer_labware_type, primer_target_position,
-               primer_plate_volume, liq_cls, lw_tracker=None):
+               primer_plate_volume, liq_cls):
     """Pipetting a single primer
     """
     # aspiration
@@ -521,8 +523,9 @@ def pip_primer(i, outFH, df_map, primer_labware_name,
     lw_tracker.add(disp, add_tip=False)
     
         
-def pip_primers(df_map, outFH, fp_volume=0, rp_volume=0, fp_tube=0, rp_tube=0, 
-                liq_cls='Water Free Single', lw_tracker=None):
+def pip_primers(df_map, outFH, fp_volume=0, rp_volume=0,
+                fp_tube=0, rp_tube=0, 
+                liq_cls='Water Free Single'):
     """Commands for aliquoting primers
     """
     outFH.write('C;Primers\n')
@@ -582,7 +585,7 @@ def pip_primers(df_map, outFH, fp_volume=0, rp_volume=0, fp_tube=0, rp_tube=0,
     #     raise ValueError('barcode_type not recognized')
                 
 
-def pip_samples(df_map, outFH, liq_cls='Water Free Single', lw_tracker=None):
+def pip_samples(df_map, outFH, liq_cls='Water Free Single'):
     """Commands for aliquoting samples to each PCR rxn
     """
     outFH.write('C;Samples\n')
@@ -615,8 +618,8 @@ def pip_samples(df_map, outFH, liq_cls='Water Free Single', lw_tracker=None):
 
 
 def pip_water(df_map, outFH, pcr_volume=25.0, mm_volume=13.1,
-              fp_volume=2.0, rp_volume=2.0, liq_cls='Water Free Single',
-              lw_tracker=None):
+              fp_volume=2.0, rp_volume=2.0,
+              liq_cls='Water Free Single'):
     """Commands for aliquoting water to each PCR rxn
     """
     outFH.write('C;Water\n')
@@ -681,7 +684,6 @@ def map2biorad(df_map, positions):
     df_biorad['*Target Name'] = np.nan
     df_biorad = df_biorad[['Row', 'Column', '*Target Name', '*Sample Name']]
     
-
     return df_biorad
 
         

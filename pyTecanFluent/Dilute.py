@@ -12,7 +12,6 @@ import pandas as pd
 ## package
 from pyTecanFluent import Utils
 from pyTecanFluent import Fluent
-#from pyTecanFluent import Labware
 
 # functions
 def get_desc():
@@ -129,20 +128,20 @@ def main(args=None):
                        dest_name=args.destname,
                        dest_type=args.desttype,
                        dest_start=args.deststart)
-    
-    # Reordering dest if plate type is 384-well
-    db = Fluent.db()
-    db.get_labware(args.desttype)
-    n_wells = db.get_labware_wells(args.desttype)
-    if n_wells == '384':
-        df_conc = reorder_384well(df_conc, 'TECAN_dest_target_position')
-        
-    # Writing out gwl file
+            
+    # gwl construction
     TipTypes = TipTypes={1000 : args.tip1000_type,
                          200 : args.tip200_type,
                          50 : args.tip50_type,
                          10 : args.tip10_type}    
     gwl = Fluent.gwl(TipTypes)
+
+    # Reordering dest if plate type is 384-well
+    gwl.db.get_labware(args.desttype)
+    n_wells = gwl.db.get_labware_wells(args.desttype)
+    if n_wells == '384':
+        df_conc = reorder_384well(df_conc, 'TECAN_dest_target_position')
+
     ## Dilutant
     pip_dilutant(df_conc, gwl=gwl,
                  src_labware_name=args.dlabware_name,
@@ -215,7 +214,7 @@ def conc2df(concfile, row_select=None, file_format=None, header=True):
 
     # selecting rows
     if row_select is not None:
-        df = df.ix[row_select,]
+        df = df.iloc[row_select]
     
     # checking file format
     check_df_conc(df)
