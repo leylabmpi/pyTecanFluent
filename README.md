@@ -36,6 +36,18 @@ Python interface to TECAN Fluent liquid handling robot
 
 [[top](#sections)]
 
+### Altering the FluentControl database
+
+The database includes:
+
+* labware
+* liquid classes
+* tip types
+* target positions
+
+To edit the database, just alter the JSON files in `./pyTecanFluent/database/` prior to installing.
+
+
 ### With pip
 
 `pip install pyTecanFluent`
