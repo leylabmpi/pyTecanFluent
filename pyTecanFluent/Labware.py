@@ -127,10 +127,10 @@ class labware(object):
         """Adding labware from gwl object to labware object.
         Note: this can be used to sum up labware from multiple gwl objects.
         """
+        # counting tips
+        self._count_tips(gwl.commands)
+        # adding labware 
         for cmd in gwl.commands:
-            # counting tips
-            self._count_tips(cmd)
-            # labware IDs
             self._add_labware(cmd, gwl)
         # summing up tip boxes        
         self._add_tip_boxes(gwl)
@@ -267,22 +267,26 @@ class labware(object):
                 tip_box_label = '{0}[{1:0>3}]'.format(tip_box, i + 1)
                 self.tip_boxes[tip_box_label] = gwl.db.get_labware(tip_box)
                         
-    def _count_tips(self, cmd):
-        """Counting all tips in gwl commands and adding to self
+    def _count_tips(self, commands):
+        """Counting all tip usage in gwl commands and adding to self.
+        Tips can be re-used if no waste command provided, so counting number 
+        of Asp-Waste found.
+        All Asp commands lacking a TipType will be skipped
         """
-        # Just count aspirations
-        if not isinstance(cmd, Fluent.aspirate):
-            return None
-        # Tip type count
-        try:
-            TipType = cmd.TipType
-        except AttributeError:
-            return None
-        try:
-            self.tip_count[TipType] += 1
-        except KeyError:
-            self.tip_count[TipType] = 1
-
+        TipType = None
+        for cmd in commands:
+            if isinstance(cmd, Fluent.waste):
+                # adding tip to count
+                try:
+                    self.tip_count[TipType] += 1
+                except KeyError:
+                    self.tip_count[TipType] = 1                
+            if isinstance(cmd, Fluent.aspirate):
+                # getting tip type for aspirate
+                try:
+                    TipType = cmd.TipType
+                except AttributeError:
+                    TipType = None
 
 class worktable_tracker():
     """Keeping track of available target positions for each target location
