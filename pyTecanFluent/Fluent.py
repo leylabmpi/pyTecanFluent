@@ -44,7 +44,7 @@ class db(object):
             self.liquid_class = json.load(inF)
 
     def RackTypes(self):
-        return self.labware.keys()
+        return list(self.labware.keys())
             
     def get_labware(self, value):
         try:
