@@ -10,146 +10,10 @@ import pandas as pd
 import collections
 
 
-# worktable-specific variables (move to config file?)
-## all labware definitions used 
-LABWARE_DB = {
-    'FCA, 10ul SBS High' : {
-        'target_location' : 'Nest7mm_Pos',
-        'category' : 'tip',
-        'wells' : 96,
-        'max_volume' : None},
-    'FCA, 50ul SBS High' : {
-        'target_location' : 'Nest7mm_Pos',
-        'category' : 'tip',
-        'wells' : 96,
-        'max_volume' : None},
-    'FCA, 200ul SBS High' : {
-        'target_location' : 'Nest7mm_Pos',
-        'category' : 'tip',
-        'wells' : 96,
-        'max_volume' : None},
-    'FCA, 1000ul SBS High' : {
-        'target_location' : 'Nest7mm_Pos',
-        'category' : 'tip',
-        'wells' : 96,
-        'max_volume' : None},
-    'FCA, 10ul Filtered SBS High' : {
-        'target_location' : 'Nest7mm_Pos',
-        'category' : 'tip',
-        'wells' : 96,
-        'max_volume' : None},
-    'FCA, 50ul Filtered SBS High' : {
-        'target_location' : 'Nest7mm_Pos',
-        'category' : 'tip',
-        'wells' : 96,
-        'max_volume' : None},
-    'FCA, 200ul Filtered SBS High' : {
-        'target_location' : 'Nest7mm_Pos',
-        'category' : 'tip',
-        'wells' : 96,
-        'max_volume' : None},
-    'FCA, 1000ul Filtered SBS High' : {
-        'target_location' : 'Nest7mm_Pos',
-        'category' : 'tip',
-        'wells' : 96,
-        'max_volume' : None},
-    '100ml_1' : {
-        'target_location' : 'Trough_100ml_Wash_1',
-        'category' : 'trough',
-        'wells' : 1,
-        'max_volume' : 100000},
-    '96 Well Eppendorf TwinTec PCR' : {
-        'target_location' : 'Nest7mm_Pos',
-        'category' : 'plate',
-        'wells' : 96,
-        'max_volume' : 200},
-    '384 Well Biorad PCR' : {
-        'target_location' : 'Nest7mm_Pos',
-        'category' : 'plate',
-        'wells' : 384,
-        'max_volume' : 40},
-    'OptiPlate_96F' : {
-        'target_location' : 'Nest7mm_Pos',
-        'category' : 'plate',
-        'wells' : 96,
-        'max_volume' : 300},
-    '96 Well Axygen semi skirted and adapter' : {
-        'target_location' : 'Nest7mm_Pos',
-        'category' : 'plate',
-        'wells' : 96,
-        'max_volume' : 200},
-    '1.5ml Eppendorf' : {
-        'target_location' : 'eppendorf',
-        'category' : 'tube',
-        'wells' : 1,
-        'max_volume' : 145000},
-    '2.0ml Eppendorf' : {
-        'target_location' : 'eppendorf',
-        'category' : 'tube',
-        'wells' : 1,
-        'max_volume' : 195000}
-}
-
-## total number of target_positions per target_location
-TARGET_POSITIONS = {
-    'Nest7mm_Pos': {
-        'position_count' : 36, 
-        'boarders' : (1,2,3,4,5,6,7,8,9,10,11,12,
-                      13,18,19,24,25,30,31,36)}, 
-    'eppendorf' : {
-        'position_count' : 96, 
-        'boarders' : ()},
-    'Trough_100ml_Wash_1' : {
-        'position_count' : 8,
-        'boarders' : ()}
-}
-
-## Tip Type DB
-TIP_TYPE_DB = {
-    'FCA, 1000ul SBS' : {
-        'tip_box' : 'FCA, 1000ul SBS High'
-    },
-    'FCA, 200ul SBS' : {
-        'tip_box' : 'FCA, 200ul SBS High'
-    },
-    'FCA, 50ul SBS' : {
-        'tip_box' : 'FCA, 50ul SBS High'
-    },
-    'FCA, 10ul SBS' : {
-        'tip_box' : 'FCA, 10ul SBS High'
-    },
-    'FCA, 1000ul Filtered SBS' : {
-        'tip_box' : 'FCA, 1000ul SBS High'
-    },
-    'FCA, 200ul Filtered SBS' : {
-        'tip_box' : 'FCA, 200ul SBS High'
-    },
-    'FCA, 50ul Filtered SBS' : {
-        'tip_box' : 'FCA, 50ul SBS High'
-    },
-    'FCA, 10ul Filtered SBS' : {
-        'tip_box' : 'FCA, 10ul SBS High'
-    }    
-}
-
-def total_positions(labware_type):
-    """Getting total number of positions for the labware type
-    """
-    try:
-        LABWARE_DB[labware_type]
-    except KeyError:
-        msg = 'Labware type "{}" not recognised'
-        raise KeyError(msg.format(labware_type))
-    try:
-        positions = LABWARE_DB[labware_type]['wells']
-    except KeyError:
-        msg = 'No "wells" key for labware type "{}"'
-        raise KeyError(msg.format(labware_type))
-    return positions
-
 def position2well(position, wells=96, just_row=False, just_col=False):
     """Convert position to well
     Note: assuming column-wise ordering
+    Return: list with row & column IDs => [row,column]
     """
     # making plate index
     wells = int(wells)
@@ -160,7 +24,8 @@ def position2well(position, wells=96, just_row=False, just_col=False):
         nrows = 16
         ncols = 24
     else:
-        raise ValueError('Number of wells ({}) not recognized'.format(wells))
+        msg = 'Number of wells ({}) not recognized'
+        raise ValueError(msg.format(wells))
     
     rows = list(string.ascii_uppercase[:nrows])
     cols = [x + 1 for x in range(ncols)]
@@ -179,13 +44,10 @@ def position2well(position, wells=96, just_row=False, just_col=False):
     else:
         return [row,col]
 
-def well2position(well, wells=96, labware_type=None):
-    """well ID to column-wise position
+def well2position(well, wells=96):
+    """well ID to column-wise position (opposite of position2well)
     """
-    # setting wells based on labware type (if provided)
-    if labware_type is not None:
-        wells = total_positions(labware_type)
-    # skip if already integer (not well)
+    # skip if already integer (not wellID)
     try:
         return int(well)
     except ValueError:
@@ -215,6 +77,8 @@ def well2position(well, wells=96, labware_type=None):
 
 class worktable_tracker():
     """Keeping track of available target positions for each target location
+
+    NOTE: depreciated
     """
     def __init__(self):
         self._target_positions = TARGET_POSITIONS
@@ -317,6 +181,8 @@ class labware_tracker():
     *) labware_type = one of the FluentControl labware definitions
     *) target_location = location type on worktable
     *) target_position = location position on worktable
+
+    NOTE: depreciated
     """
     def __init__(self, tip_types={}):
         self.tip_types = self.tip_type_setter(tip_types)

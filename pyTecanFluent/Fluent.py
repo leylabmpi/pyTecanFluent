@@ -43,7 +43,6 @@ class db(object):
         with open(f) as inF:
             self.liquid_class = json.load(inF)
 
-    #@property
     def RackTypes(self):
         return self.labware.keys()
             
@@ -134,10 +133,10 @@ class labware(object):
         # init liist of dicts (will be coverted to dataframe)
         cols = ['labware_name', 'labware_type',
                 'target_location', 'target_position']
-        df = []
         
         # adding tip boxes
-        for RackLabel,v in sorted(self.tip_boxes.items(), reverse=True):
+        df_tips = []
+        for RackLabel,v in sorted(self.tip_boxes.items()):
             # RackType
             try:
                 RackType = v['RackType']
@@ -150,11 +149,12 @@ class labware(object):
                 msg = 'No possible target location for labware: "{}"'
                 raise ValueError(msg.format(RackLabel))
             # creating table entry
-            df.append({'labware_name' : RackLabel,
+            df_tips.append({'labware_name' : RackLabel,
                        'labware_type' : RackType,
                        'target_location' : loc,
                        'target_position' : pos})
         # adding other labware
+        df_labware = []
         for RackLabel,v in self.labware.items():
             # RackType
             try:
@@ -168,12 +168,17 @@ class labware(object):
                 msg = 'No possible target location for labware: "{}"'
                 raise ValueError(msg.format(RackLabel))
             # creating table entry
-            df.append({'labware_name' : RackLabel,
-                       'labware_type' : RackType,
-                       'target_location' : loc,
-                       'target_position' : pos})            
+            df_labware.append({'labware_name' : RackLabel,
+                               'labware_type' : RackType,
+                               'target_location' : loc,
+                               'target_position' : pos})            
         # covert to dataframe & return
-        return pd.DataFrame.from_dict(df)
+        df_tips = pd.DataFrame.from_dict(df_tips)
+        df_labware = pd.DataFrame.from_dict(df_labware)
+        ## ordering labware dataframe
+        df_labware.sort_values(by=['labware_type', 'target_position'], inplace=True)
+        # return
+        return pd.concat([df_tips, df_labware])
 
     def _next(self, labware, loc_tracker, keep_empty=True):
         """Getting nest target position for target location
@@ -197,20 +202,23 @@ class labware(object):
         except KeyError:
             position_count = 1
         try:
-            keep_empty = target[1]['keep_empy']
+            keep_empty_list = target[1]['keep_empty']
         except KeyError:
-            keep_empty = None
+            keep_empty_list = None
         # setting target location
         while 1:
+            # adding to position counter
             try:
                 loc_tracker[target[0]] += 1
             except KeyError:
                 loc_tracker[target[0]] = 1
+
+            # checking if position is available
             if loc_tracker[target[0]] >= position_count:  
                 msg = 'Not enough positions for target: "{}"'
                 raise ValueError(msg.format(target[0]))
             elif (keep_empty == True and
-                  loc_tracker[target[0]] == keep_empty):
+                  loc_tracker[target[0]] in keep_empty_list):
                 continue
             else:
                 return target[0], loc_tracker[target[0]]                           
@@ -271,15 +279,22 @@ class gwl(object):
         self.TipTypes = TipTypes
         self.commands = []
 
-    def add(self, obj, force_tip=True):
+    def add(self, obj, force_tip=True, default_liq_cls='Water Free Single'):
         """Adding gwl commands ('obj') to list of commands
         """
         # assertions
         if isinstance(obj, aspirate) or isinstance(obj, dispense):
             assert obj.RackType is not None
+            # check that RackType is in database
+            self.db.get_labware(obj.RackType)
+            # check that liquid class is in database (or use default)
+            if self.LiquidClass_exists(obj.LiquidClass) is False:
+                obj.LiquidClass = default_liq_cls
+            
         # forcing usage of particular tip type
         if force_tip is True and isinstance(obj, aspirate):
             obj.TipType = self.set_TipType(obj.Volume)
+        
         # appending to list of commands
         self.commands.append(obj)
 
@@ -318,6 +333,21 @@ class gwl(object):
                 print(msg.format(volume), file=sys.stderr)
             return False
 
+    def RackType_count(self, RackType):
+        """Counting labware with same RackType (different RackLabel, same RackType)
+        """
+        cnt = {}
+        for x in self.commands:
+            # getting possible target locations for RackType
+            try:
+                cmd_RackLabel = x.RackLabel
+                cmd_RackType = x.RackType
+            except AttributeError:
+                continue
+            if RackType == cmd_RackType:
+                cnt[cmd_RackLabel] = 1
+        return len(cnt.keys())
+                
     def LiquidClass_exists(self, liquid_class, warn=False):
         """Check that liquid class exists in the database.
         """
