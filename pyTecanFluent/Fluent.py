@@ -366,7 +366,7 @@ class gwl(object):
     @TipTypes.setter
     def TipTypes(self, value):
         if value is None:
-            self._Tiptypes = None
+            self._TipTypes = None
         else:
             for k,v in value.items():
                 # key should be integer or float

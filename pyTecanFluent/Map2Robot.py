@@ -148,7 +148,8 @@ def main(args=None):
     check_df_map(df_map, args)
     
     # Making destination dataframe
-    df_map = add_dest(df_map, args.destname,
+    df_map = add_dest(df_map,
+                      dest_labware=args.destname,
                       dest_type=args.desttype,
                       dest_start=args.deststart,
                       rxn_reps=args.rxns)
@@ -168,9 +169,9 @@ def main(args=None):
 
     ## mastermix
     pip_mastermix(df_map, gwl,
-                      mmtube=args.mmtube,
-                      mmvolume=args.mmvolume, 
-                      liq_cls=args.mm_liq)
+                  mmtube=args.mmtube,
+                  mmvolume=args.mmvolume, 
+                  liq_cls=args.mm_liq)
     ## primers
     pip_primers(df_map, gwl,
                 fp_volume=args.fpvolume,
@@ -242,7 +243,7 @@ def check_args(args):
     wells = db.get_labware_wells(args.desttype)
     if args.deststart < 1 or args.deststart > wells:
         msg = 'Destination start well # must be in range: 1-{}'
-        raise ValueError(msg.format(destlimit))
+        raise ValueError(msg.format(wells))
 
     # rows in mapping file
     args.rows = Utils.make_range(args.rows, set_zero_index=True)
