@@ -60,3 +60,7 @@ class Test_Utils(unittest.TestCase):
         gwl_file = os.path.join(data_dir, 'multi_dispense.gwl')
         ret = Utils.check_gwl(gwl_file)
         self.assertIsNone(ret)
+
+        
+if __name__ == '__main__':
+    unittest.main()

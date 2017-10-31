@@ -90,7 +90,7 @@ def parse_args(test_args=None, subparsers=None):
     pooling = parser.add_argument_group('Pooling')
     pooling.add_argument('--volume', type=float, default=30.0,
                          help='Per-sample volume to pool (default: %(default)s)')
-    pooling.add_argument('--liqcls', type=str, default='Water Free Multi No-cLLD',
+    pooling.add_argument('--liqcls', type=str, default='Water Free Single No-cLLD',
                          help='Liquid class for pooling (default: %(default)s)')
     pooling.add_argument('--new_tips',  action='store_true', default=False,
                         help='Use new tips between sample replicates? (default: %(default)s)')
@@ -162,75 +162,61 @@ def main(args=None):
                        dest_type=args.desttype,
                        dest_start=args.deststart)
     
-    exit()
-
+    # gwl construction
+    TipTypes = TipTypes={1000 : args.tip1000_type,
+                         200 : args.tip200_type,
+                         50 : args.tip50_type,
+                         10 : args.tip10_type}    
+    gwl = Fluent.gwl(TipTypes)
     
     # Reordering dest if plate type is 384-well
-    try:
-        n_wells = Labware.LABWARE_DB[args.desttype]['wells']
-    except KeyError:
-        msg = 'Labware type "{}" does not have "wells" attribute'
-        raise KeyError(msg.format(args.desttype))
+    gwl.db.get_labware(args.desttype)
+    n_wells = gwl.db.get_labware_wells(args.desttype)
     if n_wells == '384':
         df_samp = reorder_384well(df_samp, args.position_col)
 
-    # Writing out gwl file
-    tip_types = tip_types={1000 : args.tip1000_type,
-                           200 : args.tip200_type,
-                           50 : args.tip50_type,
-                           10 : args.tip10_type}
-    lw_tracker = Labware.labware_tracker(tip_types=tip_types)
+    # samples
+    pool_samples(df_samp,
+                 gwl,
+                 sample_col=args.sample_col,
+                 labware_name_col=args.sample_labware_name,
+                 labware_type_col=args.sample_labware_type,
+                 position_col=args.position_col,                     
+                 dest_labware_name=args.destname,
+                 dest_labware_type=args.desttype,
+                 volume=args.volume,
+                 liq_cls=args.liqcls,
+                 new_tips=args.new_tips)
+    
+    ## writing out worklist (gwl) file
     gwl_file = args.prefix + '.gwl'
-    with open(gwl_file, 'w') as gwlFH:
-        # samples
-        pool_samples(df_samp,
-                     outFH=gwlFH,
-                     sample_col=args.sample_col,
-                     labware_name_col=args.sample_labware_name,
-                     labware_type_col=args.sample_labware_type,
-                     position_col=args.position_col,                     
-                     dest_labware_name=args.destname,
-                     dest_labware_type=args.desttype,
-                     volume=args.volume,
-                     liq_cls=args.liqcls,
-                     new_tips=args.new_tips,
-                     lw_tracker=lw_tracker)
+    gwl.write(gwl_file)
 
     # making labware table
-    df_labware = lw_tracker.labware_table()
+    lw = Labware.labware()
+    lw.add_gwl(gwl)
+    lw_df = lw.table()
     lw_file = args.prefix + '_labware.txt'
-    df_labware.to_csv(lw_file, sep='\t', index=False)
+    lw_df.to_csv(lw_file, sep='\t', index=False)
 
-    # # Writing out table
+
+    # Writing out updated mapping table
     if df_map is not None:
         df_map = filter_map(df_map, df_samp, args.sample_col)
         map_file = args.prefix + '_map.txt'        
         df_map.round(1).to_csv(map_file, sep='\t', index=False)
-
-    # Create windows-line breaks formatted versions
-    gwl_file_win = Utils.to_win(gwl_file)
-    lw_file_win = Utils.to_win(lw_file)
-    if df_map is not None:
-        map_file_win = Utils.to_win(map_file)
 
     # # status
     Utils.file_written(gwl_file)
     Utils.file_written(lw_file)
     if df_map is not None:
         Utils.file_written(map_file)
-    Utils.file_written(gwl_file_win)
-    Utils.file_written(lw_file_win)
-    if df_map is not None:
-        Utils.file_written(map_file_win)
-    
+        
     # end
     if df_map is not None:
-        return (gwl_file, gwl_file_win, 
-                lw_file, lw_file_win,
-                map_file, map_file_win)
+        return (gwl_file, lw_file, map_file)
     else:
-        return (gwl_file, gwl_file_win, 
-                lw_file, lw_file_win)
+        return (gwl_file, lw_file) 
     
 def check_args(args):
     """Checking user input
@@ -407,18 +393,18 @@ def add_dest(df, dest_labware, sample_col, position_col,
     return df_j
 
 
-def pool_samples(df, outFH, sample_col, labware_name_col,
+def pool_samples(df, gwl, sample_col, labware_name_col,
                  labware_type_col, position_col,
                  dest_labware_name, dest_labware_type,
-                 volume, liq_cls='Water Free Multi No-cLLD',
+                 volume, liq_cls='Water Free Single No-cLLD',
                  new_tips=False, lw_tracker=None):
     """Writing gwl commands for pooling sample replicates
     """
     # sorting by postion
     df = df.sort_values('TECAN_dest_target_position')
-    
-    outFH.write('C;Sample pooling\n')
-    # for each Sample, write out asp/dispense commands
+
+    gwl.add(Fluent.comment('Sample pooling'))
+    # for each Sample, generate asp/dispense commands
     ## optional: keep tips among sample replicates
     for sample in df[sample_col].unique():
         df_sub = df.loc[df[sample_col] == sample]
@@ -431,7 +417,7 @@ def pool_samples(df, outFH, sample_col, labware_name_col,
             asp.Position = df_sub.ix[i, position_col]
             asp.Volume = volume 
             asp.LiquidClass = liq_cls
-            outFH.write(asp.cmd() + '\n')
+            gwl.add(asp)
 
             # dispensing
             disp = Fluent.dispense()
@@ -440,19 +426,15 @@ def pool_samples(df, outFH, sample_col, labware_name_col,
             disp.Position = df_sub.ix[i,'TECAN_dest_target_position']
             disp.Volume = volume
             disp.LiquidClass = liq_cls
-            outFH.write(disp.cmd() + '\n')
+            gwl.add(disp)
 
-            # tracking labware & tip usage
-            lw_tracker.add(asp, add_tip=False)
-            lw_tracker.add(disp, add_tip=True)
-
-            # tip to waste
+            # tip to waste (each replicate)
             if new_tips == True:
-                outFH.write('W;\n')
+                gwl.add(Fluent.waste())
                 
-        # tip to waste
+        # tip to waste (between samples)
         if new_tips == False:            
-            outFH.write('W;\n')
+            gwl.add(Fluent.waste())
 
 
 def filter_map(df_map, df_samp, sample_col):

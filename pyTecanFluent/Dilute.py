@@ -451,6 +451,8 @@ def pip_samples(df_conc, gwl):
         disp.Volume = round(df_conc.ix[i,'TECAN_sample_volume'], 2)
         disp.LiquidClass = 'Water Free Single No-cLLD'
         gwl.add(disp)
+
+        # waste
         gwl.add(Fluent.waste())
 
 # main
