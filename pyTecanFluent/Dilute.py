@@ -12,6 +12,7 @@ import pandas as pd
 ## package
 from pyTecanFluent import Utils
 from pyTecanFluent import Fluent
+from pyTecanFluent import Labware
 
 # functions
 def get_desc():
@@ -154,7 +155,7 @@ def main(args=None):
     gwl.write(gwl_file)
     
     # making labware table
-    lw = Fluent.labware()
+    lw = Labware.labware()
     lw.add_gwl(gwl)
     lw_df = lw.table()
     lw_file = args.prefix + '_labware.txt'

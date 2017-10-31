@@ -1,78 +1,287 @@
 from __future__ import print_function
 
 # import
+## batteries
 import os
 import sys
+import json
 import string
 import itertools
+import collections
+## 3rd party
 import numpy as np
 import pandas as pd
-import collections
+## package
+from pyTecanFluent import Fluent
 
 
-def position2well(position, wells=96, just_row=False, just_col=False):
-    """Convert position to well
-    Note: assuming column-wise ordering
-    Return: list with row & column IDs => [row,column]
+class utils(object):
+    """Utility functions for labware
     """
-    # making plate index
-    wells = int(wells)
-    if wells == 96:
-        nrows = 8
-        ncols = 12
-    elif wells == 384:
-        nrows = 16
-        ncols = 24
-    else:
-        msg = 'Number of wells ({}) not recognized'
-        raise ValueError(msg.format(wells))
+
+    def __init__(self):
+        # target position
+        d = os.path.join(os.path.split(__file__)[0],  'database')
+        f = os.path.join(d, 'labware.json')
+        with open(f) as inF:
+            self.labware = json.load(inF)
+
+    def get_wells(self, RackType):
+        """Getting wells of RackType
+        """
+        if RackType is None:
+            return None
+        try:
+            wells = self.labware[RackType]['wells']
+        except KeyError:
+            return None
+        return wells
+            
+    def position2well(self, position, wells=96, just_row=False, just_col=False):
+        """Convert position to well
+        Note: assuming column-wise ordering
+        Return: list with row & column IDs => [row,column]
+        """
+        # making plate index
+        wells = int(wells)
+        if wells == 96:
+            nrows = 8
+            ncols = 12
+        elif wells == 384:
+            nrows = 16
+            ncols = 24
+        else:
+            msg = 'Number of wells ({}) not recognized'
+            raise ValueError(msg.format(wells))
     
-    rows = list(string.ascii_uppercase[:nrows])
-    cols = [x + 1 for x in range(ncols)]
-    # position : [row, col]
-    pos_idx = {i+1:x for i,x in enumerate(itertools.product(cols, rows))}
-    # getting row-col
-    try:
-        col,row = pos_idx[position]
-    except KeyError:
-        msg = 'Cannot find well for position: {}'
-        raise KeyError(msg.format(position))
-    if just_row == True:
-        return row
-    elif just_col == True:
-        return col
-    else:
-        return [row,col]
+        rows = list(string.ascii_uppercase[:nrows])
+        cols = [x + 1 for x in range(ncols)]
+        # position : [row, col]
+        pos_idx = {i+1:x for i,x in enumerate(itertools.product(cols, rows))}
+        # getting row-col
+        try:
+            col,row = pos_idx[position]
+        except KeyError:
+            msg = 'Cannot find well for position: {}'
+            raise KeyError(msg.format(position))
+        if just_row == True:
+            return row
+        elif just_col == True:
+            return col
+        else:
+            return [row,col]
 
-def well2position(well, wells=96):
-    """well ID to column-wise position (opposite of position2well)
+    def well2position(self, well, wells=96, RackType=None):
+        """well ID to column-wise position (opposite of position2well)
+        """
+        # skip if already integer (not wellID)
+        try:
+            return int(well)
+        except ValueError:
+            pass
+        # if RackType provided, selecting wells from database
+        if RackType is not None:
+            try:
+                wells = self.labware[RackType]['wells']
+            except KeyError:
+                msg = 'No wells found for RackType: "{}"'
+                raise KeyError(msg.format(RackType))
+        # well --> position index
+        wells = int(wells)
+        if wells == 96:
+            nrows = 8
+            ncols = 12
+        elif wells == 384:
+            nrows = 16
+            ncols = 24
+        else:
+            raise ValueError('Number of wells ({}) not recognized'.format(wells))    
+        rows = list(string.ascii_uppercase[:nrows])
+        cols = [x + 1 for x in range(ncols)]
+        well_idx = {'{0}{1:0>2}'.format(x[1], x[0]):i+1 for i,x in enumerate(itertools.product(cols, rows))}
+        # getting position
+        try:
+            position = well_idx[well]
+        except KeyError:
+            msg = 'Cannot find well "{}"'
+            raise KeyError(msg.format(well))
+        # return 
+        return position
+
+
+class labware(object):
+    """Class for summarizing labware in a gwl object.
+    Note: tip boxes are considered separate from labware
     """
-    # skip if already integer (not wellID)
-    try:
-        return int(well)
-    except ValueError:
-        pass
-    # well --> position index
-    wells = int(wells)
-    if wells == 96:
-        nrows = 8
-        ncols = 12
-    elif wells == 384:
-        nrows = 16
-        ncols = 24
-    else:
-        raise ValueError('Number of wells ({}) not recognized'.format(wells))    
-    rows = list(string.ascii_uppercase[:nrows])
-    cols = [x + 1 for x in range(ncols)]
-    well_idx = {'{0}{1:0>2}'.format(x[1], x[0]):i+1 for i,x in enumerate(itertools.product(cols, rows))}
-    # getting position
-    try:
-        position = well_idx[well]
-    except KeyError:
-        msg = 'Cannot find well "{}"'
-        raise KeyError(msg.format(well))
-    # return 
-    return position
+    def __init__(self):
+        self.tip_count = {}
+        self.tip_boxes = {}
+        self.labware = collections.OrderedDict()
+        # target position
+        d = os.path.join(os.path.split(__file__)[0],  'database')
+        f = os.path.join(d, 'target_position.json')
+        with open(f) as inF:
+            self.target_position = json.load(inF)
+                
+    def add_gwl(self, gwl):
+        """Adding labware from gwl object to labware object.
+        Note: this can be used to sum up labware from multiple gwl objects.
+        """
+        for cmd in gwl.commands:
+            # counting tips
+            self._count_tips(cmd)
+            # labware IDs
+            self._add_labware(cmd, gwl)
+        # summing up tip boxes        
+        self._add_tip_boxes(gwl)
+
+    def table(self):
+        """Creating pandas dataframe of labware
+        columns: labware_name, labware_type,target_location,target_position
+        """
+        # init target position counters
+        loc_tracker = {}
+        
+        # init liist of dicts (will be coverted to dataframe)
+        cols = ['labware_name', 'labware_type',
+                'target_location', 'target_position']
+        
+        # adding tip boxes
+        df_tips = []
+        for RackLabel,v in sorted(self.tip_boxes.items()):
+            # RackType
+            try:
+                RackType = v['RackType']
+            except KeyError:
+                msg = 'No RackType for labware: "{}"'
+                raise KeyError(msg.format(RackLabel))
+            # location & position
+            loc,pos = self._next(v, loc_tracker, keep_empty=False)
+            if loc is None:
+                msg = 'No possible target location for labware: "{}"'
+                raise ValueError(msg.format(RackLabel))
+            # creating table entry
+            df_tips.append({'labware_name' : RackLabel,
+                       'labware_type' : RackType,
+                       'target_location' : loc,
+                       'target_position' : pos})
+        # adding other labware
+        df_labware = []
+        for RackLabel,v in self.labware.items():
+            # RackType
+            try:
+                RackType = v['RackType']
+            except KeyError:
+                msg = 'No RackType for labware: "{}"'
+                raise KeyError(msg.format(RackLabel))
+            # location & position
+            loc,pos = self._next(v, loc_tracker, keep_empty=True)
+            if loc is None:
+                msg = 'No possible target location for labware: "{}"'
+                raise ValueError(msg.format(RackLabel))
+            # creating table entry
+            df_labware.append({'labware_name' : RackLabel,
+                               'labware_type' : RackType,
+                               'target_location' : loc,
+                               'target_position' : pos})            
+        # covert to dataframe & return
+        df_tips = pd.DataFrame.from_dict(df_tips)
+        df_labware = pd.DataFrame.from_dict(df_labware)
+        ## ordering labware dataframe
+        df_labware.sort_values(by=['labware_type', 'target_position'], inplace=True)
+        # return
+        return pd.concat([df_tips, df_labware])
+
+    def _next(self, labware, loc_tracker, keep_empty=True):
+        """Getting nest target position for target location
+        """
+        # what the possible 
+        psbl_targets = labware['target_location']
+        # which of the possible target positions to use?
+        target = None
+        for x in psbl_targets:
+            try:                
+                target = self.target_position[x]
+                target = [x, target]
+                break
+            except KeyError:
+                continue            
+        if target is None:
+            return None
+        # target variables
+        try:
+            position_count = target[1]['position_count']
+        except KeyError:
+            position_count = 1
+        try:
+            keep_empty_list = target[1]['keep_empty']
+        except KeyError:
+            keep_empty_list = None
+        # setting target location
+        while 1:
+            # adding to position counter
+            try:
+                loc_tracker[target[0]] += 1
+            except KeyError:
+                loc_tracker[target[0]] = 1
+
+            # checking if position is available
+            if loc_tracker[target[0]] >= position_count:  
+                msg = 'Not enough positions for target: "{}"'
+                raise ValueError(msg.format(target[0]))
+            elif (keep_empty == True and
+                  loc_tracker[target[0]] in keep_empty_list):
+                continue
+            else:
+                return target[0], loc_tracker[target[0]]                           
+        return None
+
+    def _add_labware(self, cmd, gwl):
+        """Adding labware (no tip boxes) to self
+        """
+        try:
+            RackLabel = cmd.RackLabel
+        except AttributeError:
+            return None
+        try:
+            RackType = cmd.RackType
+        except AttributeError:
+            return None
+        self.labware[RackLabel] = gwl.db.get_labware(RackType)
+    
+    def _add_tip_boxes(self, gwl):
+        """Adding tip boxes to self
+        """
+        # getting tip boxes from count
+        for TipType,count in self.tip_count.items():
+            tip_box = gwl.db.get_tip_box(TipType)
+            d = gwl.db.get_labware(tip_box)
+            try:
+                wells = d['wells']
+            except KeyError:
+                msg = '"wells" key not found for labware: "{}"'
+                raise KeyError(msg.format(tip_box))
+            # number of tip boxes for the well
+            n_boxes = int(round(count / wells + 0.5,0))
+            for i in range(n_boxes):
+                tip_box_label = '{0}[{1:0>3}]'.format(tip_box, i + 1)
+                self.tip_boxes[tip_box_label] = gwl.db.get_labware(tip_box)
+                        
+    def _count_tips(self, cmd):
+        """Counting all tips in gwl commands and adding to self
+        """
+        # Just count aspirations
+        if not isinstance(cmd, Fluent.aspirate):
+            return None
+        # Tip type count
+        try:
+            TipType = cmd.TipType
+        except AttributeError:
+            return None
+        try:
+            self.tip_count[TipType] += 1
+        except KeyError:
+            self.tip_count[TipType] = 1
 
 
 class worktable_tracker():

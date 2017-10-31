@@ -129,9 +129,9 @@ def main(args=None):
     if args is None:
         args = parse_args()
     check_args(args)
-    
+
     # Import
-    ## sample file
+    ## sample file(s); then joining
     df_samps = []
     for f in args.samplefiles:
         df_samp = sample2df(f,
@@ -145,23 +145,25 @@ def main(args=None):
                             header=args.sample_header)
         df_samps.append(df_samp)
     df_samp = pd.concat(df_samps)
-
+    
     ## mapping file
     df_map = map2df(args.mapfile,                    
                     file_format=args.map_format,
                     header=args.map_header)
-
+    
     # filtering sample file to just pass
     df_samp = df_samp.loc[df_samp[args.include_col].isin(['success', 'pass', 'include'])]
 
     # adding destination
     df_samp = add_dest(df_samp,
-                       args.destname,
-                       args.sample_col,
-                       args.position_col,
+                       dest_labware=args.destname,
+                       sample_col=args.sample_col,
+                       position_col=args.position_col,
                        dest_type=args.desttype,
                        dest_start=args.deststart)
     
+    exit()
+
     
     # Reordering dest if plate type is 384-well
     try:
@@ -236,14 +238,7 @@ def check_args(args):
     # input table column IDs
     args.rows = Utils.make_range(args.sample_rows, set_zero_index=True)
     # dilution
-    assert args.volume >= 0.0, '--volume must be >= 0'
-    # destination labware type
-    try:
-        Labware.LABWARE_DB[args.desttype]
-    except KeyError:
-        msg = 'Destination labware type "{}" not recognized'
-        raise ValueError(msg.format(args.desttype))
-    
+    assert args.volume >= 0.0, '--volume must be >= 0'    
                          
 def sample2df(samplefile, sample_col, include_col,
               labware_name_col, labware_type_col, position_col,
@@ -288,11 +283,10 @@ def sample2df(samplefile, sample_col, include_col,
     df.ix[:,include_col] = df.ix[:,include_col].apply(f)
     msg = '"{}" value not allowed in include column in sample file'
     df.ix[:,include_col].apply(check_include_column)
-    ## labware type col
-    df.ix[:,labware_type_col].apply(check_labware_type_column)
     ## converting wells to positions
-    f = lambda row: Labware.well2position(row[position_col],
-                                        labware_type=row[labware_type_col])
+    lw_utils = Labware.utils()
+    f = lambda row: lw_utils.well2position(row[position_col],
+                                           RackType=row[labware_type_col])
     df[position_col] = df.apply(f, axis=1)
         
     # selecting relevant columns
@@ -307,9 +301,9 @@ def check_include_column(x):
     psbl_vals = ('success', 'include', 'pass', 'fail', 'skip')
     assert x in psbl_vals, msg.format(x)
 
-def check_labware_type_column(x):
-    msg = 'Labware type "{}" not recognized'
-    assert x in Labware.LABWARE_DB.keys(), msg.format(x)
+#def check_labware_type_column(x):
+#    msg = 'Labware type "{}" not recognized'
+#    assert x in Labware.LABWARE_DB.keys(), msg.format(x)
     
 def map2df(mapfile, file_format=None, header=True):
     """Loading a mapping file as a pandas dataframe
@@ -353,7 +347,8 @@ def map2df(mapfile, file_format=None, header=True):
     return df
 
     
-def add_dest(df, dest_labware, sample_col, position_col, dest_type='96 Well Eppendorf TwinTec PCR',
+def add_dest(df, dest_labware, sample_col, position_col,
+             dest_type='96 Well Eppendorf TwinTec PCR',
              dest_start=1):
     """Setting destination locations for samples & primers.
     Making a new dataframe with:
@@ -365,8 +360,12 @@ def add_dest(df, dest_labware, sample_col, position_col, dest_type='96 Well Eppe
     Joining to df
     """
     dest_start= int(dest_start)
+    lw_utils = Labware.utils()
     # labware type found in DB?
-    positions = Labware.total_positions(dest_type)
+    positions = lw_utils.get_wells(dest_type)
+    if positions is None:
+        msg = 'RackType has no "wells" value: "{}"'
+        raise ValueError(msg.format(dest_type))
 
     # init destination df
     cols = ['TECAN_dest_labware_name',

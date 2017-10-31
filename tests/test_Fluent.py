@@ -10,7 +10,7 @@ import unittest
 import pandas as pd
 ## package
 from pyTecanFluent import Fluent
-
+from pyTecanFluent import Labware
 
 # data dir
 test_dir = os.path.join(os.path.dirname(__file__))
@@ -88,7 +88,7 @@ class Test_gwl(unittest.TestCase):
         
 class Test_labware(unittest.TestCase):
     def setUp(self):
-        self.labware = Fluent.labware()
+        self.labware = Labware.labware()
 
     def tearDown(self):
         pass

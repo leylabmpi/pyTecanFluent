@@ -208,7 +208,7 @@ def main(args=None):
                      error_perc=args.errorperc)
         
     # making labware table
-    lw = Fluent.labware()
+    lw = Labware.labware()
     lw.add_gwl(gwl)
     lw_df = lw.table()
     lw_file = args.prefix + '_labware.txt'
@@ -620,7 +620,8 @@ def map2biorad(df_map, positions):
     df_biorad = df_map.copy()
     df_biorad = df_biorad[['#SampleID', 'TECAN_dest_target_position']]
     df_biorad.columns = ['*Sample Name', 'TECAN_dest_target_position']
-    f = functools.partial(Labware.position2well, wells = positions)
+    lw_utils = Labware.utils()
+    f = functools.partial(lw_utils.position2well, wells = positions)
     x = df_map['TECAN_dest_target_position'].apply(f)
     x = pd.DataFrame([y for y in x], columns=['Row', 'Column'])
     df_biorad['Row'] = x.ix[:,0].tolist()
