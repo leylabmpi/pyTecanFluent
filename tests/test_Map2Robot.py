@@ -139,7 +139,7 @@ class Test_Map2Robot_destStart384(unittest.TestCase):
                                          dest_type=self.args.desttype,
                                          dest_start=200)
         self.assertTrue(isinstance(self.df_map, pd.DataFrame))
-        loc_start = self.df_map.ix[0,'TECAN_dest_target_position']
+        loc_start = self.df_map.loc[0,'TECAN_dest_target_position']
         self.assertEqual(loc_start, 200.0)
 
     def test_load_map_deststart384_2(self):
@@ -149,7 +149,7 @@ class Test_Map2Robot_destStart384(unittest.TestCase):
                                          dest_start=370)
         self.assertTrue(isinstance(self.df_map, pd.DataFrame))
 
-        loc_start = self.df_map.ix[0,'TECAN_dest_target_position']
+        loc_start = self.df_map.loc[0,'TECAN_dest_target_position']
         self.assertEqual(loc_start, 370.0)
         
         #i = self.df_map.shape[0]-1

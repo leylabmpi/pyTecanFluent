@@ -266,9 +266,9 @@ def sample2df(samplefile, sample_col, include_col,
             raise ValueError(msg.format(req_col))    
     ## include col
     f = lambda x: x.lower()
-    df.ix[:,include_col] = df.ix[:,include_col].apply(f)
+    df.loc[:,include_col] = df.loc[:,include_col].apply(f)
     msg = '"{}" value not allowed in include column in sample file'
-    df.ix[:,include_col].apply(check_include_column)
+    df.loc[:,include_col].apply(check_include_column)
     ## converting wells to positions
     lw_utils = Labware.utils()
     f = lambda row: lw_utils.well2position(row[position_col],
@@ -276,7 +276,7 @@ def sample2df(samplefile, sample_col, include_col,
     df[position_col] = df.apply(f, axis=1)
         
     # selecting relevant columns
-    df = df.ix[:,req_cols]
+    df = df.loc[:,req_cols]
     # ordering by position
     df = df.sort_values(position_col)
     
@@ -369,7 +369,7 @@ def add_dest(df, dest_labware, sample_col, position_col,
     # filling destination df
     ## for position, just 1 position per sample
     samples = {}
-    for i,sample in enumerate(df.ix[:,sample_col]):
+    for i,sample in enumerate(df.loc[:,sample_col]):
         # dest position
         try:
             dest_position = samples[sample]
@@ -412,18 +412,18 @@ def pool_samples(df, gwl, sample_col, labware_name_col,
         for i in range(df_sub.shape[0]):
             # aspiration
             asp = Fluent.aspirate()
-            asp.RackLabel = df_sub.ix[i, labware_name_col]
-            asp.RackType = df_sub.ix[i, labware_type_col]
-            asp.Position = df_sub.ix[i, position_col]
+            asp.RackLabel = df_sub.loc[i, labware_name_col]
+            asp.RackType = df_sub.loc[i, labware_type_col]
+            asp.Position = df_sub.loc[i, position_col]
             asp.Volume = volume 
             asp.LiquidClass = liq_cls
             gwl.add(asp)
 
             # dispensing
             disp = Fluent.dispense()
-            disp.RackLabel = df_sub.ix[i,'TECAN_dest_labware_name']
-            disp.RackType = df_sub.ix[i,'TECAN_dest_labware_type']
-            disp.Position = df_sub.ix[i,'TECAN_dest_target_position']
+            disp.RackLabel = df_sub.loc[i,'TECAN_dest_labware_name']
+            disp.RackType = df_sub.loc[i,'TECAN_dest_labware_type']
+            disp.Position = df_sub.loc[i,'TECAN_dest_target_position']
             disp.Volume = volume
             disp.LiquidClass = liq_cls
             gwl.add(disp)

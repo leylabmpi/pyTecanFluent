@@ -431,24 +431,24 @@ def pip_samples(df_conc, gwl):
     # for each Sample-PCR_rxn_rep, write out asp/dispense commands
     for i in range(df_conc.shape[0]):
         # skipping no-volume
-        if df_conc.ix[i,'TECAN_sample_volume'] <= 0:
+        if df_conc.loc[i,'TECAN_sample_volume'] <= 0:
             continue
         
         # aspiration
         asp = Fluent.aspirate()
-        asp.RackLabel = df_conc.ix[i,'TECAN_labware_name']
-        asp.RackType = df_conc.ix[i,'TECAN_labware_type']
-        asp.Position = df_conc.ix[i,'TECAN_target_position']
-        asp.Volume = round(df_conc.ix[i,'TECAN_sample_volume'], 2)
+        asp.RackLabel = df_conc.loc[i,'TECAN_labware_name']
+        asp.RackType = df_conc.loc[i,'TECAN_labware_type']
+        asp.Position = df_conc.loc[i,'TECAN_target_position']
+        asp.Volume = round(df_conc.loc[i,'TECAN_sample_volume'], 2)
         asp.LiquidClass = 'Water Free Single No-cLLD'
         gwl.add(asp)
         
         # dispensing
         disp = Fluent.dispense()
-        disp.RackLabel = df_conc.ix[i,'TECAN_dest_labware_name']
-        disp.RackType = df_conc.ix[i,'TECAN_dest_labware_type']        
-        disp.Position = df_conc.ix[i,'TECAN_dest_target_position']
-        disp.Volume = round(df_conc.ix[i,'TECAN_sample_volume'], 2)
+        disp.RackLabel = df_conc.loc[i,'TECAN_dest_labware_name']
+        disp.RackType = df_conc.loc[i,'TECAN_dest_labware_type']        
+        disp.Position = df_conc.loc[i,'TECAN_dest_target_position']
+        disp.Volume = round(df_conc.loc[i,'TECAN_sample_volume'], 2)
         disp.LiquidClass = 'Water Free Single No-cLLD'
         gwl.add(disp)
 

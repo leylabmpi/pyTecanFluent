@@ -363,7 +363,7 @@ def add_dest(df_map, dest_labware,
     
     # filling destination df
     orig_dest_labware = dest_labware
-    for i,(sample,rep) in enumerate(product(df_map.ix[:,0], range(rxn_reps))):
+    for i,(sample,rep) in enumerate(product(df_map.iloc[:,0], range(rxn_reps))):
         # dest location
         dest_position = i + dest_start
         dest_position = positions if dest_position % positions == 0 else dest_position % positions 
@@ -415,9 +415,9 @@ def pip_mastermix(df_map, gwl, mmvolume=13.1, mmtube=1,
     MD.SrcRackLabel = 'Mastermix tube[{0:0>3}]'.format(mmtube)
     MD.SrcRackType = '1.5ml Eppendorf'
     MD.SrcPosition = mmtube
-    MD.DestRackLabel = df_map.ix[:,'TECAN_dest_labware_name']    
-    MD.DestRackType = df_map.ix[:,'TECAN_dest_labware_type']    
-    MD.DestPositions = df_map.ix[:,'TECAN_dest_target_position']
+    MD.DestRackLabel = df_map.loc[:,'TECAN_dest_labware_name']    
+    MD.DestRackType = df_map.loc[:,'TECAN_dest_labware_type']    
+    MD.DestPositions = df_map.loc[:,'TECAN_dest_target_position']
     MD.Volume = mmvolume
     MD.LiquidClass = liq_cls
     MD.NoOfMultiDisp = int(np.floor(160 / mmvolume))  # using 200 ul tips
@@ -446,9 +446,9 @@ def pip_nonbarcode_primer(df_map, gwl, volume, tube,
 
         # dispensing
         disp = Fluent.dispense()
-        disp.RackLabel = df_map.ix[i,'TECAN_dest_labware_name']
-        disp.RackType = df_map.ix[i,'TECAN_dest_labware_type']
-        disp.Position = df_map.ix[i,'TECAN_dest_target_position']
+        disp.RackLabel = df_map.loc[i,'TECAN_dest_labware_name']
+        disp.RackType = df_map.loc[i,'TECAN_dest_labware_type']
+        disp.Position = df_map.loc[i,'TECAN_dest_target_position']
         disp.Volume = volume
         disp.LiquidClass = liq_cls
         gwl.add(disp)
@@ -463,18 +463,18 @@ def pip_primer(i, gwl, df_map, primer_labware_name,
     """
     # aspiration
     asp = Fluent.aspirate()
-    asp.RackLabel = df_map.ix[i, primer_labware_name]
-    asp.RackType = df_map.ix[i, primer_labware_type]
-    asp.Position = df_map.ix[i, primer_target_position]
+    asp.RackLabel = df_map.loc[i, primer_labware_name]
+    asp.RackType = df_map.loc[i, primer_labware_type]
+    asp.Position = df_map.loc[i, primer_target_position]
     asp.Volume = primer_plate_volume
     asp.LiquidClass = liq_cls
     gwl.add(asp)
 
     # dispensing
     disp = Fluent.dispense()
-    disp.RackLabel = df_map.ix[i,'TECAN_dest_labware_name']
-    disp.RackType = df_map.ix[i,'TECAN_dest_labware_type']
-    disp.Position = df_map.ix[i,'TECAN_dest_target_position']
+    disp.RackLabel = df_map.loc[i,'TECAN_dest_labware_name']
+    disp.RackType = df_map.loc[i,'TECAN_dest_labware_type']
+    disp.Position = df_map.loc[i,'TECAN_dest_target_position']
     disp.Volume = primer_plate_volume
     asp.LiquidClass = liq_cls
     gwl.add(disp)
@@ -521,19 +521,19 @@ def pip_samples(df_map, gwl, liq_cls='Water Free Single'):
     for i in range(df_map.shape[0]):
         # aspiration
         asp = Fluent.aspirate()
-        asp.RackLabel = df_map.ix[i,'TECAN_sample_labware_name']
-        asp.RackType = df_map.ix[i,'TECAN_sample_labware_type']
-        asp.Position = df_map.ix[i,'TECAN_sample_target_position']
-        asp.Volume = df_map.ix[i,'TECAN_sample_rxn_volume']
+        asp.RackLabel = df_map.loc[i,'TECAN_sample_labware_name']
+        asp.RackType = df_map.loc[i,'TECAN_sample_labware_type']
+        asp.Position = df_map.loc[i,'TECAN_sample_target_position']
+        asp.Volume = df_map.loc[i,'TECAN_sample_rxn_volume']
         asp.LiquidClass = liq_cls
         gwl.add(asp)
 
         # dispensing
         disp = Fluent.dispense()
-        disp.RackLabel = df_map.ix[i,'TECAN_dest_labware_name']
-        disp.RackType = df_map.ix[i,'TECAN_dest_labware_type']
-        disp.Position = df_map.ix[i,'TECAN_dest_target_position']
-        disp.Volume = df_map.ix[i,'TECAN_sample_rxn_volume']
+        disp.RackLabel = df_map.loc[i,'TECAN_dest_labware_name']
+        disp.RackType = df_map.loc[i,'TECAN_dest_labware_type']
+        disp.Position = df_map.loc[i,'TECAN_dest_target_position']
+        disp.Volume = df_map.loc[i,'TECAN_sample_rxn_volume']
         disp.LiquidClass = liq_cls
         gwl.add(disp)
 
@@ -550,7 +550,7 @@ def pip_water(df_map, gwl, pcr_volume=25.0, mm_volume=13.1,
     # calculate the amount of water
     water_volume = []
     for i in range(df_map.shape[0]):
-        samp_volume = df_map.ix[i,'TECAN_sample_rxn_volume']
+        samp_volume = df_map.loc[i,'TECAN_sample_rxn_volume']
         w_need = pcr_volume - (samp_volume + mm_volume + fp_volume + rp_volume)
         assert w_need >= 0, 'Water volume is negative: {}'.format(w_need)
         water_volume.append(w_need)
@@ -572,9 +572,9 @@ def pip_water(df_map, gwl, pcr_volume=25.0, mm_volume=13.1,
 
         # dispensing
         disp = Fluent.dispense()
-        disp.RackLabel = df_map.ix[i,'TECAN_dest_labware_name']
-        disp.RackType = df_map.ix[i,'TECAN_dest_labware_type']
-        disp.Position = df_map.ix[i,'TECAN_dest_target_position']
+        disp.RackLabel = df_map.loc[i,'TECAN_dest_labware_name']
+        disp.RackType = df_map.loc[i,'TECAN_dest_labware_type']
+        disp.Position = df_map.loc[i,'TECAN_dest_target_position']
         disp.LiquidClass = liq_cls
         disp.Volume = water_volume[i]
         gwl.add(disp)
@@ -624,8 +624,8 @@ def map2biorad(df_map, positions):
     f = functools.partial(lw_utils.position2well, wells = positions)
     x = df_map['TECAN_dest_target_position'].apply(f)
     x = pd.DataFrame([y for y in x], columns=['Row', 'Column'])
-    df_biorad['Row'] = x.ix[:,0].tolist()
-    df_biorad['Column'] = x.ix[:,1].tolist()
+    df_biorad['Row'] = x.iloc[:,0].tolist()
+    df_biorad['Column'] = x.iloc[:,1].tolist()
 
     df_biorad['*Target Name'] = np.nan
     df_biorad = df_biorad[['Row', 'Column', '*Target Name', '*Sample Name']]
