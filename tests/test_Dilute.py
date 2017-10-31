@@ -140,7 +140,23 @@ class Test_Dilute_main1(unittest.TestCase):
         ret = Utils.check_gwl(self.files[0])
         self.assertIsNone(ret)
 
+class Test_Dilute_main1_noTip10ul(unittest.TestCase):
 
+    def setUp(self):
+        concfile = os.path.join(data_dir, 'conc_file1.txt')
+        self.args = Dilute.parse_args(['--prefix', '/tmp/DIL1-no10ul',
+                                       '--tip10_type', 'None',
+                                       concfile])
+        self.files = Dilute.main(self.args)
+
+    def tearDown(self):
+        pass
+
+    def test_main_gwl(self):
+        ret = Utils.check_gwl(self.files[0])
+        self.assertIsNone(ret)
+
+        
 class Test_Dilute_main2(unittest.TestCase):
 
     def setUp(self):

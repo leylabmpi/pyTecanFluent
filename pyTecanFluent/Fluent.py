@@ -70,6 +70,8 @@ class db(object):
             raise KeyError(msg.format(value))        
         
     def get_tip_type(self, value):
+        if value is None:
+            return None
         try:
             return self.tip_type[value]
         except KeyError:

@@ -224,7 +224,16 @@ def check_args(args):
     # input table column IDs
     args.rows = Utils.make_range(args.sample_rows, set_zero_index=True)
     # dilution
-    assert args.volume >= 0.0, '--volume must be >= 0'    
+    assert args.volume >= 0.0, '--volume must be >= 0'
+    # tip type
+    if args.tip1000_type.lower() == 'none':
+        args.tip1000_type = None
+    if args.tip200_type.lower() == 'none':
+        args.tip200_type = None
+    if args.tip50_type.lower() == 'none':
+        args.tip50_type = None
+    if args.tip10_type.lower() == 'none':
+        args.tip10_type = None
                          
 def sample2df(samplefile, sample_col, include_col,
               labware_name_col, labware_type_col, position_col,

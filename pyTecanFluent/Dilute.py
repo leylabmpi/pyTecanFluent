@@ -183,7 +183,16 @@ def check_args(args):
     assert args.dilution >= 0.0, '--dilution must be >= 0'
     assert args.minvolume >= 0.0, '--minvolume must be >= 0'
     assert args.maxvolume > 0.0, '--maxvolume must be > 0'
-                         
+    # tip type
+    if args.tip1000_type.lower() == 'none':
+        args.tip1000_type = None
+    if args.tip200_type.lower() == 'none':
+        args.tip200_type = None
+    if args.tip50_type.lower() == 'none':
+        args.tip50_type = None
+    if args.tip10_type.lower() == 'none':
+        args.tip10_type = None
+        
 def conc2df(concfile, row_select=None, file_format=None, header=True):
     """Loading a concentration file as a pandas dataframe
     """

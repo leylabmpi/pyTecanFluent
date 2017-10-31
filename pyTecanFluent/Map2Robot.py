@@ -237,6 +237,15 @@ def main(args=None):
 def check_args(args):
     """Checking user input
     """
+    # tip type
+    if args.tip1000_type.lower() == 'none':
+        args.tip1000_type = None
+    if args.tip200_type.lower() == 'none':
+        args.tip200_type = None
+    if args.tip50_type.lower() == 'none':
+        args.tip50_type = None
+    if args.tip10_type.lower() == 'none':
+        args.tip10_type = None
     # destination start
     db = Fluent.db()
     db.get_labware(args.desttype)
