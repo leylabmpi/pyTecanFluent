@@ -5,7 +5,7 @@ import os
 import sys
 import argparse
 import functools
-from itertools import product
+from itertools import cycle,product
 ## 3rd party
 import numpy as np
 import pandas as pd
@@ -82,8 +82,6 @@ def parse_args(test_args=None, subparsers=None):
     dest.add_argument('--desttype', type=str, default='96 Well Eppendorf TwinTec PCR',
                       choices=['96 Well Eppendorf TwinTec PCR', '384 Well Biorad PCR'],                          
                       help='Destination labware type  on TECAN worktable (default: %(default)s)')
-    dest.add_argument('--deststart', type=int, default=1,
-                      help='Starting position (well) on the destination labware (default: %(default)s)')
 
     ## tip type
     tips = parser.add_argument_group('Tip type')
@@ -115,6 +113,13 @@ def main(args=None):
                       file_format=args.format,
                       row_select=args.rows, 
                       header=args.header)
+
+    # gwl object init 
+    TipTypes = TipTypes={1000 : args.tip1000_type,
+                         200 : args.tip200_type,
+                         50 : args.tip50_type,
+                         10 : args.tip10_type}    
+    gwl = Fluent.gwl(TipTypes)
     
     # Determining dilution volumes
     df_conc = dilution_volumes(df_conc, 
@@ -125,21 +130,15 @@ def main(args=None):
                                dest_type=args.desttype)
     
     # Adding destination data
+    gwl.db.get_labware(args.desttype)
+    n_wells = gwl.db.get_labware_wells(args.desttype)
     df_conc = add_dest(df_conc,
                        dest_name=args.destname,
                        dest_type=args.desttype,
-                       dest_start=args.deststart)
+                       dest_wells=n_wells)
             
-    # gwl construction
-    TipTypes = TipTypes={1000 : args.tip1000_type,
-                         200 : args.tip200_type,
-                         50 : args.tip50_type,
-                         10 : args.tip10_type}    
-    gwl = Fluent.gwl(TipTypes)
 
     # Reordering dest if plate type is 384-well
-    gwl.db.get_labware(args.desttype)
-    n_wells = gwl.db.get_labware_wells(args.desttype)
     if n_wells == '384':
         df_conc = reorder_384well(df_conc, 'TECAN_dest_target_position')
 
@@ -370,17 +369,32 @@ def dilution_volumes(df_conc, dilute_conc, min_vol, max_vol,
     # return
     return df_conc
         
-def add_dest(df_conc, dest_name, dest_type, dest_start=1):
+def add_dest(df_conc, dest_name, dest_type,  dest_wells=96):
     """Setting destination locations for samples & primers.
     Adding to df_conc:
       [dest_labware, dest_location]
     """
-    dest_start= int(dest_start)
+    dest_wells = int(dest_wells)
+
+    # creating dest_name column; possibly multiple names
+    n_dest_plates = int(round(df_conc.shape[0] / dest_wells + 0.5, 0))
     
-    # adding columns
-    df_conc['TECAN_dest_labware_name'] = dest_name
+    ## destination plate names
+    if n_dest_plates > 1:
+        dest_names = []
+        for i in range(df_conc.shape[0]):
+            x = int(round(i / dest_wells + 0.50001, 0))
+            dest_names.append(dest_name + '[{:0>3}]'.format(x))   
+        df_conc['TECAN_dest_labware_name'] = dest_names
+    else:
+        df_conc['TECAN_dest_labware_name'] = dest_name            
+
+    ## labware type
     df_conc['TECAN_dest_labware_type'] = dest_type
-    df_conc['TECAN_dest_target_position'] = list(range(dest_start, dest_start + df_conc.shape[0]))
+    ## positions
+    positions = cycle([x+1 for x in range(dest_wells)])
+    positions = [next(positions) for x in range(df_conc.shape[0])]
+    df_conc['TECAN_dest_target_position'] = positions
 
     # return
     return df_conc

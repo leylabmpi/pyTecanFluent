@@ -110,21 +110,8 @@ class Test_Dilute_addDest(unittest.TestCase):
     def test_load_conc_txt(self):
         self.df_conc = Dilute.add_dest(self.df_conc,
                                        dest_name=self.args.destname,
-                                       dest_type=self.args.desttype,
-                                       dest_start=self.args.deststart)
+                                       dest_type=self.args.desttype)
         self.assertTrue(isinstance(self.df_conc, pd.DataFrame))
-
-    # destination start offset
-    def test_load_conc_deststart(self):
-        self.df_conc = Dilute.add_dest(self.df_conc,
-                                       dest_name=self.args.destname,
-                                       dest_type=self.args.desttype,
-                                       dest_start=49)
-
-        self.assertTrue(isinstance(self.df_conc, pd.DataFrame))
-        pos_start = self.df_conc.loc[0,'TECAN_dest_target_position']
-        self.assertEqual(pos_start, 49)
-
 
 class Test_Dilute_main1(unittest.TestCase):
 
