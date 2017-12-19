@@ -148,7 +148,7 @@ class labware(object):
         
         # adding tip boxes
         df_tips = []
-        for RackLabel,v in sorted(self.tip_boxes.items()):
+        for RackLabel,v in sorted(self.tip_boxes.items(), reverse=True):
             # RackType
             try:
                 RackType = v['RackType']
@@ -156,7 +156,7 @@ class labware(object):
                 msg = 'No RackType for labware: "{}"'
                 raise KeyError(msg.format(RackLabel))
             # location & position
-            loc,pos = self._next(v, loc_tracker, keep_empty=False)
+            loc,pos = self._next(v, loc_tracker, keep_empty=True)
             if loc is None:
                 msg = 'No possible target location for labware: "{}"'
                 raise ValueError(msg.format(RackLabel))

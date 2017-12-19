@@ -48,31 +48,31 @@
         "max_volume" : 1000
     },
     "100ml_1" : {
-        "target_location" : ["Trough_100ml_Wash_1"],
+        "target_location" : ["Trough_100ml_3"],
         "category" : "trough",
         "wells" : 1,
         "max_volume" : 100000
     },
     "96 Well Eppendorf TwinTec PCR" : {
-        "target_location" : ["Nest7mm_Pos", "Nest61mm_Pos"],
+        "target_location" : ["Nest61mm_Pos"],
         "category" : "plate",
         "wells" : 96,
         "max_volume" : 200
     },
     "384 Well Biorad PCR" : {
-        "target_location" : ["Nest7mm_Pos", "Nest61mm_Pos"],
+        "target_location" : ["Nest61mm_Pos"],
         "category" : "plate",
         "wells" : 384,
         "max_volume" : 40
     },
     "OptiPlate_96F" : {
-        "target_location" : ["Nest7mm_Pos", "Nest61mm_Pos"],
+        "target_location" : ["Nest61mm_Pos"],
         "category" : "plate",
         "wells" : 96,
         "max_volume" : 300
     },
     "96 Well Axygen semi skirted and adapter" : {
-        "target_location" : ["Nest7mm_Pos", "Nest61mm_Pos"],
+        "target_location" : ["Nest61mm_Pos"],
         "category" : "plate",
         "wells" : 96,
         "max_volume" : 200

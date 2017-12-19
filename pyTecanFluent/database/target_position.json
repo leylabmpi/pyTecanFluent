@@ -1,14 +1,18 @@
 {
     "Nest7mm_Pos": {
-        "position_count" : 36,
-        "keep_empty" : [1,6,7,12,13,18,19,24,25,30,31,36]
+        "position_count" : 12,
+        "keep_empty" : [1,6,7,12]
+    },
+    "Nest61mm_Pos": {
+        "position_count" : 28,
+        "keep_empty" : [1,2,3,4,5,10,11,16,17,22,23,28]
     }, 
     "eppendorf" : {
         "position_count" : 96, 
         "keep_empty" : []
     },
-    "Trough_100ml_Wash_1" : {
-        "position_count" : 8,
+    "Trough_100ml_3" : {
+        "position_count" : 10,
         "keep_empty" : []
     }
 }
