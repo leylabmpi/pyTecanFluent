@@ -79,12 +79,23 @@ class db(object):
             raise KeyError(msg.format(value))            
 
     def get_tip_volume(self, value):
+        """Max volume of liquid that could fit in the tip if the liquid
+        class doesn't require air volume"""
         try:
             return self.tip_type[value]['volume']
         except KeyError:
             msg = 'Cannot find volume for tip type "{}"'
             raise KeyError(msg.format(value))            
 
+    def get_tip_DTH_volume(self, value):
+        """Max volume of liquid used for dynamic tip handling
+        """
+        try:
+            return self.tip_type[value]['DTH']
+        except KeyError:
+            msg = 'Cannot find DTH (dynamic tip handling) volume for tip type "{}"'
+            raise KeyError(msg.format(value))           
+        
     def get_tip_box(self, value):
         try:
             return self.tip_type[value]['tip_box']
@@ -108,8 +119,9 @@ class gwl(object):
         self.TipTypes = TipTypes
         self.commands = []
 
-    def add(self, obj, force_tip=True, default_liq_cls='Water Free Single'):
-        """Adding gwl commands ('obj') to list of commands
+    def add(self, obj, default_liq_cls='Water Free Single'):
+        """Adding gwl commands ('obj') to list of commands.
+        A TipType will be added, but this is just used for counting tips later on
         """
         # assertions
         if isinstance(obj, aspirate) or isinstance(obj, dispense):
@@ -119,11 +131,11 @@ class gwl(object):
             # check that liquid class is in database (or use default)
             if self.LiquidClass_exists(obj.LiquidClass) is False:
                 obj.LiquidClass = default_liq_cls
-            
-        # forcing usage of particular tip type
-        if force_tip is True and isinstance(obj, aspirate):
+
+        # adding tip type for command based on volume; used for counting
+        if isinstance(obj, aspirate):
             obj.TipType = self.set_TipType(obj.Volume)
-        
+            
         # appending to list of commands
         self.commands.append(obj)
 
@@ -141,15 +153,18 @@ class gwl(object):
         outF.close()
                     
     def set_TipType(self, volume):
-        """Setting which tip is used for the command
+        """Setting which tip will be used.
+        Tip selection based on volume and 
         """
-        if self.TipTypes is None:
-            return None
-        for k in sorted(self.TipTypes.keys()):
-            if k > volume * 1.05 and self.TipTypes[k] is not None:
-                return self.TipTypes[k]
-        return None
-
+        volume = float(volume)
+        assert self.TipTypes is not None
+        func = lambda x: (x[1]['DTH'],x[0])
+        for k,v in sorted(self.TipTypes.items(), key=func):
+            if v['DTH'] - volume > 0:
+                return k            
+        msg = 'No TipType DTH value greater than {}'
+        raise ValueError(msg.format(volume))
+            
     def TipType_exists(self, volume, warn=False):
         """Does TipType exist?
         """
@@ -188,26 +203,18 @@ class gwl(object):
                 msg = 'Liquid class does not exist: "{}"'
                 print(msg.format(liquid_class), file=sys.stderr)
             return False
-        
+
+    # get/set the available tip types (& their attributes) 
     @property
     def TipTypes(self):
         return self._TipTypes
     @TipTypes.setter
-    def TipTypes(self, value):
-        if value is None:
+    def TipTypes(self, types):
+        if types is None:
             self._TipTypes = None
         else:
-            for k,v in value.items():
-                # key should be integer or float
-                try:
-                    k = float(k)
-                except ValueError:
-                    msg = 'TypeType key "{}" cannot be converted to float'
-                    raise ValueError(msg.format(k))
-                # values should be valid tip type            
-                self.db.get_tip_type(v)                
-            self._TipTypes = value
-
+            types = [x for x in types if x is not None]  
+            self._TipTypes = {x:self.db.get_tip_type(x) for x in types}
                 
 class asp_disp(object):
     """Commands for aliquoting mastermix
@@ -237,7 +244,7 @@ class asp_disp(object):
         self.TubeID = TubeID
         self.Volume = Volume
         self.LiquidClass = LiquidClass
-        self.TipType = TipType
+        self.TipType = TipType        # doesn't actually work!
         self.TipMask = TipMask
         self.ForceRackType = ForceRack
         self.field_order = ['_ID',
@@ -346,7 +353,7 @@ class multi_disp(object):
         self._DestPositions = [1]
         # other
         self.Volume = 1.0
-        self.TipType = None
+        self.TipType = None       # doesn't actually work!
         self.LiquidClass = 'Water Free Multi'
         self.NoOfMultiDisp = 2
 

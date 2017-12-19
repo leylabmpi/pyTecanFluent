@@ -111,7 +111,7 @@ class utils(object):
 
 class labware(object):
     """Class for summarizing labware in a gwl object.
-    Note: tip boxes are considered separate from labware
+    Note: tip boxes are considered separate from other labware
     """
     def __init__(self):
         self.tip_count = {}
@@ -287,7 +287,7 @@ class labware(object):
                     TipType = cmd.TipType
                 except AttributeError:
                     TipType = None
-
+                                        
 class worktable_tracker():
     """Keeping track of available target positions for each target location
 
