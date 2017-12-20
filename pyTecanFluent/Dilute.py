@@ -23,13 +23,14 @@ def parse_args(test_args=None, subparsers=None):
     # desc
     desc = get_desc()
     epi = """DESCRIPTION:
-    Create a worklist file for the TECAN Fluent robot for diluting samples.
+    Create worklist table files for the TECAN Fluent robot for diluting samples.
     The input is an Excel or tab-delimited file the following columns:
-    * "TECAN_labware_name" = Any name you want to give to your plate of samples
-    * "TECAN_labware_type" = The labware type matching your samples
+    * "TECAN_labware_name" = Names of the plates containing the DNA samples
     * "TECAN_target_position" = The location of your samples in your labware (plate)
     * "TECAN_sample_conc" = The sample concentrations (numeric value; units=ng/ul) 
     
+    A worklist file will be created for each sample plate.
+
     Notes:
     * Sample locations in plates numbered are column-wise. 
     * All volumes are in ul.
@@ -48,8 +49,6 @@ def parse_args(test_args=None, subparsers=None):
                          help='An excel or tab-delim file of concentrations')
     groupIO.add_argument('--prefix', type=str, default='TECAN_dilute',
                          help='Output file name prefix (default: %(default)s)')
-#    groupIO.add_argument('--gwl', action='store_true', default=False,
-#                         help='Output worklist file as gwl instead of csv (default: %(default)s)')
     
     ## concentration file
     conc = parser.add_argument_group('Concentation file')
@@ -70,31 +69,6 @@ def parse_args(test_args=None, subparsers=None):
                      help='Maximum sample volume to use (default: %(default)s)')
     dil.add_argument('--mintotal', type=float, default=10.0,
                      help='Minimum post-dilution total volume (default: %(default)s)')
-    dil.add_argument('--dlabware_name', type=str, default='100ml_1',
-                     help='Name of labware containing the dilutant (default: %(default)s)')
-    dil.add_argument('--dlabware_type', type=str, default='100ml_1',
-                     choices=['100ml_1', '1.5ml Eppendorf',
-                              '2.0ml Eppendorf', '96 Well Eppendorf TwinTec PCR'], 
-                     help='Labware type containing the dilutant (default: %(default)s)')
-
-    ## destination plate
-    dest = parser.add_argument_group('Destination labware')
-    dest.add_argument('--destname', type=str, default='Diluted DNA plate',
-                      help='Destination labware name (default: %(default)s)')
-    dest.add_argument('--desttype', type=str, default='96 Well Eppendorf TwinTec PCR',
-                      choices=['96 Well Eppendorf TwinTec PCR', '384 Well Biorad PCR'],                          
-                      help='Destination labware type  on TECAN worktable (default: %(default)s)')
-
-    ## tip type
-    tips = parser.add_argument_group('Tip type')
-    tips.add_argument('--tip1000_type', type=str, default='FCA, 1000ul SBS',
-                      help='1000ul tip type (default: %(default)s)')
-    tips.add_argument('--tip200_type', type=str, default='FCA, 200ul SBS',
-                      help='200ul tip type (default: %(default)s)')
-    tips.add_argument('--tip50_type', type=str, default='FCA, 50ul SBS',
-                      help='50ul tip type (default: %(default)s)')
-    tips.add_argument('--tip10_type', type=str, default='FCA, 10ul SBS',
-                      help='10ul tip type (default: %(default)s)')
         
     # parse & return
     if test_args:
@@ -115,61 +89,105 @@ def main(args=None):
                       file_format=args.format,
                       row_select=args.rows, 
                       header=args.header)
-
-    # gwl object init 
-    TipTypes = [args.tip1000_type, args.tip200_type,
-                args.tip50_type, args.tip10_type]    
-    gwl = Fluent.gwl(TipTypes)
     
     # Determining dilution volumes
     df_conc = dilution_volumes(df_conc, 
                                dilute_conc=args.dilution,
                                min_vol=args.minvolume,
                                max_vol=args.maxvolume,
-                               min_total=args.mintotal,
-                               dest_type=args.desttype)
+                               min_total=args.mintotal)
     
     # Adding destination data
-    gwl.db.get_labware(args.desttype)
-    n_wells = gwl.db.get_labware_wells(args.desttype)
+    #gwl.db.get_labware(args.desttype)
     df_conc = add_dest(df_conc,
-                       dest_name=args.destname,
-                       dest_type=args.desttype,
-                       dest_wells=n_wells)
+                       dest_name='Destination plate',
+                       dest_wells=96)
             
     # Reordering dest if plate type is 384-well
-    if n_wells == '384':
-        df_conc = reorder_384well(df_conc, 'TECAN_dest_target_position')
-        
-    ## Dilutant
-    pip_dilutant(df_conc, gwl=gwl,
-                 src_labware_name=args.dlabware_name,
-                 src_labware_type=args.dlabware_type)
-    ## Sample
-    pip_samples(df_conc, gwl=gwl)
+    #if n_wells == '384':
+    #    df_conc = reorder_384well(df_conc, 'TECAN_dest_target_position')
+
     
-    ## writing out worklist (gwl) file
-    gwl_file = args.prefix + '.gwl'
-    gwl.write(gwl_file)
-    
-    # making labware table
-    lw = Labware.labware()
-    lw.add_gwl(gwl)
-    lw_df = lw.table()
-    lw_file = args.prefix + '_labware.txt'
-    lw_df.to_csv(lw_file, sep='\t', index=False)
-    
+    # reorder table
+    cols = ['TECAN_labware_name',  'TECAN_target_position',
+            'TECAN_dest_labware_name', 'TECAN_dest_target_position',
+            'TECAN_sample_volume', 'TECAN_dilutant_volume',
+            'TECAN_total_volume', 'TECAN_sample_conc', 'TECAN_final_conc']
+    df_conc = df_conc[cols]
+
     # Writing conc. out table
     conc_file = args.prefix + '_conc.txt'
     df_conc.round(1).to_csv(conc_file, sep='\t', index=False)
-
-    # status
-    Utils.file_written(gwl_file)
     Utils.file_written(conc_file)
-    Utils.file_written(lw_file)
 
-    # end
-    return gwl_file, conc_file, lw_file
+    # splitting by Sample plate
+    for lw_name in df_conc['TECAN_labware_name'].unique():
+        write_worklist(df_conc[df_conc['TECAN_labware_name'] == lw_name],
+                       lw_name.replace(' ', '-'), args)
+    
+    # ## Dilutant
+    # pip_dilutant(df_conc, gwl=gwl,
+    #              src_labware_name=args.dlabware_name,
+    #              src_labware_type=args.dlabware_type)
+    # ## Sample
+    # pip_samples(df_conc, gwl=gwl)
+    
+    # ## writing out worklist (gwl) file
+    # gwl_file = args.prefix + '.gwl'
+    # gwl.write(gwl_file)
+    
+    # # making labware table
+    # lw = Labware.labware()
+    # lw.add_gwl(gwl)
+    # lw_df = lw.table()
+    # lw_file = args.prefix + '_labware.txt'
+    # lw_df.to_csv(lw_file, sep='\t', index=False)
+    
+    # # Writing conc. out table
+    # conc_file = args.prefix + '_conc.txt'
+    # df_conc.round(1).to_csv(conc_file, sep='\t', index=False)
+
+    # # status
+    # Utils.file_written(gwl_file)
+    # Utils.file_written(conc_file)
+    # Utils.file_written(lw_file)
+
+    # # end
+    # return gwl_file, conc_file, lw_file
+
+
+def write_worklist(df_conc, labware_name, args):
+    # spliting into Dilutant & Sample
+    ## dilutant
+    df_conc_dil = df_conc.copy()
+    df_conc_dil.loc[:,'TECAN_labware_name'] = 'Dilutant'
+    df_conc_dil.loc[:,'TECAN_target_position'] = 1
+    df_conc_dil.loc[:,'TECAN_liquid_class'] = 'Water Free Single'
+    df_conc_dil.rename(columns={'TECAN_sample_volume':'TECAN_volume'}, inplace=True)
+    cols = ['TECAN_labware_name',  'TECAN_target_position',
+            'TECAN_dest_labware_name', 'TECAN_dest_target_position',
+            'TECAN_volume', 'TECAN_liquid_class',
+            'TECAN_total_volume', 'TECAN_sample_conc', 'TECAN_final_conc']
+    df_conc_dil = df_conc_dil[cols]
+    
+    ## sample
+    df_conc_samp = df_conc.copy()
+    df_conc_samp.loc[:,'TECAN_labware_name'] = 'Sample plate'
+    df_conc_samp.loc[:,'TECAN_liquid_class'] = 'Water Contact Wet Single'
+    df_conc_samp.rename(columns={'TECAN_dilutant_volume':'TECAN_volume'}, inplace=True)
+    cols = ['TECAN_labware_name', 'TECAN_target_position',
+            'TECAN_dest_labware_name', 'TECAN_dest_target_position',
+            'TECAN_volume', 'TECAN_liquid_class',
+            'TECAN_total_volume', 'TECAN_sample_conc', 'TECAN_final_conc']
+    df_conc_samp = df_conc_samp[cols]
+
+    ## combining
+    df_worklist = pd.concat([df_conc_dil, df_conc_samp])
+    
+    # Writing conc. out table
+    worklist_file = '_'.join([args.prefix, labware_name, 'worklist.txt'])
+    df_worklist.round(1).to_csv(worklist_file, sep='\t', index=False)
+    Utils.file_written(worklist_file)
 
 
 def check_args(args):
@@ -182,14 +200,14 @@ def check_args(args):
     assert args.minvolume >= 0.0, '--minvolume must be >= 0'
     assert args.maxvolume > 0.0, '--maxvolume must be > 0'
     # tip type
-    if args.tip1000_type.lower() == 'none':
-        args.tip1000_type = None
-    if args.tip200_type.lower() == 'none':
-        args.tip200_type = None
-    if args.tip50_type.lower() == 'none':
-        args.tip50_type = None
-    if args.tip10_type.lower() == 'none':
-        args.tip10_type = None
+    # if args.tip1000_type.lower() == 'none':
+    #     args.tip1000_type = None
+    # if args.tip200_type.lower() == 'none':
+    #     args.tip200_type = None
+    # if args.tip50_type.lower() == 'none':
+    #     args.tip50_type = None
+    # if args.tip10_type.lower() == 'none':
+    #     args.tip10_type = None
         
 def conc2df(concfile, row_select=None, file_format=None, header=True):
     """Loading a concentration file as a pandas dataframe
@@ -240,18 +258,8 @@ def check_df_conc(df_conc):
     """Assertions of df_conc object formatting
     """
     # checking for columns
-    req_cols = ['TECAN_labware_name', 'TECAN_labware_type',
-                'TECAN_target_position', 'TECAN_sample_conc']
+    req_cols = ['TECAN_labware_name', 'TECAN_target_position', 'TECAN_sample_conc']
     missing_cols(df_conc, req_cols)
-
-    # checking labware types
-    db = Fluent.db()
-    msg = 'ERROR (concfile, line={}): labware type not recognized: {}'
-    for i,lt in enumerate(df_conc['TECAN_labware_type']):
-        try:
-            db.get_labware(lt)
-        except KeyError:
-            raise KeyError(msg.format(i, lt))
                          
     # checking sample locations (>=1)
     msg = 'ERROR (concfile, line={}): location is < 1'
@@ -310,20 +318,16 @@ def calc_final_conc(row):
     x = x / row['TECAN_total_volume']
     return x
     
-def dilution_volumes(df_conc, dilute_conc, min_vol, max_vol, 
-                     min_total, dest_type):
+def dilution_volumes(df_conc, dilute_conc, min_vol, max_vol, min_total):
     """Setting the amoutn of sample to aliquot for dilution
     df_conc: pd.dataframe
     dilute_conc: concentration to dilute to 
     min_vol: min volume of sample to use
     max_vol: max total volume to use
     min_total: minimum total post-dilution volume
-    dest_type: labware type for destination labware
     """
     # max well volume
-    db = Fluent.db()
-    db.get_labware(dest_type)
-    max_well_vol = db.get_labware_max_volume(dest_type)
+    max_well_vol = 200
 
     # converting all negative concentrations to zero
     f = lambda row: 0 if row['TECAN_sample_conc'] < 0 else row['TECAN_sample_conc']
@@ -368,7 +372,7 @@ def dilution_volumes(df_conc, dilute_conc, min_vol, max_vol,
     # return
     return df_conc
         
-def add_dest(df_conc, dest_name, dest_type,  dest_wells=96):
+def add_dest(df_conc, dest_name, dest_wells=96):
     """Setting destination locations for samples & primers.
     Adding to df_conc:
       [dest_labware, dest_location]
@@ -388,8 +392,6 @@ def add_dest(df_conc, dest_name, dest_type,  dest_wells=96):
     else:
         df_conc['TECAN_dest_labware_name'] = dest_name            
 
-    ## labware type
-    df_conc['TECAN_dest_labware_type'] = dest_type
     ## positions
     positions = cycle([x+1 for x in range(dest_wells)])
     positions = [next(positions) for x in range(df_conc.shape[0])]
