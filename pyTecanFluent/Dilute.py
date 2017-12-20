@@ -153,15 +153,16 @@ def write_worklist(df_conc, labware_name, args):
     ## combining
     df_worklist = pd.concat([df_conc_dil, df_conc_samp]).reset_index(drop=True)
     df_worklist = df_worklist[df_worklist['TECAN_volume'] >= 0.2]
+    df_worklist = df_worklist.sort_values(['TECAN_labware_name', 'TECAN_dest_target_position'], ascending=True)
 
     ## for each TECAN_target_position, reorder where larger volume is first, then changing liquid class for water contact
-    df_worklist = df_worklist.sort_values(['TECAN_dest_target_position', 'TECAN_volume'], ascending=False)
-    df_worklist['TECAN_volume_CumSum'] = df_worklist.groupby(['TECAN_dest_target_position'])['TECAN_volume'].cumsum()
-    df_worklist['TECAN_volume_Rank'] = df_worklist.groupby(['TECAN_dest_target_position'])['TECAN_volume'].rank(method='first')
-    df_worklist.loc[(df_worklist['TECAN_volume_Rank'] > 1) & (df_worklist['TECAN_volume_CumSum'] >= 5),
-                    'TECAN_liquid_class'] = 'Water Contact Wet Single'
-    df_worklist = df_worklist.sort_values(['TECAN_dest_target_position', 'TECAN_volume_Rank'], ascending=True)
-    df_worklist.drop(['TECAN_volume_CumSum', 'TECAN_volume_Rank'], axis=1, inplace=True)
+    # df_worklist = df_worklist.sort_values(['TECAN_dest_target_position', 'TECAN_volume'], ascending=False)
+    # df_worklist['TECAN_volume_CumSum'] = df_worklist.groupby(['TECAN_dest_target_position'])['TECAN_volume'].cumsum()
+    # df_worklist['TECAN_volume_Rank'] = df_worklist.groupby(['TECAN_dest_target_position'])['TECAN_volume'].rank(method='first')
+    # df_worklist.loc[(df_worklist['TECAN_volume_Rank'] > 1) & (df_worklist['TECAN_volume_CumSum'] >= 5),
+    #                 'TECAN_liquid_class'] = 'Water Contact Wet Single'
+    # df_worklist = df_worklist.sort_values(['TECAN_dest_target_position', 'TECAN_volume_Rank'], ascending=[True, False])
+    # df_worklist.drop(['TECAN_volume_CumSum', 'TECAN_volume_Rank'], axis=1, inplace=True)
     
     # Writing conc. out table
     worklist_file = '_'.join([args.prefix, labware_name, 'worklist.txt'])
