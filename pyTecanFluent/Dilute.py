@@ -348,19 +348,9 @@ def add_dest(df_conc, dest_name, dest_wells=96):
       [dest_labware, dest_location]
     """
     dest_wells = int(dest_wells)
-
-    # creating dest_name column; possibly multiple names
-    n_dest_plates = int(round(df_conc.shape[0] / dest_wells + 0.5, 0))
     
     ## destination plate names
-    if n_dest_plates > 1:
-        dest_names = []
-        for i in range(df_conc.shape[0]):
-            x = int(round(i / dest_wells + 0.50001, 0))
-            dest_names.append(dest_name + '[{:0>3}]'.format(x))   
-        df_conc['TECAN_dest_labware_name'] = dest_names
-    else:
-        df_conc['TECAN_dest_labware_name'] = dest_name            
+    df_conc['TECAN_dest_labware_name'] = dest_name            
 
     ## positions
     positions = cycle([x+1 for x in range(dest_wells)])
