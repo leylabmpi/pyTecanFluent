@@ -106,7 +106,6 @@ def main(args=None):
     # Reordering dest if plate type is 384-well
     #if n_wells == '384':
     #    df_conc = reorder_384well(df_conc, 'TECAN_dest_target_position')
-
     
     # reorder table
     cols = ['TECAN_labware_name',  'TECAN_target_position',
@@ -120,41 +119,11 @@ def main(args=None):
     df_conc.round(1).to_csv(conc_file, sep='\t', index=False)
     Utils.file_written(conc_file)
 
-    # splitting by Sample plate
+    # splitting by Sample plate and writing workliist files 
     for lw_name in df_conc['TECAN_labware_name'].unique():
         write_worklist(df_conc[df_conc['TECAN_labware_name'] == lw_name],
                        lw_name.replace(' ', '-'), args)
     
-    # ## Dilutant
-    # pip_dilutant(df_conc, gwl=gwl,
-    #              src_labware_name=args.dlabware_name,
-    #              src_labware_type=args.dlabware_type)
-    # ## Sample
-    # pip_samples(df_conc, gwl=gwl)
-    
-    # ## writing out worklist (gwl) file
-    # gwl_file = args.prefix + '.gwl'
-    # gwl.write(gwl_file)
-    
-    # # making labware table
-    # lw = Labware.labware()
-    # lw.add_gwl(gwl)
-    # lw_df = lw.table()
-    # lw_file = args.prefix + '_labware.txt'
-    # lw_df.to_csv(lw_file, sep='\t', index=False)
-    
-    # # Writing conc. out table
-    # conc_file = args.prefix + '_conc.txt'
-    # df_conc.round(1).to_csv(conc_file, sep='\t', index=False)
-
-    # # status
-    # Utils.file_written(gwl_file)
-    # Utils.file_written(conc_file)
-    # Utils.file_written(lw_file)
-
-    # # end
-    # return gwl_file, conc_file, lw_file
-
 
 def write_worklist(df_conc, labware_name, args):
     # spliting into Dilutant & Sample
@@ -173,7 +142,7 @@ def write_worklist(df_conc, labware_name, args):
     ## sample
     df_conc_samp = df_conc.copy()
     df_conc_samp.loc[:,'TECAN_labware_name'] = 'Sample plate'
-    df_conc_samp.loc[:,'TECAN_liquid_class'] = 'Water Contact Wet Single'
+    df_conc_samp.loc[:,'TECAN_liquid_class'] = 'Water Free Single'
     df_conc_samp.rename(columns={'TECAN_dilutant_volume':'TECAN_volume'}, inplace=True)
     cols = ['TECAN_labware_name', 'TECAN_target_position',
             'TECAN_dest_labware_name', 'TECAN_dest_target_position',
@@ -182,7 +151,17 @@ def write_worklist(df_conc, labware_name, args):
     df_conc_samp = df_conc_samp[cols]
 
     ## combining
-    df_worklist = pd.concat([df_conc_dil, df_conc_samp])
+    df_worklist = pd.concat([df_conc_dil, df_conc_samp]).reset_index(drop=True)
+    df_worklist = df_worklist[df_worklist['TECAN_volume'] >= 0.2]
+
+    ## for each TECAN_target_position, reorder where larger volume is first, then changing liquid class for water contact
+    df_worklist = df_worklist.sort_values(['TECAN_dest_target_position', 'TECAN_volume'], ascending=False)
+    df_worklist['TECAN_volume_CumSum'] = df_worklist.groupby(['TECAN_dest_target_position'])['TECAN_volume'].cumsum()
+    df_worklist['TECAN_volume_Rank'] = df_worklist.groupby(['TECAN_dest_target_position'])['TECAN_volume_CumSum'].rank(method='first')
+    df_worklist.loc[(df_worklist['TECAN_volume_Rank'] > 1) & (df_worklist['TECAN_volume_CumSum'] >= 5),
+                    'TECAN_liquid_class'] = 'Water Contact Wet Single'
+    df_worklist = df_worklist.sort_values(['TECAN_dest_target_position'])
+    df_worklist.drop(['TECAN_volume_CumSum', 'TECAN_volume_Rank'], axis=1, inplace=True)
     
     # Writing conc. out table
     worklist_file = '_'.join([args.prefix, labware_name, 'worklist.txt'])
@@ -199,15 +178,6 @@ def check_args(args):
     assert args.dilution >= 0.0, '--dilution must be >= 0'
     assert args.minvolume >= 0.0, '--minvolume must be >= 0'
     assert args.maxvolume > 0.0, '--maxvolume must be > 0'
-    # tip type
-    # if args.tip1000_type.lower() == 'none':
-    #     args.tip1000_type = None
-    # if args.tip200_type.lower() == 'none':
-    #     args.tip200_type = None
-    # if args.tip50_type.lower() == 'none':
-    #     args.tip50_type = None
-    # if args.tip10_type.lower() == 'none':
-    #     args.tip10_type = None
         
 def conc2df(concfile, row_select=None, file_format=None, header=True):
     """Loading a concentration file as a pandas dataframe
