@@ -34,6 +34,7 @@ def parse_args(test_args=None, subparsers=None):
     Notes:
     * Sample locations in plates numbered are column-wise. 
     * All volumes are in ul.
+    * For sample concentrations <= 0, only dilutant will be added (using --mintotal).
     """
     if subparsers:
         parser = subparsers.add_parser('dilute', description=desc, epilog=epi,
@@ -262,11 +263,15 @@ def calc_sample_volume(row, dilute_conc, min_vol, max_vol):
         x = min_vol
     return x
 
-def calc_dilutant_volume(row):
-    """ dilutatant volume = total_volume - sample_volume
+def calc_dilutant_volume(row, min_total):
+    """ Calculating the amount of dilutant to add
+    dilutatant volume = total_volume - sample_volume
+    min_total : volume of dilutant used if sample volume <= 0
     """
+    # if sample volume is <=0, use all dilutant 
     if row['TECAN_sample_volume'] <= 0:
-        return 0
+        return min_total
+    # calc dilutant volume
     x = row['TECAN_total_volume'] - row['TECAN_sample_volume']
     if x < 0:
         x = 0
@@ -324,7 +329,8 @@ def dilution_volumes(df_conc, dilute_conc, min_vol, max_vol, min_total):
                           min_vol=min_vol, max_vol=max_vol)
     df_conc['TECAN_sample_volume'] = df_conc.apply(f, axis=1)
     # dilutatant volume = total_volume - sample_volume
-    df_conc['TECAN_dilutant_volume'] = df_conc.apply(calc_dilutant_volume, axis=1)
+    f = functools.partial(calc_dilutant_volume, min_total=min_total)
+    df_conc['TECAN_dilutant_volume'] = df_conc.apply(f, axis=1)
     # updating total volume
     f = lambda row: row['TECAN_sample_volume'] + row['TECAN_dilutant_volume']
     df_conc['TECAN_total_volume'] = df_conc.apply(f, axis=1)
