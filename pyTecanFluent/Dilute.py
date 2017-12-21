@@ -133,7 +133,7 @@ def write_worklist(df_conc, labware_name, args):
     df_conc_dil.loc[:,'TECAN_labware_name'] = 'Dilutant'
     df_conc_dil.loc[:,'TECAN_target_position'] = 1
     df_conc_dil.loc[:,'TECAN_liquid_class'] = 'Water Free Single'
-    df_conc_dil.rename(columns={'TECAN_sample_volume':'TECAN_volume'}, inplace=True)
+    df_conc_dil.rename(columns={'TECAN_dilutant_volume':'TECAN_volume'}, inplace=True)
     cols = ['TECAN_labware_name',  'TECAN_target_position',
             'TECAN_dest_labware_name', 'TECAN_dest_target_position',
             'TECAN_volume', 'TECAN_liquid_class',
@@ -144,7 +144,7 @@ def write_worklist(df_conc, labware_name, args):
     df_conc_samp = df_conc.copy()
     df_conc_samp.loc[:,'TECAN_labware_name'] = 'Sample plate'
     df_conc_samp.loc[:,'TECAN_liquid_class'] = 'Water Free Single'
-    df_conc_samp.rename(columns={'TECAN_dilutant_volume':'TECAN_volume'}, inplace=True)
+    df_conc_samp.rename(columns={'TECAN_sample_volume':'TECAN_volume'}, inplace=True)
     cols = ['TECAN_labware_name', 'TECAN_target_position',
             'TECAN_dest_labware_name', 'TECAN_dest_target_position',
             'TECAN_volume', 'TECAN_liquid_class',
