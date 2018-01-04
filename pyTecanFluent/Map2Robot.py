@@ -112,15 +112,15 @@ def parse_args(test_args=None, subparsers=None):
                       help='Water liquid class (default: %(default)s)')
 
     ## tip type
-    tips = parser.add_argument_group('Tip type')
-    tips.add_argument('--tip1000_type', type=str, default='FCA, 1000ul SBS',
-                      help='1000ul tip type (default: %(default)s)')
-    tips.add_argument('--tip200_type', type=str, default='FCA, 200ul SBS',
-                      help='200ul tip type (default: %(default)s)')
-    tips.add_argument('--tip50_type', type=str, default='FCA, 50ul SBS',
-                      help='50ul tip type (default: %(default)s)')
-    tips.add_argument('--tip10_type', type=str, default='FCA, 10ul SBS',
-                      help='10ul tip type (default: %(default)s)')
+    # tips = parser.add_argument_group('Tip type')
+    # tips.add_argument('--tip1000_type', type=str, default='FCA, 1000ul SBS',
+    #                   help='1000ul tip type (default: %(default)s)')
+    # tips.add_argument('--tip200_type', type=str, default='FCA, 200ul SBS',
+    #                   help='200ul tip type (default: %(default)s)')
+    # tips.add_argument('--tip50_type', type=str, default='FCA, 50ul SBS',
+    #                   help='50ul tip type (default: %(default)s)')
+    # tips.add_argument('--tip10_type', type=str, default='FCA, 10ul SBS',
+    #                   help='10ul tip type (default: %(default)s)')
     
     ## Misc
     misc = parser.add_argument_group('Misc')
@@ -155,10 +155,12 @@ def main(args=None):
                       rxn_reps=args.rxns)
     
     # gwl construction
-    TipTypes = TipTypes={1000 : args.tip1000_type,
-                         200 : args.tip200_type,
-                         50 : args.tip50_type,
-                         10 : args.tip10_type}
+    #TipTypes = TipTypes={1000 : args.tip1000_type,
+    #                     200 : args.tip200_type,
+    #                     50 : args.tip50_type,
+    #                     10 : args.tip10_type}
+    TipTypes = ['FCA, 1000ul SBS', 'FCA, 200ul SBS',
+                'FCA, 50ul SBS', 'FCA, 10ul SBS']     
     gwl = Fluent.gwl(TipTypes)
 
     # Reordering dest if plate type is 384-well
@@ -238,14 +240,14 @@ def check_args(args):
     """Checking user input
     """
     # tip type
-    if args.tip1000_type.lower() == 'none':
-        args.tip1000_type = None
-    if args.tip200_type.lower() == 'none':
-        args.tip200_type = None
-    if args.tip50_type.lower() == 'none':
-        args.tip50_type = None
-    if args.tip10_type.lower() == 'none':
-        args.tip10_type = None
+    # if args.tip1000_type.lower() == 'none':
+    #     args.tip1000_type = None
+    # if args.tip200_type.lower() == 'none':
+    #     args.tip200_type = None
+    # if args.tip50_type.lower() == 'none':
+    #     args.tip50_type = None
+    # if args.tip10_type.lower() == 'none':
+    #     args.tip10_type = None
     # destination start
     db = Fluent.db()
     db.get_labware(args.desttype)
@@ -418,7 +420,7 @@ def pip_mastermix(df_map, gwl, mmvolume=13.1, mmtube=1,
       * calc total volume: n_disp * mmvolume
     """
     mmtube = int(mmtube)
-    gwl.add(Fluent.comment('MasterMix'))
+    gwl.add(Fluent.Comment('MasterMix'))
 
     MD = Fluent.multi_disp()
     MD.SrcRackLabel = 'Mastermix tube[{0:0>3}]'.format(mmtube)
@@ -445,7 +447,7 @@ def pip_nonbarcode_primer(df_map, gwl, volume, tube,
     # for each Sample-PCR_rxn_rep, write out asp/dispense commands
     for i in range(df_map.shape[0]):
         # aspiration
-        asp = Fluent.aspirate()
+        asp = Fluent.Aspirate()
         asp.RackLabel = 'Primer tube[{0:0>3}]'.format(tube)
         asp.RackType = '1.5ml Eppendorf'
         asp.Position = tube
@@ -454,7 +456,7 @@ def pip_nonbarcode_primer(df_map, gwl, volume, tube,
         gwl.add(asp)
 
         # dispensing
-        disp = Fluent.dispense()
+        disp = Fluent.Dispense()
         disp.RackLabel = df_map.loc[i,'TECAN_dest_labware_name']
         disp.RackType = df_map.loc[i,'TECAN_dest_labware_type']
         disp.Position = df_map.loc[i,'TECAN_dest_target_position']
@@ -463,15 +465,15 @@ def pip_nonbarcode_primer(df_map, gwl, volume, tube,
         gwl.add(disp)
 
         # waste
-        gwl.add(Fluent.waste())
-
+        gwl.add(Fluent.Waste())
+        
 def pip_primer(i, gwl, df_map, primer_labware_name, 
                primer_labware_type, primer_target_position,
                primer_plate_volume, liq_cls):
     """Pipetting a single primer
     """
     # aspiration
-    asp = Fluent.aspirate()
+    asp = Fluent.Aspirate()
     asp.RackLabel = df_map.loc[i, primer_labware_name]
     asp.RackType = df_map.loc[i, primer_labware_type]
     asp.Position = df_map.loc[i, primer_target_position]
@@ -480,7 +482,7 @@ def pip_primer(i, gwl, df_map, primer_labware_name,
     gwl.add(asp)
 
     # dispensing
-    disp = Fluent.dispense()
+    disp = Fluent.Dispense()
     disp.RackLabel = df_map.loc[i,'TECAN_dest_labware_name']
     disp.RackType = df_map.loc[i,'TECAN_dest_labware_type']
     disp.Position = df_map.loc[i,'TECAN_dest_target_position']
@@ -489,47 +491,51 @@ def pip_primer(i, gwl, df_map, primer_labware_name,
     gwl.add(disp)
 
     # waste
-    gwl.add(Fluent.waste())
-        
+    gwl.add(Fluent.Waste())
+    
 def pip_primers(df_map, gwl, fp_volume=0, rp_volume=0,
                 fp_tube=0, rp_tube=0, 
                 liq_cls='Water Free Single'):
     """Commands for aliquoting primers
     """
     primer_plate_volume = 0
-    gwl.add(Fluent.comment('Primers'))
+    gwl.add(Fluent.Comment('Primers'))
     
     # pipetting non-barcoded primers
     ## forward primer
     if fp_tube > 0 and fp_volume > 0:
-        gwl.add(Fluent.comment('Forward non-barcode primer'))
+        gwl.add(Fluent.Comment('Forward non-barcode primer'))
         pip_nonbarcode_primer(df_map, gwl, fp_volume, fp_tube)
     else:
         primer_plate_volume += fp_volume
     ## reverse primer
     if rp_tube > 0 and rp_volume > 0:
-        gwl.add(Fluent.comment('Reverse non-barcode primer'))
+        gwl.add(Fluent.Comment('Reverse non-barcode primer'))
         pip_nonbarcode_primer(df_map, gwl, rp_volume, rp_tube)
     else:
         primer_plate_volume += rp_volume
             
     # pipetting barcoded primers
-    gwl.add(Fluent.comment('Barcoded primers'))
+    gwl.add(Fluent.Comment('Barcoded primers'))
     for i in range(df_map.shape[0]):
         pip_primer(i, gwl, df_map,
                    'TECAN_primer_labware_name', 
                    'TECAN_primer_labware_type',
                    'TECAN_primer_target_position',
                    primer_plate_volume, liq_cls)
+        
+    # adding break
+    gwl.add(Fluent.Break())
+
                 
 def pip_samples(df_map, gwl, liq_cls='Water Free Single'):
     """Commands for aliquoting samples to each PCR rxn
     """
-    gwl.add(Fluent.comment('Samples'))
+    gwl.add(Fluent.Comment('Samples'))
     # for each Sample-PCR_rxn_rep, write out asp/dispense commands
     for i in range(df_map.shape[0]):
         # aspiration
-        asp = Fluent.aspirate()
+        asp = Fluent.Aspirate()
         asp.RackLabel = df_map.loc[i,'TECAN_sample_labware_name']
         asp.RackType = df_map.loc[i,'TECAN_sample_labware_type']
         asp.Position = df_map.loc[i,'TECAN_sample_target_position']
@@ -538,7 +544,7 @@ def pip_samples(df_map, gwl, liq_cls='Water Free Single'):
         gwl.add(asp)
 
         # dispensing
-        disp = Fluent.dispense()
+        disp = Fluent.Dispense()
         disp.RackLabel = df_map.loc[i,'TECAN_dest_labware_name']
         disp.RackType = df_map.loc[i,'TECAN_dest_labware_type']
         disp.Position = df_map.loc[i,'TECAN_dest_target_position']
@@ -547,14 +553,18 @@ def pip_samples(df_map, gwl, liq_cls='Water Free Single'):
         gwl.add(disp)
 
         # waste
-        gwl.add(Fluent.waste())
+        gwl.add(Fluent.Waste())
+        
+    # adding break
+    gwl.add(Fluent.Break())
+
 
 def pip_water(df_map, gwl, pcr_volume=25.0, mm_volume=13.1,
               fp_volume=2.0, rp_volume=2.0,
               liq_cls='Water Free Single'):
     """Commands for aliquoting water to each PCR rxn
     """
-    gwl.add(Fluent.comment('Water'))
+    gwl.add(Fluent.Comment('Water'))
     
     # calculate the amount of water
     water_volume = []
@@ -571,7 +581,7 @@ def pip_water(df_map, gwl, pcr_volume=25.0, mm_volume=13.1,
     # for each Sample-PCR_rxn_rep, write out asp/dispense commands
     for i in range(df_map.shape[0]):
         # aspiration
-        asp = Fluent.aspirate()
+        asp = Fluent.Aspirate()
         asp.RackLabel = 'PCR water tube'
         asp.RackType = '1.5ml Eppendorf'
         asp.Position = water_target_position
@@ -580,7 +590,7 @@ def pip_water(df_map, gwl, pcr_volume=25.0, mm_volume=13.1,
         gwl.add(asp)
 
         # dispensing
-        disp = Fluent.dispense()
+        disp = Fluent.Dispense()
         disp.RackLabel = df_map.loc[i,'TECAN_dest_labware_name']
         disp.RackType = df_map.loc[i,'TECAN_dest_labware_type']
         disp.Position = df_map.loc[i,'TECAN_dest_target_position']
@@ -589,7 +599,11 @@ def pip_water(df_map, gwl, pcr_volume=25.0, mm_volume=13.1,
         gwl.add(disp)
 
         # waste
-        gwl.add(Fluent.waste())
+        gwl.add(Fluent.Waste())
+        
+    # adding break
+    gwl.add(Fluent.Break())
+
 
 def PrimerPCR_plate_map(df_map, prefix='PrimerPCR'):
     """Create a PrimerPCR plate map table.

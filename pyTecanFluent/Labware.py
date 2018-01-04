@@ -148,7 +148,9 @@ class labware(object):
         
         # adding tip boxes
         df_tips = []
-        for RackLabel,v in sorted(self.tip_boxes.items(), reverse=True):
+        #print(self.tip_boxes)
+        func = lambda x: (x[1]['max_volume'], x[0])
+        for RackLabel,v in sorted(self.tip_boxes.items(), key=func):
             # RackType
             try:
                 RackType = v['RackType']

@@ -377,7 +377,7 @@ class multi_disp(object):
         sample_cnt = 0
         while 1:
             # single-asp
-            asp = aspirate()
+            asp = Aspirate()
             asp.RackLabel = self.SrcRackLabel
             asp.RackType = self.SrcRackType
             asp.Position = self.SrcPosition
@@ -416,7 +416,7 @@ class multi_disp(object):
                 # Skipping 0-volumes
                 if self.Volumes[sample_cnt-1] <= 0:
                     continue 
-                disp = dispense()
+                disp = Dispense()
                 disp.RackLabel = self.DestRackLabel[sample_cnt-1]
                 disp.RackType = self.DestRackType[sample_cnt-1]
                 disp.Position = self.DestPositions[sample_cnt-1]
@@ -434,7 +434,7 @@ class multi_disp(object):
             gwl.add(asp)
             for x in dispenses:
                 gwl.add(x)
-            gwl.add(waste())                       
+            gwl.add(Waste())                       
 
     @property
     def DestPositions(self):

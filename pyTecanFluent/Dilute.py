@@ -86,15 +86,15 @@ def parse_args(test_args=None, subparsers=None):
                       help='Destination labware type  on TECAN worktable (default: %(default)s)')
 
     ## tip type
-    tips = parser.add_argument_group('Tip type')
-    tips.add_argument('--tip1000_type', type=str, default='FCA, 1000ul SBS',
-                      help='1000ul tip type (default: %(default)s)')
-    tips.add_argument('--tip200_type', type=str, default='FCA, 200ul SBS',
-                      help='200ul tip type (default: %(default)s)')
-    tips.add_argument('--tip50_type', type=str, default='FCA, 50ul SBS',
-                      help='50ul tip type (default: %(default)s)')
-    tips.add_argument('--tip10_type', type=str, default='FCA, 10ul SBS',
-                      help='10ul tip type (default: %(default)s)')
+    # tips = parser.add_argument_group('Tip type')
+    # tips.add_argument('--tip1000_type', type=str, default='FCA, 1000ul SBS',
+    #                   help='1000ul tip type (default: %(default)s)')
+    # tips.add_argument('--tip200_type', type=str, default='FCA, 200ul SBS',
+    #                   help='200ul tip type (default: %(default)s)')
+    # tips.add_argument('--tip50_type', type=str, default='FCA, 50ul SBS',
+    #                   help='50ul tip type (default: %(default)s)')
+    # tips.add_argument('--tip10_type', type=str, default='FCA, 10ul SBS',
+    #                   help='10ul tip type (default: %(default)s)')
         
     # parse & return
     if test_args:
@@ -117,8 +117,10 @@ def main(args=None):
                       header=args.header)
 
     # gwl object init 
-    TipTypes = [args.tip1000_type, args.tip200_type,
-                args.tip50_type, args.tip10_type]    
+    #TipTypes = [args.tip1000_type, args.tip200_type,
+    #            args.tip50_type, args.tip10_type]
+    TipTypes = ['FCA, 1000ul SBS', 'FCA, 200ul SBS',
+                'FCA, 50ul SBS', 'FCA, 10ul SBS']    
     gwl = Fluent.gwl(TipTypes)
     
     # Determining dilution volumes
@@ -171,7 +173,6 @@ def main(args=None):
     # end
     return gwl_file, conc_file, lw_file
 
-
 def check_args(args):
     """Checking user input
     """
@@ -182,14 +183,14 @@ def check_args(args):
     assert args.minvolume >= 0.0, '--minvolume must be >= 0'
     assert args.maxvolume > 0.0, '--maxvolume must be > 0'
     # tip type
-    if args.tip1000_type.lower() == 'none':
-        args.tip1000_type = None
-    if args.tip200_type.lower() == 'none':
-        args.tip200_type = None
-    if args.tip50_type.lower() == 'none':
-        args.tip50_type = None
-    if args.tip10_type.lower() == 'none':
-        args.tip10_type = None
+    # if args.tip1000_type.lower() == 'none':
+    #     args.tip1000_type = None
+    # if args.tip200_type.lower() == 'none':
+    #     args.tip200_type = None
+    # if args.tip50_type.lower() == 'none':
+    #     args.tip50_type = None
+    # if args.tip10_type.lower() == 'none':
+    #     args.tip10_type = None
         
 def conc2df(concfile, row_select=None, file_format=None, header=True):
     """Loading a concentration file as a pandas dataframe
