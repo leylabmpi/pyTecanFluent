@@ -275,13 +275,13 @@ class labware(object):
         """
         TipType = None
         for cmd in commands:
-            if isinstance(cmd, Fluent.waste):
+            if isinstance(cmd, Fluent.Waste):
                 # adding tip to count
                 try:
                     self.tip_count[TipType] += 1
                 except KeyError:
                     self.tip_count[TipType] = 1                
-            if isinstance(cmd, Fluent.aspirate):
+            if isinstance(cmd, Fluent.Aspirate):
                 # getting tip type for aspirate
                 try:
                     TipType = cmd.TipType

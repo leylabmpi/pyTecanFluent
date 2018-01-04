@@ -124,7 +124,7 @@ class gwl(object):
         A TipType will be added, but this is just used for counting tips later on
         """
         # assertions
-        if isinstance(obj, aspirate) or isinstance(obj, dispense):
+        if isinstance(obj, Aspirate) or isinstance(obj, Dispense):
             assert obj.RackType is not None
             # check that RackType is in database
             self.db.get_labware(obj.RackType)
@@ -133,7 +133,7 @@ class gwl(object):
                 obj.LiquidClass = default_liq_cls
 
         # adding tip type for command based on volume; used for counting
-        if isinstance(obj, aspirate):
+        if isinstance(obj, Aspirate):
             obj.TipType = self.set_TipType(obj.Volume)
             
         # appending to list of commands
@@ -154,7 +154,7 @@ class gwl(object):
                     
     def set_TipType(self, volume):
         """Setting which tip will be used.
-        Tip selection based on volume and 
+        Tip selection based on dynamic tip handling (DTH) volume specified in the database
         """
         volume = float(volume)
         assert self.TipTypes is not None
@@ -283,21 +283,21 @@ class asp_disp(object):
         self.db.get_liquid_class(value)
         self._LiquidClass = value
         
-class aspirate(asp_disp):
+class Aspirate(asp_disp):
     """gwl aspirate command: "A;"
     """
     def __init__(self):
         asp_disp.__init__(self)
         self._ID = 'A'
 
-class dispense(asp_disp):
+class Dispense(asp_disp):
     """gwl dispense command: "D;"
     """
     def __init__(self):
         asp_disp.__init__(self)
         self._ID = 'D'
 
-class comment():
+class Comment():
     """gwl comment command: "C;"
     """
     def __init__(self, comment=''):
@@ -306,7 +306,7 @@ class comment():
     def cmd(self):
         return 'C;' + self.comment.lstrip('C;')
 
-class waste():
+class Waste():
     """gwl waste command: "W;"
     """
     def __init__(self):
@@ -314,6 +314,15 @@ class waste():
 
     def cmd(self):
         return 'W;'
+
+class Break():
+    """gwl break command: "B;"
+    """
+    def __init__(self):
+        pass
+
+    def cmd(self):
+        return 'B;'
     
 class multi_disp(object):
     """Commands for aliquoting reagent to multiple labware positions
