@@ -1,7 +1,7 @@
 {
     "Nest7mm_Pos": {
-        "position_count" : 12,
-        "keep_empty" : [1,6,7,12]
+        "position_count" : 18,
+        "keep_empty" : [1,6,7,12,13,18]
     },
     "Nest61mm_Pos": {
         "position_count" : 28,

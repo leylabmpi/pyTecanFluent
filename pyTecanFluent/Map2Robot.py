@@ -30,7 +30,7 @@ def parse_args(test_args=None, subparsers=None):
 
     EXTRA COLUMNS in MAPPING FILE:
 
-    * "TECAN_sample_labware_name" = The sample labware name on the robot worktable
+    * "TECAN_sample_labware_name" = The sample labware name on the robot worktable. Whatever name you want to use! 
     * "TECAN_sample_labware_type" = The type of labware containing samples (eg., '96 Well Eppendorf TwinTec PCR')
     * "TECAN_sample_target_position" = The well or tube location (a number)
     * "TECAN_sample_rxn_volume" = The volume of sample to use per PCR (ul)
@@ -40,12 +40,8 @@ def parse_args(test_args=None, subparsers=None):
 
     CONTROLS:
     * For the positive & negative controls, include them in the mapping file.
-    * If the controls (or samples) are provided in a tube, use "micro15[XXX]" 
-      for the "TECAN_sample_labware" column, but change "XXX" to the tube number
-      that you want to use (eg., micro15[003] for tube position 3)
-
-    OUTPUT FILES:
-    * The output files ending in "_win" have Windows line breads (needed for the robot)
+    * If the controls (or samples) are provided in a tube, use "1.5ml Eppendorf" 
+      for the "TECAN_sample_labware_type" column. The labware name can be whatever you want.
 
     MISC NOTES:
     * All volumes are in ul
@@ -73,9 +69,8 @@ def parse_args(test_args=None, subparsers=None):
     dest = parser.add_argument_group('Destination plate')
     dest.add_argument('--destname', type=str, default='Destination plate',
                       help='Distination labware name (default: %(default)s)')
-    dest.add_argument('--desttype', type=str, default='PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR',
-                      choices=['PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR',
-                               '96 Well Eppendorf TwinTec PCR',
+    dest.add_argument('--desttype', type=str, default='96 Well Eppendorf TwinTec PCR',
+                      choices=['96 Well Eppendorf TwinTec PCR',
                                '384 Well Biorad PCR'],
                       help='Destination labware type (default: %(default)s)')
     dest.add_argument('--deststart', type=int, default=1,
@@ -284,8 +279,10 @@ def map2df(mapfile, row_select=None):
     row_select: select particular rows of table in map file
     """
     # load via pandas IO
-    if mapfile.endswith('.txt') or mapfile.endswith('.csv'):
+    if mapfile.endswith('.txt') or mapfile.endswith('.tsv'):
         df = pd.read_csv(mapfile, sep='\t')
+    elif mapfile.endswith('.csv'):
+        df = pd.read_csv(mapfile, sep=',')
     elif mapfile.endswith('.xls') or mapfile.endswith('.xlsx'):
         xls = pd.ExcelFile(mapfile)
         df = pd.read_excel(xls)
