@@ -1,6 +1,6 @@
 {
     "FCA, 1000ul SBS" : {
-        "tip_box" : "FCA, 1000ul SBS High",
+        "tip_box" : "FCA, 1000ul SBS",
 	"volume" : 1000,
 	"DTH" : 1000
     },
@@ -20,7 +20,7 @@
 	"DTH" : 8
     },
     "FCA, 1000ul Filtered SBS" : {
-        "tip_box" : "FCA, 1000ul SBS High",
+        "tip_box" : "FCA, 1000ul SBS",
 	"volume" : 1000,
 	"DTH" : 1000
     },

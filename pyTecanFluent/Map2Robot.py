@@ -104,11 +104,11 @@ def parse_args(test_args=None, subparsers=None):
     liq = parser.add_argument_group('Liquid classes')
     liq.add_argument('--mm-liq', type=str, default='MasterMix Free Multi No-cLLD',
                       help='Mastermix liquid class (default: %(default)s)')
-    liq.add_argument('--primer-liq', type=str, default='Water Contact Wet Single No-cLLD',
+    liq.add_argument('--primer-liq', type=str, default='Water Contact Wet Single',
                       help='Primer liquid class (default: %(default)s)')
-    liq.add_argument('--sample-liq', type=str, default='Water Contact Wet Single No-cLLD',
+    liq.add_argument('--sample-liq', type=str, default='Water Contact Wet Single',
                       help='Sample liquid class (default: %(default)s)')
-    liq.add_argument('--water-liq', type=str, default='Water Contact Wet Single No-cLLD',
+    liq.add_argument('--water-liq', type=str, default='Water Contact Wet Single',
                       help='Water liquid class (default: %(default)s)')
 
     ## tip type
@@ -431,9 +431,12 @@ def pip_mastermix(df_map, gwl, mmvolume=13.1, mmtube=1,
     MD.DestPositions = df_map.loc[:,'TECAN_dest_target_position']
     MD.Volume = mmvolume
     MD.LiquidClass = liq_cls
-    MD.NoOfMultiDisp = int(np.floor(160 / mmvolume))  # using 200 ul tips
-    MD.add(gwl, 0.8)
+    MD.NoOfMultiDisp = 6  #int(np.floor(120 / mmvolume))  # using 200 ul tips
+    MD.add(gwl, 0.85)
 
+    # adding break
+    gwl.add(Fluent.Break())
+    
 def pip_nonbarcode_primer(df_map, gwl, volume, tube,
                           liq_cls='Water Free Single'):
     """Pipetting primers from tube.

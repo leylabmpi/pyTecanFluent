@@ -17,7 +17,7 @@
         "wells" : 96,
         "max_volume" : 200
     },
-    "FCA, 1000ul SBS High" : {
+    "FCA, 1000ul SBS" : {
         "target_location" : ["Nest7mm_Pos"],
         "category" : "tip",
         "wells" : 96,
@@ -41,7 +41,7 @@
         "wells" : 96,
         "max_volume" : 200
     },
-    "FCA, 1000ul Filtered SBS High" : {
+    "FCA, 1000ul Filtered SBS" : {
         "target_location" : ["Nest7mm_Pos"],
         "category" : "tip",
         "wells" : 96,

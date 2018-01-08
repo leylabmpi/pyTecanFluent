@@ -117,6 +117,7 @@ class gwl(object):
     def __init__(self, TipTypes=None):
         self.db = db()
         self.TipTypes = TipTypes
+        self.last_asp = None
         self.commands = []
 
     def add(self, obj, default_liq_cls='Water Free Single'):
@@ -124,6 +125,7 @@ class gwl(object):
         A TipType will be added, but this is just used for counting tips later on
         """
         # assertions
+        ## check values for asp/disp commands
         if isinstance(obj, Aspirate) or isinstance(obj, Dispense):
             assert obj.RackType is not None
             # check that RackType is in database
@@ -131,10 +133,15 @@ class gwl(object):
             # check that liquid class is in database (or use default)
             if self.LiquidClass_exists(obj.LiquidClass) is False:
                 obj.LiquidClass = default_liq_cls
-
+                
         # adding tip type for command based on volume; used for counting
         if isinstance(obj, Aspirate):
             obj.TipType = self.set_TipType(obj.Volume)
+            self.last_asp = obj
+        # dispense must have same liquid class as previous aspirate
+        if isinstance(obj, Dispense):
+            assert self.last_asp is not None
+            obj.LiquidClass = self.last_asp.LiquidClass
             
         # appending to list of commands
         self.commands.append(obj)
