@@ -73,8 +73,9 @@ def parse_args(test_args=None, subparsers=None):
     dest = parser.add_argument_group('Destination plate')
     dest.add_argument('--destname', type=str, default='Destination plate',
                       help='Distination labware name (default: %(default)s)')
-    dest.add_argument('--desttype', type=str, default='96 Well Eppendorf TwinTec PCR',
-                      choices=['96 Well Eppendorf TwinTec PCR',
+    dest.add_argument('--desttype', type=str, default='PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR',
+                      choices=['PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR',
+                               '96 Well Eppendorf TwinTec PCR',
                                '384 Well Biorad PCR'],
                       help='Destination labware type (default: %(default)s)')
     dest.add_argument('--deststart', type=int, default=1,
@@ -587,7 +588,7 @@ def pip_water(df_map, gwl, pcr_volume=25.0, mm_volume=13.1,
         asp = Fluent.Aspirate()
         asp.RackLabel = 'PCR water tube'
         asp.RackType = '1.5ml Eppendorf'
-        asp.Position = water_target_position
+        asp.Position = 1 #water_target_position
         asp.Volume = water_volume[i]
         asp.LiquidClass = liq_cls
         gwl.add(asp)

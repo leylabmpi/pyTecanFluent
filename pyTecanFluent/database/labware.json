@@ -58,6 +58,12 @@
         "category" : "plate",
         "wells" : 96,
         "max_volume" : 200
+    },    
+    "PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR" : {
+        "target_location" : ["Nest61mm_Pos"],
+        "category" : "plate",
+        "wells" : 96,
+        "max_volume" : 200
     },
     "384 Well Biorad PCR" : {
         "target_location" : ["Nest61mm_Pos"],
