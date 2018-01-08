@@ -680,7 +680,7 @@ def write_report(df_map, outFH, pcr_volume, mm_volume,
     ## total PCR
     total_pcr_volume = pcr_volume * n_rxn
     ## total mastermix
-    total_mm_volume = pcr_volume * n_rxn
+    total_mm_volume = mm_volume * n_rxn
     ## total primer
     if fp_tube > 0 and fp_volume > 0:
         total_fp_volume = fp_volume * n_rxn

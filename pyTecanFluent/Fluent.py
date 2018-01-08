@@ -129,7 +129,10 @@ class gwl(object):
         if isinstance(obj, Aspirate) or isinstance(obj, Dispense):
             assert obj.RackType is not None
             # check that RackType is in database
-            self.db.get_labware(obj.RackType)
+            labware = self.db.get_labware(obj.RackType)
+            # check that tubes have target_position of 1 (only 1 position per tube)
+            if 'eppendorf' in set(labware['target_location']):
+                assert obj.Position == 1
             # check that liquid class is in database (or use default)
             if self.LiquidClass_exists(obj.LiquidClass) is False:
                 obj.LiquidClass = default_liq_cls
@@ -369,7 +372,7 @@ class multi_disp(object):
         self._DestPositions = [1]
         # other
         self.Volume = 1.0
-        self.TipType = None       # doesn't actually work!
+        self.TipType = None       
         self.LiquidClass = 'Water Free Multi'
         self.NoOfMultiDisp = 2
 
