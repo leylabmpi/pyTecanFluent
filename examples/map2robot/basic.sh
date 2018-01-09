@@ -12,5 +12,5 @@ pyTecanFluent map2robot --prefix /tmp/Map2Robot_basic_384well \
 
 # 96-well source plate, 384-well destination plate
 pyTecanFluent map2robot --prefix /tmp/Map2Robot_basic_96-384well \
-  --desttype '384 Well Biorad PCR' \
+  --dest-type '384 Well Biorad PCR' \
   $DIR/../../tests/data/basic_96well.txt

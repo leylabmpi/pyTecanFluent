@@ -3,6 +3,7 @@ from __future__ import print_function
 # import
 import os
 import sys
+import re
 import json
 import collections
 import pkg_resources
@@ -131,8 +132,9 @@ class gwl(object):
             # check that RackType is in database
             labware = self.db.get_labware(obj.RackType)
             # check that tubes have target_position of 1 (only 1 position per tube)
-            if 'eppendorf' in set(labware['target_location']):
-                assert obj.Position == 1
+            if 'eppendorf' in set(labware['target_location']) and int(obj.Position) != 1:
+                obj.Position = 1
+                
             # check that liquid class is in database (or use default)
             if self.LiquidClass_exists(obj.LiquidClass) is False:
                 obj.LiquidClass = default_liq_cls
@@ -161,7 +163,7 @@ class gwl(object):
         for x in self.commands:
             outF.write(x.cmd() + '\n')
         outF.close()
-                    
+        
     def set_TipType(self, volume):
         """Setting which tip will be used.
         Tip selection based on dynamic tip handling (DTH) volume specified in the database
@@ -213,7 +215,7 @@ class gwl(object):
                 msg = 'Liquid class does not exist: "{}"'
                 print(msg.format(liquid_class), file=sys.stderr)
             return False
-
+        
     # get/set the available tip types (& their attributes) 
     @property
     def TipTypes(self):
@@ -388,10 +390,6 @@ class multi_disp(object):
         while 1:
             # single-asp
             asp = Aspirate()
-            asp.RackLabel = self.SrcRackLabel
-            asp.RackType = self.SrcRackType
-            asp.Position = self.SrcPosition
-            asp.LiquidClass = self.LiquidClass
             # determining total volume for this asp            
             dispenses_tmp = 0
             sample_cnt_tmp = sample_cnt

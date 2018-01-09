@@ -148,7 +148,6 @@ class labware(object):
         
         # adding tip boxes
         df_tips = []
-        #print(self.tip_boxes)
         func = lambda x: (x[1]['max_volume'], x[0])
         for RackLabel,v in sorted(self.tip_boxes.items(), key=func):
             # RackType
@@ -193,7 +192,7 @@ class labware(object):
         df_labware.sort_values(by=['labware_type', 'target_position'], inplace=True)
         # return
         return pd.concat([df_tips, df_labware])
-
+    
     def _next(self, labware, loc_tracker, keep_empty=True):
         """Getting nest target position for target location
         """
@@ -289,7 +288,7 @@ class labware(object):
                     TipType = cmd.TipType
                 except AttributeError:
                     TipType = None
-                                        
+                    
 class worktable_tracker():
     """Keeping track of available target positions for each target location
 

@@ -87,13 +87,13 @@
         "target_location" : ["eppendorf"],
         "category" : "tube",
         "wells" : 1,
-        "max_volume" : 145000
+        "max_volume" : 1200
     },
     "2.0ml Eppendorf" : {
         "target_location" : ["eppendorf"],
         "category" : "tube",
         "wells" : 1,
-        "max_volume" : 195000
+        "max_volume" : 1800
     }
 }
 

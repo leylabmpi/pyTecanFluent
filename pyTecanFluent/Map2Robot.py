@@ -38,6 +38,10 @@ def parse_args(test_args=None, subparsers=None):
     * "TECAN_primer_labware_type" = The primer plate labware type on the robot worktable
     * "TECAN_primer_target_position" = The well location (1-96 or 1-384)
 
+    PRIMERS:
+    * For single-indexed primers (eg., EMP primers), the non-barcoded primer should be pre-added to either
+      the mastermix (adjust the volume used for this script!) or each of the barcoded primers.
+
     CONTROLS:
     * For the positive & negative controls, include them in the mapping file.
     * If the controls (or samples) are provided in a tube, use "1.5ml Eppendorf" 
@@ -67,44 +71,55 @@ def parse_args(test_args=None, subparsers=None):
 
     ## Destination plate
     dest = parser.add_argument_group('Destination plate')
-    dest.add_argument('--destname', type=str, default='Destination plate',
+    dest.add_argument('--dest-name', type=str, default='Destination plate',
                       help='Distination labware name (default: %(default)s)')
-    dest.add_argument('--desttype', type=str, default='96 Well Eppendorf TwinTec PCR',
+    dest.add_argument('--dest-type', type=str, default='96 Well Eppendorf TwinTec PCR',
                       choices=['96 Well Eppendorf TwinTec PCR',
                                '384 Well Biorad PCR'],
                       help='Destination labware type (default: %(default)s)')
-    dest.add_argument('--deststart', type=int, default=1,
+    dest.add_argument('--dest-start', type=int, default=1,
                       help='Start well number on destination plate (default: %(default)s)')
     dest.add_argument('--rxns', type=int, default=3,
                       help='Number of replicate PCRs per sample (default: %(default)s)')
 
+    ## Reagents
+    rgnt = parser.add_argument_group('Reagents')
+    rgnt.add_argument('--mm-volume', type=float, default=13.1,
+                      help='MasterMix volume per PCR (default: %(default)s)')
+    rgnt.add_argument('--prm-volume', type=float, default=1.0,
+                         help='Primer volume per PCR (default: %(default)s)')
+    rgnt.add_argument('--pcr-volume', type=float, default=25.0,
+                        help='Total volume per PCR (default: %(default)s)')
+    rgnt.add_argument('--error-perc', type=float, default=10.0,
+                        help='Percent of extra total reagent volume to include (default: %(default)s)')
+    
     ## MasterMix
-    mm = parser.add_argument_group('Master mix')
-    mm.add_argument('--mmtube', type=int, default=1,
-                        help='MasterMix tube number (default: %(default)s)')
-    mm.add_argument('--mmvolume', type=float, default=13.1,
-                        help='MasterMix volume per PCR (default: %(default)s)')
+#    mm = parser.add_argument_group('Master mix')
+#    mm.add_argument('--mmtube', type=int, default=1,
+#                        help='MasterMix tube number (default: %(default)s)')
+#    mm.add_argument('--mmvolume', type=float, default=13.1,
+#                        help='MasterMix volume per PCR (default: %(default)s)')
 
     ## Primers
-    primers = parser.add_argument_group('Primers')
-    primers.add_argument('--fpvolume', type=float, default=1.0,
-                        help='Forward primer volume per PCR (default: %(default)s)')
-    primers.add_argument('--rpvolume', type=float, default=1.0,
-                        help='Reverse primer volume per PCR (default: %(default)s)')
-    primers.add_argument('--fptube', type=int, default=0,
-                        help='Forward non-bacode primer tube number (0 = barcoded primer on a plate), (default: %(default)s)')
-    primers.add_argument('--rptube', type=int, default=0,
-                        help='Reverse non-bacode primer tube number (0 = barcoded primer on a plate), (default: %(default)s)')
+    # primers = parser.add_argument_group('Primers')
+    # primers.add_argument('--fpvolume', type=float, default=1.0,
+    #                     help='Forward primer volume per PCR (default: %(default)s)')
+    # primers.add_argument('--rpvolume', type=float, default=1.0,
+    #                     help='Reverse primer volume per PCR (default: %(default)s)')
+    # primers.add_argument('--fptube', action='store_true', default=False,
+    #                     help='Forward non-barcode (default: %(default)s)')
+    # primers.add_argument('--rptube', type=int, default=0,
+    #                     help='Reverse non-bacode primer tube number (0 = barcoded primer on a plate), (default: %(default)s)')
     
     # Liquid classes
     liq = parser.add_argument_group('Liquid classes')
     liq.add_argument('--mm-liq', type=str, default='MasterMix Free Multi No-cLLD',
                       help='Mastermix liquid class (default: %(default)s)')
-    liq.add_argument('--primer-liq', type=str, default='Water Contact Wet Single',
+    liq.add_argument('--primer-liq', type=str, default='Water Free Single No-cLLD',
                       help='Primer liquid class (default: %(default)s)')
-    liq.add_argument('--sample-liq', type=str, default='Water Contact Wet Single',
+    liq.add_argument('--sample-liq', type=str, default='Water Free Single No-cLLD',
                       help='Sample liquid class (default: %(default)s)')
-    liq.add_argument('--water-liq', type=str, default='Water Contact Wet Single',
+    liq.add_argument('--water-liq', type=str, default='Water Free Single No-cLLD',
                       help='Water liquid class (default: %(default)s)')
 
     ## tip type
@@ -119,11 +134,11 @@ def parse_args(test_args=None, subparsers=None):
     #                   help='10ul tip type (default: %(default)s)')
     
     ## Misc
-    misc = parser.add_argument_group('Misc')
-    misc.add_argument('--pcrvolume', type=float, default=25.0,
-                        help='Total volume per PCR (default: %(default)s)')
-    misc.add_argument('--errorperc', type=float, default=10.0,
-                        help='Percent of extra total reagent volume to include (default: %(default)s)')
+    # misc = parser.add_argument_group('Misc')
+    # misc.add_argument('--pcrvolume', type=float, default=25.0,
+    #                     help='Total volume per PCR (default: %(default)s)')
+    # misc.add_argument('--errorperc', type=float, default=10.0,
+    #                     help='Percent of extra total reagent volume to include (default: %(default)s)')
 
     # running test args
     if test_args:
@@ -145,9 +160,9 @@ def main(args=None):
     
     # Making destination dataframe
     df_map = add_dest(df_map,
-                      dest_labware=args.destname,
-                      dest_type=args.desttype,
-                      dest_start=args.deststart,
+                      dest_labware=args.dest_name,
+                      dest_type=args.dest_type,
+                      dest_start=args.dest_start,
                       rxn_reps=args.rxns)
     
     # gwl construction
@@ -160,34 +175,28 @@ def main(args=None):
     gwl = Fluent.gwl(TipTypes)
 
     # Reordering dest if plate type is 384-well
-    gwl.db.get_labware(args.desttype)
-    n_wells = gwl.db.get_labware_wells(args.desttype)
+    gwl.db.get_labware(args.dest_type)
+    n_wells = gwl.db.get_labware_wells(args.dest_type)
     if n_wells == '384':
         df_map = reorder_384well(df_map, 'TECAN_dest_target_position')
 
     ## mastermix
     pip_mastermix(df_map, gwl,
-                  mmtube=args.mmtube,
-                  mmvolume=args.mmvolume, 
+                  mm_volume=args.mm_volume, 
                   liq_cls=args.mm_liq)
     ## primers
     pip_primers(df_map, gwl,
-                fp_volume=args.fpvolume,
-                rp_volume=args.rpvolume,
-                fp_tube=args.fptube,
-                rp_tube=args.rptube, 
+                prm_volume=args.prm_volume,
                 liq_cls=args.primer_liq)
     ## samples
-    pip_samples(df_map, gwl, 
-                liq_cls=args.sample_liq)
+    pip_samples(df_map, gwl, liq_cls=args.sample_liq)
     ## water
     pip_water(df_map, gwl,
-              pcr_volume=args.pcrvolume,
-              mm_volume=args.mmvolume,
-              fp_volume=args.fpvolume,
-              rp_volume=args.rpvolume, 
+              pcr_volume=args.pcr_volume,
+              mm_volume=args.mm_volume,
+              prm_volume=args.prm_volume,
               liq_cls=args.water_liq)
-
+    
     ## writing out worklist (gwl) file
     gwl_file = args.prefix + '.gwl'
     gwl.write(gwl_file)
@@ -196,14 +205,11 @@ def main(args=None):
     report_file = args.prefix + '_report.txt'
     with open(report_file, 'w') as repFH:
         write_report(df_map, outFH=repFH,
-                     pcr_volume=args.pcrvolume,
-                     mm_volume=args.mmvolume,
-                     fp_tube=args.fptube,
-                     fp_volume=args.fpvolume,
-                     rp_tube=args.rptube,
-                     rp_volume=args.rpvolume,
+                     pcr_volume=args.pcr_volume,
+                     mm_volume=args.mm_volume,
+                     prm_volume=args.prm_volume,
                      n_rxn_reps=args.rxns,
-                     error_perc=args.errorperc)
+                     error_perc=args.error_perc)
         
     # making labware table
     lw = Labware.labware()
@@ -246,33 +252,37 @@ def check_args(args):
     #     args.tip10_type = None
     # destination start
     db = Fluent.db()
-    db.get_labware(args.desttype)
-    wells = db.get_labware_wells(args.desttype)
-    if args.deststart < 1 or args.deststart > wells:
+    db.get_labware(args.dest_type)
+    wells = db.get_labware_wells(args.dest_type)
+    if args.dest_start < 1 or args.dest_start > wells:
         msg = 'Destination start well # must be in range: 1-{}'
         raise ValueError(msg.format(wells))
 
     # rows in mapping file
     args.rows = Utils.make_range(args.rows, set_zero_index=True)
     # tube number
-    if args.mmtube < 1 or args.mmtube > 24:
-        msg = '{} tube # must be in range: 1-24'
-        raise ValueError(msg.format('MasterMix'))
-    if args.fptube < 0 or args.fptube > 24:
-        msg = '{} tube # must be in range: 1-24 (or 0 if no tube)'
-        raise ValueError(msg.format('Forward primer'))
-    if args.rptube < 0 or args.rptube > 24:
-        msg = '{} tube # must be in range: 1-24 (or 0 if no tube)'
-        raise ValueError(msg.format('Reverse primer'))
+    # if args.mmtube < 1 or args.mmtube > 24:
+    #     msg = '{} tube # must be in range: 1-24'
+    #     raise ValueError(msg.format('MasterMix'))
+    # if args.fptube < 0 or args.fptube > 24:
+    #     msg = '{} tube # must be in range: 1-24 (or 0 if no tube)'
+    #     raise ValueError(msg.format('Forward primer'))
+    # if args.rptube < 0 or args.rptube > 24:
+    #     msg = '{} tube # must be in range: 1-24 (or 0 if no tube)'
+    #     raise ValueError(msg.format('Reverse primer'))
     # volumes
     ## mastermix
-    if args.mmvolume > args.pcrvolume:
+    if args.mm_volume > args.pcr_volume:
         msg = 'MasterMix volume > total PCR volume'
         raise ValueError(msg)
-    if args.mmvolume / 2.0 > args.pcrvolume:
+    if args.mm_volume / 2.0 > args.pcr_volume:
         msg = 'WARNING: MasterMix volume > half of PCR volume'
         print(msg, file=sys.stderr)
-
+    ## primers
+    assert args.prm_volume > 0, 'Primer volume must be > 0'
+    assert args.pcr_volume > 0, 'PCR volume must be > 0'
+    
+        
 def map2df(mapfile, row_select=None):
     """Loading a mapping file as a pandas dataframe
     mapfile: string; mapping file path
@@ -328,7 +338,7 @@ def check_df_map(df_map, args):
     # checking sample volumes
     msg = 'WARNING: sample volume > mastermix volume'
     for sv in df_map['TECAN_sample_rxn_volume']:
-        if sv > args.mmvolume:
+        if sv > args.mm_volume:
             print(msg, file=sys.stderr)
         if sv < 0:
             raise ValueError('Sample volume < 0')
@@ -405,72 +415,133 @@ def reorder_384well(df, reorder_col):
     df.index = range(df.shape[0])
     return df
 
-
-def pip_mastermix(df_map, gwl, mmvolume=13.1, mmtube=1, 
-                  liq_cls='Water Free Single'):
+def pip_mastermix_OLD(df_map, gwl, mm_volume=13.1, liq_cls='Water Free Single'):
     """Writing worklist commands for aliquoting mastermix.
     Using 1-asp-multi-disp with 200 ul tips.
     Method:
-    * calc max multi-dispense for 200 ul tips & mmvolume
+    * calc max multi-dispense for 200 ul tips & mm_volume
     * for 1:n_dispense
       * determine how many disp left for channel (every 8th)
       * if n_disp_left < n_disp: n_disp = n_disp_left
-      * calc total volume: n_disp * mmvolume
+      * calc total volume: n_disp * mm_volume
     """
-    mmtube = int(mmtube)
+    tube_max_vol = gwl.db.get_labware_max_volume('1.5ml Eppendorf')
+    
     gwl.add(Fluent.Comment('MasterMix'))
-
     MD = Fluent.multi_disp()
-    MD.SrcRackLabel = 'Mastermix tube[{0:0>3}]'.format(mmtube)
+    MD.SrcRackLabel = 'Mastermix tube[{0:0>3}]'.format(1)
     MD.SrcRackType = '1.5ml Eppendorf'
-    MD.SrcPosition = mmtube
+    MD.SrcPosition = 1 
     MD.DestRackLabel = df_map.loc[:,'TECAN_dest_labware_name']    
     MD.DestRackType = df_map.loc[:,'TECAN_dest_labware_type']    
     MD.DestPositions = df_map.loc[:,'TECAN_dest_target_position']
-    MD.Volume = mmvolume
+    MD.Volume = mm_volume
     MD.LiquidClass = liq_cls
-    MD.NoOfMultiDisp = 6  #int(np.floor(120 / mmvolume))  # using 200 ul tips
+    MD.NoOfMultiDisp = 6  #int(np.floor(120 / mm_volume))  # using 200 ul tips
     MD.add(gwl, 0.85)
 
     # adding break
     gwl.add(Fluent.Break())
-    
-def pip_nonbarcode_primer(df_map, gwl, volume, tube,
-                          liq_cls='Water Free Single'):
-    """Pipetting primers from tube.
-    Assuming primer is aliquoted to all samples
-    df_map : mapping file dataframe
-    volume : volume to aliquot to each reaction
-    tube : tube number (rackID assumed)
-    liq_cls : liquid class
-    """
-    tube = int(tube)
-    # for each Sample-PCR_rxn_rep, write out asp/dispense commands
-    for i in range(df_map.shape[0]):
-        # aspiration
-        asp = Fluent.Aspirate()
-        asp.RackLabel = 'Primer tube[{0:0>3}]'.format(tube)
-        asp.RackType = '1.5ml Eppendorf'
-        asp.Position = tube
-        asp.Volume = volume
-        asp.LiquidClass = liq_cls
-        gwl.add(asp)
 
-        # dispensing
+def pip_mastermix(df_map, gwl, mm_volume=13.1, multi_disp=6, liq_cls='Water Free Single'):
+    """Writing worklist commands for aliquoting mastermix.
+    Using 1-asp-multi-disp with 200 ul tips.
+    Method:
+    * calc max multi-dispense for 200 ul tips & mm_volume
+    * for 1:n_dispense
+      * determine how many disp left for channel (every 8th)
+      * if n_disp_left < n_disp: n_disp = n_disp_left
+      * calc total volume: n_disp * mm_volume
+    """
+    channels = {x:[] for x in range(8)}
+    
+    gwl.add(Fluent.Comment('MasterMix'))
+    # adding dispenses for each channel
+    for i in range(df_map.shape[0]):        
+        channel = i % 8        
         disp = Fluent.Dispense()
         disp.RackLabel = df_map.loc[i,'TECAN_dest_labware_name']
         disp.RackType = df_map.loc[i,'TECAN_dest_labware_type']
         disp.Position = df_map.loc[i,'TECAN_dest_target_position']
-        disp.Volume = volume
+        disp.Volume = mm_volume
         disp.LiquidClass = liq_cls
-        gwl.add(disp)
+        channels[channel].append(disp)
+        if len(channels[channel]) % multi_disp == 0:
+            channels[channel].append(Fluent.Waste())
+    # adding waste at end of each (if needed)
+    for channel,v in channels.items():
+        if not isinstance(v[-1], Fluent.Waste):
+            channels[channel].append(Fluent.Waste())
+    # adding aspirations
+    tube_max_vol = gwl.db.get_labware_max_volume('1.5ml Eppendorf')
+    total_vol_sum = 0
+    for channel,v in sorted(channels.items()):
+        cmds = []
+        vol_sum = 0
+        for i,x in enumerate(reversed(v)):
+            if isinstance(x, Fluent.Dispense):
+                cmds.append(x)
+            if i == len(v)-1 or (i != 0 and isinstance(x, Fluent.Waste)):
+                asp = Fluent.Aspirate()
+                tube_id = int(total_vol_sum / tube_max_vol) + 1
+                asp.RackLabel = 'Mastermix tube[{0:0>3}]'.format(tube_id)
+                asp.RackType = '1.5ml Eppendorf'
+                asp.Position = 1
+                asp.Volume = round(vol_sum * 1.15, 1)
+                asp.LiquidClass = liq_cls
+                cmds.append(asp)
+                total_vol_sum += vol_sum
+                vol_sum = 0
+            elif isinstance(x, Fluent.Dispense):
+                vol_sum += x.Volume                
+            if isinstance(x, Fluent.Waste):
+                cmds.append(x)
+        channels[channel] = [x for x in reversed(cmds)]
 
-        # waste
-        gwl.add(Fluent.Waste())
+    # adding commands to gwl
+    for channel,v in sorted(channels.items()):
+        for x in v:
+            #print('Channel {}: {}'.format(channel, x))
+            gwl.add(x)
+        
+    # adding break
+    gwl.add(Fluent.Break())
+
+    
+    # def pip_nonbarcode_primer(df_map, gwl, volume, liq_cls='Water Free Single'):
+#     """Pipetting primers from tube.
+#     Assuming primer is aliquoted to all samples
+#     df_map : mapping file dataframe
+#     volume : volume to aliquot to each reaction
+#     liq_cls : liquid class
+#     """
+#     #tube = int(tube)
+#     # for each Sample-PCR_rxn_rep, write out asp/dispense commands
+#     for i in range(df_map.shape[0]):
+#         # aspiration
+#         asp = Fluent.Aspirate()
+#         asp.RackLabel = 'Primer tube[{0:0>3}]'.format(1)
+#         asp.RackType = '1.5ml Eppendorf'
+#         asp.Position = 1 
+#         asp.Volume = volume
+#         asp.LiquidClass = liq_cls
+#         gwl.add(asp)
+
+#         # dispensing
+#         disp = Fluent.Dispense()
+#         disp.RackLabel = df_map.loc[i,'TECAN_dest_labware_name']
+#         disp.RackType = df_map.loc[i,'TECAN_dest_labware_type']
+#         disp.Position = df_map.loc[i,'TECAN_dest_target_position']
+#         disp.Volume = volume
+#         disp.LiquidClass = liq_cls
+#         gwl.add(disp)
+
+#         # waste
+#         gwl.add(Fluent.Waste())
         
 def pip_primer(i, gwl, df_map, primer_labware_name, 
                primer_labware_type, primer_target_position,
-               primer_plate_volume, liq_cls):
+               primer_volume, liq_cls):
     """Pipetting a single primer
     """
     # aspiration
@@ -478,7 +549,7 @@ def pip_primer(i, gwl, df_map, primer_labware_name,
     asp.RackLabel = df_map.loc[i, primer_labware_name]
     asp.RackType = df_map.loc[i, primer_labware_type]
     asp.Position = df_map.loc[i, primer_target_position]
-    asp.Volume = primer_plate_volume
+    asp.Volume = primer_volume
     asp.LiquidClass = liq_cls
     gwl.add(asp)
 
@@ -487,43 +558,41 @@ def pip_primer(i, gwl, df_map, primer_labware_name,
     disp.RackLabel = df_map.loc[i,'TECAN_dest_labware_name']
     disp.RackType = df_map.loc[i,'TECAN_dest_labware_type']
     disp.Position = df_map.loc[i,'TECAN_dest_target_position']
-    disp.Volume = primer_plate_volume
+    disp.Volume = primer_volume
     asp.LiquidClass = liq_cls
     gwl.add(disp)
 
     # waste
     gwl.add(Fluent.Waste())
     
-def pip_primers(df_map, gwl, fp_volume=0, rp_volume=0,
-                fp_tube=0, rp_tube=0, 
-                liq_cls='Water Free Single'):
+def pip_primers(df_map, gwl, prm_volume=0, liq_cls='Water Free Single'):
     """Commands for aliquoting primers
     """
-    primer_plate_volume = 0
+#    primer_plate_volume = 0
     gwl.add(Fluent.Comment('Primers'))
     
     # pipetting non-barcoded primers
     ## forward primer
-    if fp_tube > 0 and fp_volume > 0:
-        gwl.add(Fluent.Comment('Forward non-barcode primer'))
-        pip_nonbarcode_primer(df_map, gwl, fp_volume, fp_tube)
-    else:
-        primer_plate_volume += fp_volume
-    ## reverse primer
-    if rp_tube > 0 and rp_volume > 0:
-        gwl.add(Fluent.Comment('Reverse non-barcode primer'))
-        pip_nonbarcode_primer(df_map, gwl, rp_volume, rp_tube)
-    else:
-        primer_plate_volume += rp_volume
+    # if fp_volume > 0:
+    #     gwl.add(Fluent.Comment('Forward non-barcode primer'))
+    #     pip_nonbarcode_primer(df_map, gwl, fp_volume)
+    # else:
+    #     primer_plate_volume += fp_volume
+    # ## reverse primer
+    # if rp_volume > 0:
+    #     gwl.add(Fluent.Comment('Reverse non-barcode primer'))
+    #     pip_nonbarcode_primer(df_map, gwl, rp_volume)
+    # else:
+    #     primer_plate_volume += rp_volume
             
     # pipetting barcoded primers
-    gwl.add(Fluent.Comment('Barcoded primers'))
+#    gwl.add(Fluent.Comment('Barcoded primers'))
     for i in range(df_map.shape[0]):
         pip_primer(i, gwl, df_map,
                    'TECAN_primer_labware_name', 
                    'TECAN_primer_labware_type',
                    'TECAN_primer_target_position',
-                   primer_plate_volume, liq_cls)
+                   prm_volume, liq_cls)
         
     # adding break
     gwl.add(Fluent.Break())
@@ -561,8 +630,7 @@ def pip_samples(df_map, gwl, liq_cls='Water Free Single'):
 
 
 def pip_water(df_map, gwl, pcr_volume=25.0, mm_volume=13.1,
-              fp_volume=2.0, rp_volume=2.0,
-              liq_cls='Water Free Single'):
+              prm_volume=2.0, liq_cls='Water Free Single'):
     """Commands for aliquoting water to each PCR rxn
     """
     gwl.add(Fluent.Comment('Water'))
@@ -571,13 +639,13 @@ def pip_water(df_map, gwl, pcr_volume=25.0, mm_volume=13.1,
     water_volume = []
     for i in range(df_map.shape[0]):
         samp_volume = df_map.loc[i,'TECAN_sample_rxn_volume']
-        w_need = pcr_volume - (samp_volume + mm_volume + fp_volume + rp_volume)
+        w_need = pcr_volume - (samp_volume + mm_volume + prm_volume)
         assert w_need >= 0, 'Water volume is negative: {}'.format(w_need)
         water_volume.append(w_need)
     df_map['TECAN_water_rxn_volume'] = water_volume
     
     # target_position for water tube (next tube position available)
-    water_target_position = gwl.RackType_count('1.5ml Eppendorf') + 1
+    #water_target_position = gwl.RackType_count('1.5ml Eppendorf') + 1
     
     # for each Sample-PCR_rxn_rep, write out asp/dispense commands
     for i in range(df_map.shape[0]):
@@ -585,7 +653,7 @@ def pip_water(df_map, gwl, pcr_volume=25.0, mm_volume=13.1,
         asp = Fluent.Aspirate()
         asp.RackLabel = 'PCR water tube'
         asp.RackType = '1.5ml Eppendorf'
-        asp.Position = 1 #water_target_position
+        asp.Position = 1 
         asp.Volume = water_volume[i]
         asp.LiquidClass = liq_cls
         gwl.add(asp)
@@ -671,8 +739,7 @@ def write_report_line(outFH, subject, volume, round_digits=1, error_perc=None):
     outFH.write('{}:\t{}\n'.format(subject, v))
 
 def write_report(df_map, outFH, pcr_volume, mm_volume,
-                 fp_tube, fp_volume, rp_tube, rp_volume,
-                 n_rxn_reps, error_perc=10.0):
+                 prm_volume, n_rxn_reps, error_perc=10.0):
     """Writing a report on
     """
     # calculating total volumes
@@ -682,14 +749,14 @@ def write_report(df_map, outFH, pcr_volume, mm_volume,
     ## total mastermix
     total_mm_volume = mm_volume * n_rxn
     ## total primer
-    if fp_tube > 0 and fp_volume > 0:
-        total_fp_volume = fp_volume * n_rxn
-    else:
-        total_fp_volume = None
-    if rp_tube > 0 and rp_volume > 0:
-        total_rp_volume = rp_volume * n_rxn
-    else:
-        total_rp_volume = None
+    # if fp_volume > 0:
+    #     total_fp_volume = fp_volume * n_rxn
+    # else:
+    #     total_fp_volume = None
+    # if rp_volume > 0:
+    #     total_rp_volume = rp_volume * n_rxn
+    # else:
+    #     total_rp_volume = None
     ## total water
     total_water_volume = sum(df_map['TECAN_water_rxn_volume'])
 
@@ -702,19 +769,20 @@ def write_report(df_map, outFH, pcr_volume, mm_volume,
     outFH.write('# Volumes per PCR (ul)\n')
     write_report_line(outFH, 'Total', pcr_volume)
     write_report_line(outFH, 'Master Mix', mm_volume)
-    write_report_line(outFH, 'Forward Primer', fp_volume)
-    write_report_line(outFH, 'Reverse Primer', rp_volume)
+    write_report_line(outFH, 'Primers', prm_volume)
+#    write_report_line(outFH, 'Forward Primer', fp_volume)
+#    write_report_line(outFH, 'Reverse Primer', rp_volume)
     ## raw total volumes
     outFH.write('# Total volumes (ul)\n')
     write_report_line(outFH, 'Master Mix', total_mm_volume)
-    write_report_line(outFH, 'Forward Primer', total_fp_volume)
-    write_report_line(outFH, 'Reverse Primer', total_rp_volume)
+#    write_report_line(outFH, 'Forward Primer', total_fp_volume)
+#    write_report_line(outFH, 'Reverse Primer', total_rp_volume)
     write_report_line(outFH, 'Water', total_water_volume)
     ## total volumes with error
     outFH.write('# Total volumes with (ul; {}% error)\n'.format(error_perc))
     write_report_line(outFH, 'Master Mix', total_mm_volume, error_perc=error_perc)
-    write_report_line(outFH, 'Forward Primer', total_fp_volume, error_perc=error_perc)
-    write_report_line(outFH, 'Reverse Primer', total_rp_volume, error_perc=error_perc)
+#    write_report_line(outFH, 'Forward Primer', total_fp_volume, error_perc=error_perc)
+#    write_report_line(outFH, 'Reverse Primer', total_rp_volume, error_perc=error_perc)
     write_report_line(outFH, 'Water', total_water_volume, error_perc=error_perc)
     # samples
     outFH.write('')
