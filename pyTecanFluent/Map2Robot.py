@@ -415,7 +415,7 @@ def reorder_384well(df, reorder_col):
     df.index = range(df.shape[0])
     return df
 
-def pip_mastermix(df_map, gwl, mm_volume=13.1, multi_disp=6, liq_cls='Water Free Single'):
+def pip_mastermix_multi_disp(df_map, gwl, mm_volume=13.1, multi_disp=6, liq_cls='Water Free Single'):
     """Writing worklist commands for aliquoting mastermix.
     Using 1-asp-multi-disp with 200 ul tips.
     Method:
@@ -478,7 +478,53 @@ def pip_mastermix(df_map, gwl, mm_volume=13.1, multi_disp=6, liq_cls='Water Free
         
     # adding break
     gwl.add(Fluent.Break())
-        
+
+def pip_mastermix(df_map, gwl, mm_volume=13.1, multi_disp=6,
+                  liq_cls='MasterMix Free Multi'):
+    """Writing worklist commands for aliquoting mastermix.
+    Using 1-asp-multi-disp with 200 ul tips.
+    Method:
+    * calc max multi-dispense for 200 ul tips & mm_volume
+    * for 1:n_dispense
+      * determine how many disp left for channel (every 8th)
+      * if n_disp_left < n_disp: n_disp = n_disp_left
+      * calc total volume: n_disp * mm_volume
+    """
+    # separate regent dispense per designation plate (new source tube)
+    cols = ['TECAN_dest_labware_name', 'TECAN_dest_labware_type']
+    df_map_f = df_map.loc[:,cols].drop_duplicates()
+    df_map_f.reset_index(inplace=True)
+    func = lambda row: gwl.db.get_labware_wells(row['TECAN_dest_labware_type'])
+    df_map_f['wells'] = df_map_f.apply(func, axis=1)
+    for i in range(df_map_f.shape[0]):
+        # all records for 1 plate
+        RackLabel = df_map_f.loc[i,'TECAN_dest_labware_name']
+        df_tmp = df_map.loc[df_map['TECAN_dest_labware_name'] == RackLabel,]
+        # finding positions to exclude
+        all_wells = [x+1 for x in range(df_map_f.loc[i,'wells'])]
+        target_pos = df_tmp['TECAN_dest_target_position'].tolist()
+        to_exclude = set(all_wells) - set(target_pos)
+        # creating reagnet distribution command
+        rd = Fluent.Reagent_distribution()
+        rd.SrcRackLabel = 'Mastermix tube[{0:0>3}]'.format(i + 1)
+        rd.SrcRackType = '1.5ml Eppendorf waste'
+        rd.SrcPosStart = 1
+        rd.SrcPosEnd = 1
+        # dispense parameters
+        rd.DestRackLabel = df_map_f.loc[i,'TECAN_dest_labware_name']
+        rd.DestRackType = df_map_f.loc[i,'TECAN_dest_labware_type']
+        rd.DestPosStart = 1
+        rd.DestPosEnd = df_map_f.loc[i,'wells']
+        # other
+        rd.Volume = mm_volume
+        rd.LiquidClass = liq_cls
+        rd.NoOfDiTiReuses = 1
+        rd.NoOfMultiDisp = multi_disp
+        rd.Direction = 0
+        rd.ExcludedDestWell = ';'.join([str(x) for x in list(to_exclude)])
+        # adding to gwl object
+        gwl.add(rd)
+    
 def pip_primer(i, gwl, df_map, primer_labware_name, 
                primer_labware_type, primer_target_position,
                primer_volume, liq_cls):

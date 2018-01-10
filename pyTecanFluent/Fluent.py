@@ -463,9 +463,11 @@ class multi_disp(object):
         return len(self._DestPositions)
 
     
-class reagent_distribution(object):
+class Reagent_distribution(object):
     """
-    # NOTE: depreciated 
+    NOTE: Using this command requires a labware designated for FCA waste
+    (eg., a trough or tube)
+    The labware must have "IsFcaLiquidWaste" == True in the "Custom Attributes"
 
     Commands for aliquoting mastermix
     *AspirateParameters*
@@ -485,7 +487,7 @@ class reagent_distribution(object):
     LiquidClass = Which liquid class to use? Default: 'Water Free Multi'
     NoOfDiTiReuses = How many times to reuse tips?
     NoOfMultiDisp = How many multi-dispenses?
-    Direction = Which way to pipette? Default:0
+    Direction = Which way to pipette? Default:0 (column-wise)
     ExcludedDestWell = Semi-colon separated string of locations to exclude
 
     *WashParameters*
@@ -506,7 +508,7 @@ class reagent_distribution(object):
         self.DestRackLabel = None
         self.DestRackID = None
         self.DestRackType = None
-        self.DestPositions = 1
+        self.DestPosStart = 1
         self.DestPosEnd = 1
         # other
         self.Volume = 1
