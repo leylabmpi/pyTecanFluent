@@ -48,8 +48,6 @@ def parse_args(test_args=None, subparsers=None):
                          help='An excel or tab-delim file of concentrations')
     groupIO.add_argument('--prefix', type=str, default='TECAN_dilute',
                          help='Output file name prefix (default: %(default)s)')
-#    groupIO.add_argument('--gwl', action='store_true', default=False,
-#                         help='Output worklist file as gwl instead of csv (default: %(default)s)')
     
     ## concentration file
     conc = parser.add_argument_group('Concentation file')
@@ -64,37 +62,26 @@ def parse_args(test_args=None, subparsers=None):
     dil = parser.add_argument_group('Dilution')
     dil.add_argument('--dilution', type=float, default=5.0,
                      help='Target dilution concentration (ng/ul) (default: %(default)s)')
-    dil.add_argument('--minvolume', type=float, default=2.0,
+    dil.add_argument('--min-volume', type=float, default=2.0,
                      help='Minimum sample volume to use (default: %(default)s)')
-    dil.add_argument('--maxvolume', type=float, default=30.0,
+    dil.add_argument('--max-volume', type=float, default=30.0,
                      help='Maximum sample volume to use (default: %(default)s)')
-    dil.add_argument('--mintotal', type=float, default=10.0,
+    dil.add_argument('--min-total', type=float, default=10.0,
                      help='Minimum post-dilution total volume (default: %(default)s)')
-    dil.add_argument('--dlabware_name', type=str, default='100ml_1',
+    dil.add_argument('--dil-labware-name', type=str, default='100ml_1',
                      help='Name of labware containing the dilutant (default: %(default)s)')
-    dil.add_argument('--dlabware_type', type=str, default='100ml_1',
+    dil.add_argument('--dil-labware-type', type=str, default='100ml_1',
                      choices=['100ml_1', '1.5ml Eppendorf',
                               '2.0ml Eppendorf', '96 Well Eppendorf TwinTec PCR'], 
                      help='Labware type containing the dilutant (default: %(default)s)')
 
     ## destination plate
     dest = parser.add_argument_group('Destination labware')
-    dest.add_argument('--destname', type=str, default='Diluted DNA plate',
+    dest.add_argument('--dest-name', type=str, default='Diluted DNA plate',
                       help='Destination labware name (default: %(default)s)')
-    dest.add_argument('--desttype', type=str, default='96 Well Eppendorf TwinTec PCR',
+    dest.add_argument('--dest-type', type=str, default='96 Well Eppendorf TwinTec PCR',
                       choices=['96 Well Eppendorf TwinTec PCR', '384 Well Biorad PCR'],                          
                       help='Destination labware type  on TECAN worktable (default: %(default)s)')
-
-    ## tip type
-    # tips = parser.add_argument_group('Tip type')
-    # tips.add_argument('--tip1000_type', type=str, default='FCA, 1000ul SBS',
-    #                   help='1000ul tip type (default: %(default)s)')
-    # tips.add_argument('--tip200_type', type=str, default='FCA, 200ul SBS',
-    #                   help='200ul tip type (default: %(default)s)')
-    # tips.add_argument('--tip50_type', type=str, default='FCA, 50ul SBS',
-    #                   help='50ul tip type (default: %(default)s)')
-    # tips.add_argument('--tip10_type', type=str, default='FCA, 10ul SBS',
-    #                   help='10ul tip type (default: %(default)s)')
         
     # parse & return
     if test_args:
@@ -117,8 +104,6 @@ def main(args=None):
                       header=args.header)
 
     # gwl object init 
-    #TipTypes = [args.tip1000_type, args.tip200_type,
-    #            args.tip50_type, args.tip10_type]
     TipTypes = ['FCA, 1000ul SBS', 'FCA, 200ul SBS',
                 'FCA, 50ul SBS', 'FCA, 10ul SBS']    
     gwl = Fluent.gwl(TipTypes)
@@ -126,17 +111,17 @@ def main(args=None):
     # Determining dilution volumes
     df_conc = dilution_volumes(df_conc, 
                                dilute_conc=args.dilution,
-                               min_vol=args.minvolume,
-                               max_vol=args.maxvolume,
-                               min_total=args.mintotal,
-                               dest_type=args.desttype)
+                               min_vol=args.min_volume,
+                               max_vol=args.max_volume,
+                               min_total=args.min_total,
+                               dest_type=args.dest_type)
     
     # Adding destination data
-    gwl.db.get_labware(args.desttype)
-    n_wells = gwl.db.get_labware_wells(args.desttype)
+    gwl.db.get_labware(args.dest_type)
+    n_wells = gwl.db.get_labware_wells(args.dest_type)
     df_conc = add_dest(df_conc,
-                       dest_name=args.destname,
-                       dest_type=args.desttype,
+                       dest_name=args.dest_name,
+                       dest_type=args.dest_type,
                        dest_wells=n_wells)
             
     # Reordering dest if plate type is 384-well
@@ -145,8 +130,8 @@ def main(args=None):
         
     ## Dilutant
     pip_dilutant(df_conc, gwl=gwl,
-                 src_labware_name=args.dlabware_name,
-                 src_labware_type=args.dlabware_type)
+                 src_labware_name=args.dil_labware_name,
+                 src_labware_type=args.dil_labware_type)
     ## Sample
     pip_samples(df_conc, gwl=gwl)
     
@@ -180,17 +165,8 @@ def check_args(args):
     args.rows = Utils.make_range(args.rows, set_zero_index=True)
     # dilution
     assert args.dilution >= 0.0, '--dilution must be >= 0'
-    assert args.minvolume >= 0.0, '--minvolume must be >= 0'
-    assert args.maxvolume > 0.0, '--maxvolume must be > 0'
-    # tip type
-    # if args.tip1000_type.lower() == 'none':
-    #     args.tip1000_type = None
-    # if args.tip200_type.lower() == 'none':
-    #     args.tip200_type = None
-    # if args.tip50_type.lower() == 'none':
-    #     args.tip50_type = None
-    # if args.tip10_type.lower() == 'none':
-    #     args.tip10_type = None
+    assert args.min_volume >= 0.0, '--min-volume must be >= 0'
+    assert args.max_volume > 0.0, '--max-volume must be > 0'
         
 def conc2df(concfile, row_select=None, file_format=None, header=True):
     """Loading a concentration file as a pandas dataframe
@@ -448,7 +424,8 @@ def reorder_384well(df, reorder_col):
 #     MD.add(gwl, tip_frac)
 
 def pip_dilutant(df_conc, gwl, src_labware_name, src_labware_type=None):
-    """Commands for aliquoting dilutant
+    """Commands for aliquoting dilutant.
+    TODO: determine whether tips can be re-used by skipping "W;"
     """
     gwl.add(Fluent.Comment('Dilutant'))
     # for each sample, transfer aliquot via asp-disp 
@@ -464,7 +441,7 @@ def pip_dilutant(df_conc, gwl, src_labware_name, src_labware_type=None):
         asp.RackType = src_labware_type
         asp.Position = 1
         asp.Volume = volume
-        asp.LiquidClass = 'Water Free Single No-cLLD'
+        asp.LiquidClass = 'Water Free Single'
         gwl.add(asp)
         
         # dispensing
@@ -473,7 +450,7 @@ def pip_dilutant(df_conc, gwl, src_labware_name, src_labware_type=None):
         disp.RackType = df_conc.loc[i,'TECAN_dest_labware_type']        
         disp.Position = df_conc.loc[i,'TECAN_dest_target_position']
         disp.Volume = volume
-        disp.LiquidClass = 'Water Free Single No-cLLD'
+        disp.LiquidClass = 'Water Free Single'
         gwl.add(disp)
 
         # waste
