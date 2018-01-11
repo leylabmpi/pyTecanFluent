@@ -62,59 +62,48 @@ def parse_args(test_args=None, subparsers=None):
                          help='A QIIME-formatted mapping file')
     
     ## file format
-    filef = parser.add_argument_group('sample file')
+    filef = parser.add_argument_group('Sample file details')
     ### sample file
-    filef.add_argument('--sample_format', type=str, default=None,
+    filef.add_argument('--sample-format', type=str, default=None,
                         help='File format (excel or tab). If not provided, the format is determined from the file extension') 
-    filef.add_argument('--sample_header', action='store_false', default=True,
+    filef.add_argument('--sample-header', action='store_false', default=True,
                         help='Header in the sample file? (default: %(default)s)')
-    filef.add_argument('--sample_rows', type=str, default='all',
+    filef.add_argument('--sample-rows', type=str, default='all',
                       help='Which rows (not including header) of the sample file to use ("all"=all rows; "1-48"=rows 1-48) (default: %(default)s)')
-    filef.add_argument('--sample_col', type=str, default='Sample',
+    filef.add_argument('--sample-col', type=str, default='Sample',
                         help='Name of column containing the samples  (default: %(default)s)')
-    filef.add_argument('--include_col', type=str, default='Call',
+    filef.add_argument('--include-col', type=str, default='Call',
                         help='Name of column designating sample include/skip (default: %(default)s)')
-    filef.add_argument('--sample_labware_name', type=str, default='labware_name',
+    filef.add_argument('--sample-labware-name', type=str, default='labware_name',
                         help='Name of column designating the sample labware name  (default: %(default)s)')
-    filef.add_argument('--sample_labware_type', type=str, default='labware_type',
+    filef.add_argument('--sample-labware-type', type=str, default='labware_type',
                         help='Name of column designating the sample labware type (default: %(default)s)')
-    filef.add_argument('--position_col', type=str, default='Well',
+    filef.add_argument('--position-col', type=str, default='Well',
                         help='Name of column designating sample location in the plate (default: %(default)s)')
     ### mapping file
-    filef.add_argument('--map_format', type=str, default=None,
+    filef.add_argument('--map-format', type=str, default=None,
                         help='File format (excel or tab). If not provided, the format is determined from the file extension') 
-    filef.add_argument('--map_header', action='store_false', default=True,
+    filef.add_argument('--map-header', action='store_false', default=True,
                         help='Header in the mapping file? (default: %(default)s)')
 
     ## pooling
     pooling = parser.add_argument_group('Pooling')
     pooling.add_argument('--volume', type=float, default=30.0,
                          help='Per-sample volume to pool (default: %(default)s)')
-    pooling.add_argument('--liqcls', type=str, default='Water Free Single No-cLLD',
+    pooling.add_argument('--liq-cls', type=str, default='Water Free Single No-cLLD',
                          help='Liquid class for pooling (default: %(default)s)')
-    pooling.add_argument('--new_tips',  action='store_true', default=False,
+    pooling.add_argument('--new-tips',  action='store_true', default=False,
                         help='Use new tips between sample replicates? (default: %(default)s)')
 
     ## destination plate
     dest = parser.add_argument_group('Destination labware')
-    dest.add_argument('--destname', type=str, default='Pooled DNA plate',
+    dest.add_argument('--dest-name', type=str, default='Pooled DNA plate',
                       help='Destination labware name (default: %(default)s)')
-    dest.add_argument('--desttype', type=str, default='96 Well Eppendorf TwinTec PCR',
+    dest.add_argument('--dest-type', type=str, default='96 Well Eppendorf TwinTec PCR',
                       choices=['96 Well Eppendorf TwinTec PCR', '384 Well Biorad PCR'],                          
                       help='Destination labware type (default: %(default)s)')
-    dest.add_argument('--deststart', type=int, default=1,
+    dest.add_argument('--dest-start', type=int, default=1,
                       help='Starting position (well) on the destination labware (default: %(default)s)')
-
-    ## tip type
-    tips = parser.add_argument_group('Tip type')
-    tips.add_argument('--tip1000_type', type=str, default='FCA, 1000ul SBS',
-                      help='1000ul tip type (default: %(default)s)')
-    tips.add_argument('--tip200_type', type=str, default='FCA, 200ul SBS',
-                      help='200ul tip type (default: %(default)s)')
-    tips.add_argument('--tip50_type', type=str, default='FCA, 50ul SBS',
-                      help='50ul tip type (default: %(default)s)')
-    tips.add_argument('--tip10_type', type=str, default='FCA, 10ul SBS',
-                      help='10ul tip type (default: %(default)s)')
     
     # parse & return
     if test_args:
@@ -156,22 +145,20 @@ def main(args=None):
 
     # adding destination
     df_samp = add_dest(df_samp,
-                       dest_labware=args.destname,
+                       dest_labware=args.dest_name,
                        sample_col=args.sample_col,
                        position_col=args.position_col,
-                       dest_type=args.desttype,
-                       dest_start=args.deststart)
+                       dest_type=args.dest_type,
+                       dest_start=args.dest_start)
     
     # gwl construction
-    TipTypes = TipTypes={1000 : args.tip1000_type,
-                         200 : args.tip200_type,
-                         50 : args.tip50_type,
-                         10 : args.tip10_type}    
+    TipTypes = ['FCA, 1000ul SBS', 'FCA, 200ul SBS',
+                'FCA, 50ul SBS', 'FCA, 10ul SBS']     
     gwl = Fluent.gwl(TipTypes)
     
     # Reordering dest if plate type is 384-well
-    gwl.db.get_labware(args.desttype)
-    n_wells = gwl.db.get_labware_wells(args.desttype)
+    gwl.db.get_labware(args.dest_type)
+    n_wells = gwl.db.get_labware_wells(args.dest_type)
     if n_wells == '384':
         df_samp = reorder_384well(df_samp, args.position_col)
 
@@ -182,10 +169,10 @@ def main(args=None):
                  labware_name_col=args.sample_labware_name,
                  labware_type_col=args.sample_labware_type,
                  position_col=args.position_col,                     
-                 dest_labware_name=args.destname,
-                 dest_labware_type=args.desttype,
+                 dest_labware_name=args.dest_name,
+                 dest_labware_type=args.dest_type,
                  volume=args.volume,
-                 liq_cls=args.liqcls,
+                 liq_cls=args.liq_cls,
                  new_tips=args.new_tips)
     
     ## writing out worklist (gwl) file
@@ -198,7 +185,6 @@ def main(args=None):
     lw_df = lw.table()
     lw_file = args.prefix + '_labware.txt'
     lw_df.to_csv(lw_file, sep='\t', index=False)
-
 
     # Writing out updated mapping table
     if df_map is not None:
@@ -225,15 +211,6 @@ def check_args(args):
     args.rows = Utils.make_range(args.sample_rows, set_zero_index=True)
     # dilution
     assert args.volume >= 0.0, '--volume must be >= 0'
-    # tip type
-    if args.tip1000_type.lower() == 'none':
-        args.tip1000_type = None
-    if args.tip200_type.lower() == 'none':
-        args.tip200_type = None
-    if args.tip50_type.lower() == 'none':
-        args.tip50_type = None
-    if args.tip10_type.lower() == 'none':
-        args.tip10_type = None
                          
 def sample2df(samplefile, sample_col, include_col,
               labware_name_col, labware_type_col, position_col,
@@ -412,7 +389,7 @@ def pool_samples(df, gwl, sample_col, labware_name_col,
     # sorting by postion
     df = df.sort_values('TECAN_dest_target_position')
 
-    gwl.add(Fluent.comment('Sample pooling'))
+    gwl.add(Fluent.Comment('Sample pooling'))
     # for each Sample, generate asp/dispense commands
     ## optional: keep tips among sample replicates
     for sample in df[sample_col].unique():
@@ -420,7 +397,7 @@ def pool_samples(df, gwl, sample_col, labware_name_col,
         df_sub.index = range(df_sub.shape[0])
         for i in range(df_sub.shape[0]):
             # aspiration
-            asp = Fluent.aspirate()
+            asp = Fluent.Aspirate()
             asp.RackLabel = df_sub.loc[i, labware_name_col]
             asp.RackType = df_sub.loc[i, labware_type_col]
             asp.Position = df_sub.loc[i, position_col]
@@ -429,7 +406,7 @@ def pool_samples(df, gwl, sample_col, labware_name_col,
             gwl.add(asp)
 
             # dispensing
-            disp = Fluent.dispense()
+            disp = Fluent.Dispense()
             disp.RackLabel = df_sub.loc[i,'TECAN_dest_labware_name']
             disp.RackType = df_sub.loc[i,'TECAN_dest_labware_type']
             disp.Position = df_sub.loc[i,'TECAN_dest_target_position']
@@ -439,11 +416,11 @@ def pool_samples(df, gwl, sample_col, labware_name_col,
 
             # tip to waste (each replicate)
             if new_tips == True:
-                gwl.add(Fluent.waste())
+                gwl.add(Fluent.Waste())
                 
         # tip to waste (between samples)
         if new_tips == False:            
-            gwl.add(Fluent.waste())
+            gwl.add(Fluent.Waste())
 
 
 def filter_map(df_map, df_samp, sample_col):
