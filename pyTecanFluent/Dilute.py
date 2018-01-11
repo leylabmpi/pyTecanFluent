@@ -68,20 +68,19 @@ def parse_args(test_args=None, subparsers=None):
                      help='Maximum sample volume to use (default: %(default)s)')
     dil.add_argument('--min-total', type=float, default=10.0,
                      help='Minimum post-dilution total volume (default: %(default)s)')
-    dil.add_argument('--dil-labware-name', type=str, default='100ml_1',
+    dil.add_argument('--dil-labware-name', type=str, default='Dilutant',
                      help='Name of labware containing the dilutant (default: %(default)s)')
     dil.add_argument('--dil-labware-type', type=str, default='100ml_1',
-                     choices=['100ml_1', '1.5ml Eppendorf',
-                              '2.0ml Eppendorf', '96 Well Eppendorf TwinTec PCR'], 
+                     choices=['100ml_1', '1.5ml Eppendorf', '2.0ml Eppendorf'], 
                      help='Labware type containing the dilutant (default: %(default)s)')
 
     ## destination plate
     dest = parser.add_argument_group('Destination labware')
-    dest.add_argument('--dest-name', type=str, default='Diluted DNA plate',
+    dest.add_argument('--dest-name', type=str, default='Diluted sample plate',
                       help='Destination labware name (default: %(default)s)')
     dest.add_argument('--dest-type', type=str, default='96 Well Eppendorf TwinTec PCR',
-                      choices=['96 Well Eppendorf TwinTec PCR', '384 Well Biorad PCR'],                          
-                      help='Destination labware type  on TECAN worktable (default: %(default)s)')
+                      choices=['96 Well Eppendorf TwinTec PCR', '384 Well Biorad PCR'],
+                      help='Destination labware type on TECAN worktable (default: %(default)s)')
         
     # parse & return
     if test_args:
