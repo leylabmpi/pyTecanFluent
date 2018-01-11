@@ -143,11 +143,13 @@ class gwl(object):
         if isinstance(obj, Aspirate):
             obj.TipType = self.set_TipType(obj.Volume)
             self.last_asp = obj
+        elif isinstance(obj, Reagent_distribution):
+            obj.TipType = self.set_TipType(obj.volume_per_aspirate())
         # dispense must have same liquid class as previous aspirate
         if isinstance(obj, Dispense):
             assert self.last_asp is not None
             obj.LiquidClass = self.last_asp.LiquidClass
-            
+                        
         # appending to list of commands
         self.commands.append(obj)
 
@@ -517,6 +519,7 @@ class Reagent_distribution(object):
         self.NoOfMultiDisp = 5
         self.Direction = 0
         self.ExcludedDestWell = None
+        self.TipType = None      # just used for counting tips
         self.key_order = ['_ID',
                           'SrcRackLabel', 'SrcRackID', 'SrcRackType',
                           'SrcPosStart', 'SrcPosEnd',
@@ -535,7 +538,10 @@ class Reagent_distribution(object):
         # return
         return ';'.join(vals)
 
-
+    def volume_per_aspirate(self):
+        """Get the volume per aspiration for the multi-dispense
+        """
+        return self.Volume * self.NoOfMultiDisp
 
 # main
 if __name__ == '__main__':

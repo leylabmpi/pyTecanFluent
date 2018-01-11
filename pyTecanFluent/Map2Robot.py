@@ -518,7 +518,7 @@ def pip_mastermix(df_map, gwl, mm_volume=13.1, multi_disp=6,
         # other
         rd.Volume = mm_volume
         rd.LiquidClass = liq_cls
-        rd.NoOfDiTiReuses = 1
+        rd.NoOfDiTiReuses = 2
         rd.NoOfMultiDisp = multi_disp
         rd.Direction = 0
         rd.ExcludedDestWell = ';'.join([str(x) for x in list(to_exclude)])
@@ -615,8 +615,6 @@ def pip_water(df_map, gwl, pcr_volume=25.0, mm_volume=13.1,
     for i in range(df_map.shape[0]):
         # aspiration
         asp = Fluent.Aspirate()
-        #tube_id = int(total_vol_sum / tube_max_vol) + 1
-        #asp.RackLabel = 'PCR water tube[{0:0>3}]'.format(tube_id)
         asp.RackLabel = '100ml_1_1'
         asp.RackType = '100ml_1'
         asp.Position = 1 

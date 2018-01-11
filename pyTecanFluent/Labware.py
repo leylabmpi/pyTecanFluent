@@ -149,7 +149,7 @@ class labware(object):
         # adding tip boxes
         df_tips = []
         func = lambda x: (x[1]['max_volume'], x[0])
-        for RackLabel,v in sorted(self.tip_boxes.items(), key=func):
+        for RackLabel,v in sorted(self.tip_boxes.items(), key=func, reverse=True):
             # RackType
             try:
                 RackType = v['RackType']
@@ -240,15 +240,23 @@ class labware(object):
     def _add_labware(self, cmd, gwl):
         """Adding labware (no tip boxes) to self
         """
-        try:
-            RackLabel = cmd.RackLabel
-        except AttributeError:
-            return None
-        try:
-            RackType = cmd.RackType
-        except AttributeError:
-            return None
-        self.labware[RackLabel] = gwl.db.get_labware(RackType)
+        if isinstance(cmd, Fluent.Reagent_distribution):
+            assert cmd.SrcRackLabel is not None
+            assert cmd.DestRackLabel is not None
+            assert cmd.SrcRackType is not None
+            assert cmd.DestRackType is not None
+            self.labware[cmd.SrcRackLabel] = gwl.db.get_labware(cmd.SrcRackType)
+            self.labware[cmd.DestRackLabel] = gwl.db.get_labware(cmd.DestRackType)
+        else:
+            try:
+                RackLabel = cmd.RackLabel
+            except AttributeError:
+                return None
+            try:
+                RackType = cmd.RackType
+            except AttributeError:
+                return None
+            self.labware[RackLabel] = gwl.db.get_labware(RackType)
     
     def _add_tip_boxes(self, gwl):
         """Adding tip boxes to self
@@ -281,13 +289,21 @@ class labware(object):
                 try:
                     self.tip_count[TipType] += 1
                 except KeyError:
-                    self.tip_count[TipType] = 1                
+                    self.tip_count[TipType] = 1
             if isinstance(cmd, Fluent.Aspirate):
                 # getting tip type for aspirate
                 try:
                     TipType = cmd.TipType
                 except AttributeError:
                     TipType = None
+            if isinstance(cmd, Fluent.Reagent_distribution):
+                # all tips used
+                assert cmd.TipType is not None
+                try: 
+                    self.tip_count[cmd.TipType] += 8    # TODO: more precise
+                except KeyError:
+                    self.tip_count[cmd.TipType] = 8    # TODO: more precise
+                
                     
 class worktable_tracker():
     """Keeping track of available target positions for each target location
