@@ -92,25 +92,7 @@ def parse_args(test_args=None, subparsers=None):
                         help='Total volume per PCR (default: %(default)s)')
     rgnt.add_argument('--error-perc', type=float, default=10.0,
                         help='Percent of extra total reagent volume to include (default: %(default)s)')
-    
-    ## MasterMix
-#    mm = parser.add_argument_group('Master mix')
-#    mm.add_argument('--mmtube', type=int, default=1,
-#                        help='MasterMix tube number (default: %(default)s)')
-#    mm.add_argument('--mmvolume', type=float, default=13.1,
-#                        help='MasterMix volume per PCR (default: %(default)s)')
-
-    ## Primers
-    # primers = parser.add_argument_group('Primers')
-    # primers.add_argument('--fpvolume', type=float, default=1.0,
-    #                     help='Forward primer volume per PCR (default: %(default)s)')
-    # primers.add_argument('--rpvolume', type=float, default=1.0,
-    #                     help='Reverse primer volume per PCR (default: %(default)s)')
-    # primers.add_argument('--fptube', action='store_true', default=False,
-    #                     help='Forward non-barcode (default: %(default)s)')
-    # primers.add_argument('--rptube', type=int, default=0,
-    #                     help='Reverse non-bacode primer tube number (0 = barcoded primer on a plate), (default: %(default)s)')
-    
+        
     # Liquid classes
     liq = parser.add_argument_group('Liquid classes')
     liq.add_argument('--mm-liq', type=str, default='MasterMix Free Multi',
@@ -121,24 +103,6 @@ def parse_args(test_args=None, subparsers=None):
                       help='Sample liquid class (default: %(default)s)')
     liq.add_argument('--water-liq', type=str, default='Water Free Single',
                       help='Water liquid class (default: %(default)s)')
-
-    ## tip type
-    # tips = parser.add_argument_group('Tip type')
-    # tips.add_argument('--tip1000_type', type=str, default='FCA, 1000ul SBS',
-    #                   help='1000ul tip type (default: %(default)s)')
-    # tips.add_argument('--tip200_type', type=str, default='FCA, 200ul SBS',
-    #                   help='200ul tip type (default: %(default)s)')
-    # tips.add_argument('--tip50_type', type=str, default='FCA, 50ul SBS',
-    #                   help='50ul tip type (default: %(default)s)')
-    # tips.add_argument('--tip10_type', type=str, default='FCA, 10ul SBS',
-    #                   help='10ul tip type (default: %(default)s)')
-    
-    ## Misc
-    # misc = parser.add_argument_group('Misc')
-    # misc.add_argument('--pcrvolume', type=float, default=25.0,
-    #                     help='Total volume per PCR (default: %(default)s)')
-    # misc.add_argument('--errorperc', type=float, default=10.0,
-    #                     help='Percent of extra total reagent volume to include (default: %(default)s)')
 
     # running test args
     if test_args:
@@ -166,10 +130,6 @@ def main(args=None):
                       rxn_reps=args.rxns)
     
     # gwl construction
-    #TipTypes = TipTypes={1000 : args.tip1000_type,
-    #                     200 : args.tip200_type,
-    #                     50 : args.tip50_type,
-    #                     10 : args.tip10_type}
     TipTypes = ['FCA, 1000ul SBS', 'FCA, 200ul SBS',
                 'FCA, 50ul SBS', 'FCA, 10ul SBS']     
     gwl = Fluent.gwl(TipTypes)
@@ -241,15 +201,6 @@ def main(args=None):
 def check_args(args):
     """Checking user input
     """
-    # tip type
-    # if args.tip1000_type.lower() == 'none':
-    #     args.tip1000_type = None
-    # if args.tip200_type.lower() == 'none':
-    #     args.tip200_type = None
-    # if args.tip50_type.lower() == 'none':
-    #     args.tip50_type = None
-    # if args.tip10_type.lower() == 'none':
-    #     args.tip10_type = None
     # destination start
     db = Fluent.db()
     db.get_labware(args.dest_type)
@@ -260,16 +211,7 @@ def check_args(args):
 
     # rows in mapping file
     args.rows = Utils.make_range(args.rows, set_zero_index=True)
-    # tube number
-    # if args.mmtube < 1 or args.mmtube > 24:
-    #     msg = '{} tube # must be in range: 1-24'
-    #     raise ValueError(msg.format('MasterMix'))
-    # if args.fptube < 0 or args.fptube > 24:
-    #     msg = '{} tube # must be in range: 1-24 (or 0 if no tube)'
-    #     raise ValueError(msg.format('Forward primer'))
-    # if args.rptube < 0 or args.rptube > 24:
-    #     msg = '{} tube # must be in range: 1-24 (or 0 if no tube)'
-    #     raise ValueError(msg.format('Reverse primer'))
+    
     # volumes
     ## mastermix
     if args.mm_volume > args.pcr_volume:
