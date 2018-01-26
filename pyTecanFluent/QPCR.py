@@ -68,22 +68,26 @@ def parse_args(test_args=None, subparsers=None):
 
     ## source labware 
     src = parser.add_argument_group('Source labware')
-    src.add_argument('--mm', type=str, default='Tubes[001]',
-                      help='Mastermix source labware ID on TECAN worktable (default: %(default)s)')
-    src.add_argument('--mmloc', type=int, default=1,
+    src.add_argument('--mm', type=str, default='1.5ml Eppendorf',
+                      help='Mastermix labware type (default: %(default)s)')
+    src.add_argument('--mm-loc', type=str, default='eppendorf',
+                      help='Mastermix labware target location (default: %(default)s)')
+    src.add_argument('--mm-pos', type=int, default=1,
                       help='Mastermix start position on source labware (default: %(default)s)')
-    src.add_argument('--water', type=str, default='100ml[001]',
-                      help='Water source labware ID on TECAN worktable (default: %(default)s)')
-    src.add_argument('--waterloc', type=int, default=1,
+    src.add_argument('--water', type=str, default='100ml_1',
+                      help='Water source labware type (default: %(default)s)')
+    src.add_argument('--water-loc', type=str, default='Trough_100ml_3',
+                      help='Water source labware target location (default: %(default)s)')
+    src.add_argument('--water-pos', type=int, default=1,
                       help='Water start position on source labware (default: %(default)s)')
 
     # liquid classes
     liq = parser.add_argument_group('Liquid classes')
-    liq.add_argument('--mmliq', type=str, default='MasterMix Free Multi',
+    liq.add_argument('--mm-liq', type=str, default='MasterMix Free Multi',
                       help='Mastermix liquid class (default: %(default)s)')
-    liq.add_argument('--sampliq', type=str, default='Water Contact Wet Single',
+    liq.add_argument('--samp-liq', type=str, default='Water Contact Wet Single',
                       help='Sample liquid class (default: %(default)s)')
-    liq.add_argument('--waterliq', type=str, default='Water Contact Wet Single',
+    liq.add_argument('--water-liq', type=str, default='Water Contact Wet Single',
                       help='Water liquid class (default: %(default)s)')
 
     ## tip type

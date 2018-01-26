@@ -168,6 +168,7 @@ class labware(object):
                        'target_position' : pos})
         # adding other labware
         df_labware = []
+        adapter_cnt = 0
         for RackLabel,v in self.labware.items():
             # RackType
             try:
@@ -180,11 +181,24 @@ class labware(object):
             if loc is None:
                 msg = 'No possible target location for labware: "{}"'
                 raise ValueError(msg.format(RackLabel))
+            ## if Racktype includes adapter, adding adapter + plate
+            if RackType == 'PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR':
+                adapter_cnt += 1
+                # adding adapter to labware table
+                df_labware.append({'labware_name' : 'PCR Adapter 96 Well[{0:0>3}]'.format(adapter_cnt),
+                                   'labware_type' : 'PCR Adapter 96 Well',
+                                   'target_location' : loc,
+                                   'target_position' : pos})
+                # editing info for plate on adapter
+                RackType = '96 Well Eppendorf TwinTec PCR'
+                loc = 'PCR96WellAdapter_CoverSite'
+                pos = adapter_cnt                
             # creating table entry
             df_labware.append({'labware_name' : RackLabel,
                                'labware_type' : RackType,
                                'target_location' : loc,
-                               'target_position' : pos})            
+                               'target_position' : pos})
+            
         # covert to dataframe & return
         df_tips = pd.DataFrame.from_dict(df_tips)
         df_labware = pd.DataFrame.from_dict(df_labware)
