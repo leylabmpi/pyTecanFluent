@@ -357,70 +357,6 @@ def reorder_384well(df, reorder_col):
     df.index = range(df.shape[0])
     return df
 
-def pip_mastermix_multi_disp(df_map, gwl, mm_volume=13.1, multi_disp=6, liq_cls='Water Free Single'):
-    """Writing worklist commands for aliquoting mastermix.
-    Using 1-asp-multi-disp with 200 ul tips.
-    Method:
-    * calc max multi-dispense for 200 ul tips & mm_volume
-    * for 1:n_dispense
-      * determine how many disp left for channel (every 8th)
-      * if n_disp_left < n_disp: n_disp = n_disp_left
-      * calc total volume: n_disp * mm_volume
-    """
-    channels = {x:[] for x in range(8)}
-    
-    gwl.add(Fluent.Comment('MasterMix'))
-    # adding dispenses for each channel
-    for i in range(df_map.shape[0]):        
-        channel = i % 8        
-        disp = Fluent.Dispense()
-        disp.RackLabel = df_map.loc[i,'TECAN_dest_labware_name']
-        disp.RackType = df_map.loc[i,'TECAN_dest_labware_type']
-        disp.Position = df_map.loc[i,'TECAN_dest_target_position']
-        disp.Volume = mm_volume
-        disp.LiquidClass = liq_cls
-        channels[channel].append(disp)
-        if len(channels[channel]) % multi_disp == 0:
-            channels[channel].append(Fluent.Waste())
-    # adding waste at end of each (if needed)
-    for channel,v in channels.items():
-        if not isinstance(v[-1], Fluent.Waste):
-            channels[channel].append(Fluent.Waste())
-    # adding aspirations
-    tube_max_vol = gwl.db.get_labware_max_volume('1.5ml Eppendorf')
-    total_vol_sum = 0
-    for channel,v in sorted(channels.items()):
-        cmds = []
-        vol_sum = 0
-        for i,x in enumerate(reversed(v)):
-            if isinstance(x, Fluent.Dispense):
-                cmds.append(x)
-            if isinstance(x, Fluent.Dispense):
-                vol_sum += x.Volume
-            # add aspirate if waste (not last waste) found or at start for channel
-            if i == len(v)-1 or (i != 0 and isinstance(x, Fluent.Waste)):
-                asp = Fluent.Aspirate()
-                tube_id = int(total_vol_sum / tube_max_vol) + 1
-                asp.RackLabel = 'Mastermix tube[{0:0>3}]'.format(tube_id)
-                asp.RackType = '1.5ml Eppendorf'
-                asp.Position = 1
-                asp.Volume = round(vol_sum * 1.11, 1)  # volume + 11% extra
-                asp.LiquidClass = liq_cls
-                cmds.append(asp)
-                total_vol_sum += vol_sum
-                vol_sum = 0
-            if isinstance(x, Fluent.Waste):
-                cmds.append(x)
-        channels[channel] = [x for x in reversed(cmds)]
-    # adding commands to gwl
-    for channel,v in sorted(channels.items()):
-        for x in v:
-            #print('Channel {}: {}'.format(channel, x))
-            gwl.add(x)
-        
-    # adding break
-    gwl.add(Fluent.Break())
-
 def pip_mastermix(df_map, gwl, mm_volume=13.1, multi_disp=6,
                   liq_cls='MasterMix Free Multi'):
     """Writing worklist commands for aliquoting mastermix.
@@ -466,7 +402,11 @@ def pip_mastermix(df_map, gwl, mm_volume=13.1, multi_disp=6,
         rd.ExcludedDestWell = ';'.join([str(x) for x in list(to_exclude)])
         # adding to gwl object
         gwl.add(rd)
-    
+
+    # adding break
+    gwl.add(Fluent.Break())
+
+        
 def pip_primer(i, gwl, df_map, primer_labware_name, 
                primer_labware_type, primer_target_position,
                primer_volume, liq_cls):

@@ -322,6 +322,7 @@ class Comment():
 
 class Waste():
     """gwl waste command: "W;"
+    Used for ejecting tip. 
     """
     def __init__(self):
         pass
@@ -329,8 +330,24 @@ class Waste():
     def cmd(self):
         return 'W;'
 
+class Flush():
+    """gwl flush command: "F;"
+    This is useful for re-using tips.
+    The flush command will flush the extra
+    volume back into the source labware.
+    Note: the source labware must have the variable: "IsFCAWaste = True"
+    Using the following worklist command structure : "A; D; F; ... W; B;"
+    """
+    def __init__(self):
+        pass
+
+    def cmd(self):
+        return 'F;'
+    
 class Break():
     """gwl break command: "B;"
+    Useful for forcing tip ejects and preventing errors 
+    transitioning between pipetting tasks (eg., mastermix & water)
     """
     def __init__(self):
         pass
