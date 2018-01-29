@@ -50,7 +50,6 @@ def parse_args(test_args=None, subparsers=None):
          * Volume of water in PCR rxn (ul)
     
     Notes:
-    * Labware names will be based on the "*Sample Name" column of the input table
     * Sample locations in plates numbered are column-wise (left-to-right)
     * The setup file (input table) MUST have a header (capitalization doesn't matter)
     * All volumes are in ul.
@@ -73,20 +72,20 @@ def parse_args(test_args=None, subparsers=None):
                          choices=[None, 'excel', 'csv', 'tsv'],
                          help='File format (excel, csv, or tsv). If not provided, the format is determined from the file extension (default: %(default)s)') 
 
-    ## destination labware
-    dest = parser.add_argument_group('Destination labware')
-    dest.add_argument('--dest', type=str, default='Dest plate[001]',
-                      help='Destination plate labware name (default: %(default)s)')
-    dest.add_argument('--dest-type', type=str, default='384 Well Biorad PCR',
-                      choices=['96 Well Eppendorf TwinTec PCR', '384 Well Biorad PCR'],
-                      help='Destination plate labware type (default: %(default)s)')
-
     ## source labware 
     src = parser.add_argument_group('Source labware')
     src.add_argument('--mm-type', type=str, default='1.5ml Eppendorf waste',
                       help='Mastermix labware type (default: %(default)s)')
     src.add_argument('--water-type', type=str, default='100ml_1 waste',
                       help='Water labware type (default: %(default)s)')
+    
+    ## destination labware
+    dest = parser.add_argument_group('Destination labware')
+    dest.add_argument('--dest', type=str, default='Destination plate',
+                      help='Destination plate labware name (default: %(default)s)')
+    dest.add_argument('--dest-type', type=str, default='384 Well Biorad PCR',
+                      choices=['96 Well Eppendorf TwinTec PCR', '384 Well Biorad PCR'],
+                      help='Destination plate labware type (default: %(default)s)')
 
     # Liquid classes
     liq = parser.add_argument_group('Liquid classes')
