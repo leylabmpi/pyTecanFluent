@@ -134,7 +134,7 @@ def main(args=None):
     # adding sample/reagent destinations to setup table
     n_wells = gwl.db.get_labware_wells(args.dest_type)
     add_dest(df_setup, args.dest, args.dest_type, n_wells)
-    
+    df_setup = check_rack_labels(df_setup)
     
     # Reordering dest for optimal pipetting
     if n_wells == 384:
@@ -238,7 +238,7 @@ def check_df_setup(df_setup):
     for i,loc in enumerate(df_setup['sample location']):
         if loc < 1:
             print(msg.format(i), file=sys.stderr)
-    
+            
     # checking sample conc
     msg = 'ERROR (setupFile, line={}): volume is < 0'
     for i,vol in enumerate(df_setup['sample volume']):
@@ -249,6 +249,14 @@ def check_df_setup(df_setup):
         assert np.isnan(vol) or vol >= 0.0, msg.format(i)
     
 
+def check_rack_labels(df_setup):
+    """Removing '.' for rack labels (causes execution failures)
+    """
+    cols = ['sample labware name', 'mm name', 'dest_labware_name']
+    for x in cols:
+        df_setup[x] = [y.replace('.', '_') for y in df_setup[x].tolist()]
+    return df_setup
+        
 def plate2robot_loc(row_val, col_val, n_wells):
     """Changing positioning from row (letter) and column (number)
     to just numeric position (column-wise) on the plate,

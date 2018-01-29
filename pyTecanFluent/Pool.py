@@ -150,6 +150,7 @@ def main(args=None):
                        position_col=args.position_col,
                        dest_type=args.dest_type,
                        dest_start=args.dest_start)
+    df_samp = check_rack_labels(df_samp)        
     
     # gwl construction
     TipTypes = ['FCA, 1000ul SBS', 'FCA, 200ul SBS',
@@ -273,9 +274,13 @@ def check_include_column(x):
     psbl_vals = ('success', 'include', 'pass', 'fail', 'skip')
     assert x in psbl_vals, msg.format(x)
 
-#def check_labware_type_column(x):
-#    msg = 'Labware type "{}" not recognized'
-#    assert x in Labware.LABWARE_DB.keys(), msg.format(x)
+def check_rack_labels(df_samp):
+    """Removing '.' for rack labels (causes execution failures)
+    """
+    cols = ['labware_name', 'TECAN_dest_labware_name']
+    for x in cols:
+        df_samp[x] = [y.replace('.', '_') for y in df_samp[x].tolist()]
+    return df_samp
     
 def map2df(mapfile, file_format=None, header=True):
     """Loading a mapping file as a pandas dataframe

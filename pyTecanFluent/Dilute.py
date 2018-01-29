@@ -122,7 +122,8 @@ def main(args=None):
                        dest_name=args.dest_name,
                        dest_type=args.dest_type,
                        dest_wells=n_wells)
-            
+    df_conc = check_rack_labels(df_conc)
+    
     # Reordering dest if plate type is 384-well
     if n_wells == '384':
         df_conc = reorder_384well(df_conc, 'TECAN_dest_target_position')
@@ -240,6 +241,14 @@ def check_df_conc(df_conc):
     for i,sc in enumerate(df_conc['TECAN_sample_conc']):
         if sc <= 0.0:
             print(msg.format(i), file=sys.stderr)
+
+def check_rack_labels(df_conc):
+    """Removing '.' for rack labels (causes execution failures)
+    """
+    cols = ['TECAN_labware_name', 'TECAN_dest_labware_name']
+    for x in cols:
+        df_conc[x] = [y.replace('.', '_') for y in df_conc[x].tolist()]
+    return df_conc
             
 def calc_sample_volume(row, dilute_conc, min_vol, max_vol):
     """sample_volume = dilute_conc * total_volume / conc 

@@ -192,8 +192,8 @@ class labware(object):
                 # editing info for plate on adapter
                 RackType = '96 Well Eppendorf TwinTec PCR'
                 loc = 'PCR96WellAdapter_CoverSite'
-                pos = adapter_cnt                
-            # creating table entry
+                pos = adapter_cnt
+            # creating table entry            
             df_labware.append({'labware_name' : RackLabel,
                                'labware_type' : RackType,
                                'target_location' : loc,

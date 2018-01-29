@@ -132,6 +132,7 @@ def main(args=None):
                       dest_type=args.dest_type,
                       dest_start=args.dest_start,
                       rxn_reps=args.rxns)
+    df_map = check_rack_labels(df_map)
     
     # gwl construction
     TipTypes = ['FCA, 1000ul SBS', 'FCA, 200ul SBS',
@@ -289,6 +290,14 @@ def check_df_map(df_map, args):
         if sv < 0:
             raise ValueError('Sample volume < 0')
 
+def check_rack_labels(df_map):
+    """Removing '.' for rack labels (causes execution failures)
+    """
+    cols = ['TECAN_sample_labware_name', 'TECAN_primer_labware_name', 'TECAN_dest_labware_name']
+    for x in cols:
+        df_map[x] = [y.replace('.', '_') for y in df_map[x].tolist()]
+    return df_map
+        
 def add_dest(df_map, dest_labware,
              dest_type='96 Well Eppendorf TwinTec PCR',
              dest_start=1, rxn_reps=3):
