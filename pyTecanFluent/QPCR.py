@@ -90,11 +90,11 @@ def parse_args(test_args=None, subparsers=None):
 
     # Liquid classes
     liq = parser.add_argument_group('Liquid classes')
-    liq.add_argument('--mm-liq', type=str, default='MasterMix Free Multi',
+    liq.add_argument('--mm-liq', type=str, default='MasterMix Free Multi Bottom Disp',
                       help='Mastermix liquid class (default: %(default)s)')
-    liq.add_argument('--samp-liq', type=str, default='Water Contact Wet Single',
+    liq.add_argument('--samp-liq', type=str, default='Water Free Single Bottom Disp',
                       help='Sample liquid class (default: %(default)s)')
-    liq.add_argument('--water-liq', type=str, default='Water Contact Wet Single',
+    liq.add_argument('--water-liq', type=str, default='Water Free Single Bottom Disp',
                       help='Water liquid class (default: %(default)s)')
 
     ## tip type

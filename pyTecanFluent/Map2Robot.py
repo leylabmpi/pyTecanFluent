@@ -95,13 +95,13 @@ def parse_args(test_args=None, subparsers=None):
         
     # Liquid classes
     liq = parser.add_argument_group('Liquid classes')
-    liq.add_argument('--mm-liq', type=str, default='MasterMix Free Multi No-cLLD',
+    liq.add_argument('--mm-liq', type=str, default='MasterMix Free Multi LEV Bottom Disp',
                       help='Mastermix liquid class (default: %(default)s)')
-    liq.add_argument('--primer-liq', type=str, default='Water Free Single No-cLLD',
+    liq.add_argument('--primer-liq', type=str, default='Water Free Single Bottom Disp',
                       help='Primer liquid class (default: %(default)s)')
-    liq.add_argument('--sample-liq', type=str, default='Water Free Single No-cLLD',
+    liq.add_argument('--sample-liq', type=str, default='Water Free Single Bottom Disp',
                       help='Sample liquid class (default: %(default)s)')
-    liq.add_argument('--water-liq', type=str, default='Water Free Single',
+    liq.add_argument('--water-liq', type=str, default='Water Free Single Bottom Disp',
                       help='Water liquid class (default: %(default)s)')
 
     # running test args
