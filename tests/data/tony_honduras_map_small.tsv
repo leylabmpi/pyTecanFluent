@@ -1,9 +1,9 @@
 #SampleID	TECAN_sample_labware_name	TECAN_sample_labware_type	well	TECAN_sample_target_position	TECAN_primer_labware_name	TECAN_primer_labware_type	TECAN_primer_target_position	TECAN_sample_rxn_volume
-201	Honduras plate 3	96 Well Eppendorf TwinTec PCR	A2	9	primerF_primerR	1.5ml Eppendorf	2	1.00
-202	Honduras plate 3	96 Well Eppendorf TwinTec PCR	B2	10	primerF_primerR	1.5ml Eppendorf	2	1.00
-203	Honduras plate 3	96 Well Eppendorf TwinTec PCR	C2	11	primerF_primerR	1.5ml Eppendorf	2	1.00
-204	Honduras plate 3	96 Well Eppendorf TwinTec PCR	D2	12	primerF_primerR	1.5ml Eppendorf	2	1.00
-205	Honduras plate 3	96 Well Eppendorf TwinTec PCR	E2	13	primerF_primerR	1.5ml Eppendorf	2	1.00
-210	Honduras plate 3	96 Well Eppendorf TwinTec PCR	B3	18	primerF_primerR	1.5ml Eppendorf	2	1.00
-211	Honduras plate 3	96 Well Eppendorf TwinTec PCR	C3	19	primerF_primerR	1.5ml Eppendorf	2	1.00
-250	Honduras plate 3	96 Well Eppendorf TwinTec PCR	B8	58	primerF_primerR	1.5ml Eppendorf	2	1.00
+201	Honduras plate 3	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	A2	9	primerF_primerR	1.5ml Eppendorf	2	1.00
+202	Honduras plate 3	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	B2	10	primerF_primerR	1.5ml Eppendorf	2	1.00
+203	Honduras plate 3	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	C2	11	primerF_primerR	1.5ml Eppendorf	2	1.00
+204	Honduras plate 3	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	D2	12	primerF_primerR	1.5ml Eppendorf	2	1.00
+205	Honduras plate 3	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	E2	13	primerF_primerR	1.5ml Eppendorf	2	1.00
+210	Honduras plate 3	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	B3	18	primerF_primerR	1.5ml Eppendorf	2	1.00
+211	Honduras plate 3	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	C3	19	primerF_primerR	1.5ml Eppendorf	2	1.00
+250	Honduras plate 3	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	B8	58	primerF_primerR	1.5ml Eppendorf	2	1.00

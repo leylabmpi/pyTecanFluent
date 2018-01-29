@@ -203,7 +203,7 @@ class labware(object):
         df_tips = pd.DataFrame.from_dict(df_tips)
         df_labware = pd.DataFrame.from_dict(df_labware)
         ## ordering labware dataframe
-        df_labware.sort_values(by=['labware_type', 'target_position'], inplace=True)
+        df_labware.sort_values(by=['labware_type', 'target_position'], inplace=True, ascending=[False, True])
         # return
         return pd.concat([df_tips, df_labware])
     

@@ -47,6 +47,9 @@ def parse_args(test_args=None, subparsers=None):
     * If the controls (or samples) are provided in a tube, use "1.5ml Eppendorf" 
       for the "TECAN_sample_labware_type" column. The labware name can be whatever you want.
 
+    LABWARE:
+    * In order to use a plate adapter, use "PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR"
+
     MISC NOTES:
     * All volumes are in ul
     * Plate well locations are 1 to n-wells; numbering by column
@@ -75,13 +78,14 @@ def parse_args(test_args=None, subparsers=None):
                       help='Distination labware name (default: %(default)s)')
     dest.add_argument('--dest-type', type=str, default='96 Well Eppendorf TwinTec PCR',
                       choices=['96 Well Eppendorf TwinTec PCR',
+                               'PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR',
                                '384 Well Biorad PCR'],
                       help='Destination labware type (default: %(default)s)')
     dest.add_argument('--dest-start', type=int, default=1,
                       help='Start well number on destination plate (default: %(default)s)')
     dest.add_argument('--rxns', type=int, default=3,
                       help='Number of replicate PCRs per sample (default: %(default)s)')
-
+    
     ## Reagents
     rgnt = parser.add_argument_group('Reagents')
     rgnt.add_argument('--mm-volume', type=float, default=13.1,
