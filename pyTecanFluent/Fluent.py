@@ -53,21 +53,21 @@ class db(object):
             d['RackType'] = value
             return d
         except KeyError:
-            msg = 'Cannot find labware "{}"'
+            msg = 'Labware not in database: "{}"'
             raise KeyError(msg.format(value))
 
     def get_labware_wells(self, value):
         try:
             return self.labware[value]['wells']
         except KeyError:
-            msg = 'Cannot find wells for labware "{}"'
+            msg = 'Cannot find number of wells for labware: "{}"'
             raise KeyError(msg.format(value))                
 
     def get_labware_max_volume(self, value):
         try:
             return self.labware[value]['max_volume']
         except KeyError:
-            msg = 'Cannot find max_volume for labware "{}"'
+            msg = 'Cannot find max_volume for labware: "{}"'
             raise KeyError(msg.format(value))        
         
     def get_tip_type(self, value):
@@ -76,7 +76,7 @@ class db(object):
         try:
             return self.tip_type[value]
         except KeyError:
-            msg = 'Cannot find tip type "{}"'
+            msg = 'Tip type not in databse: "{}"'
             raise KeyError(msg.format(value))            
 
     def get_tip_volume(self, value):
@@ -85,7 +85,7 @@ class db(object):
         try:
             return self.tip_type[value]['volume']
         except KeyError:
-            msg = 'Cannot find volume for tip type "{}"'
+            msg = 'Cannot find volume for tip type: "{}"'
             raise KeyError(msg.format(value))            
 
     def get_tip_DTH_volume(self, value):
@@ -94,21 +94,21 @@ class db(object):
         try:
             return self.tip_type[value]['DTH']
         except KeyError:
-            msg = 'Cannot find DTH (dynamic tip handling) volume for tip type "{}"'
+            msg = 'Cannot find DTH (dynamic tip handling) volume for tip type: "{}"'
             raise KeyError(msg.format(value))           
         
     def get_tip_box(self, value):
         try:
             return self.tip_type[value]['tip_box']
         except KeyError:
-            msg = 'Cannot find tip-box for tip type "{}"'
+            msg = 'Cannot find tip-box for tip type: "{}"'
             raise KeyError(msg.format(value))            
 
     def get_liquid_class(self, value):
         try:
             return self.liquid_class[value]
         except KeyError:
-            msg = 'Cannot find liquid class "{}"'
+            msg = 'Liquid class not in database: "{}"'
             raise KeyError(msg.format(value))            
         
             

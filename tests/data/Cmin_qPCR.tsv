@@ -1,118 +1,118 @@
 Row	Column	Sample Type	Replicate #	*Target Name	*Sample Name	*Biological Set Name	*Well Note	Starting Quantity	Units	Sample labware name	Sample labware type	Sample location	Sample volume	MM name	MM volume	Water volume
-A	1	Std	1	16S	C. minuta		9	3.80E+01	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	16S	15	1
-A	2	Std	1	16S	C. minuta		9	3.80E+01	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	16S	15	1
-A	3	Std	1	16S	C. minuta		9	3.80E+01	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	16S	15	1
-A	5	Std	9	Cmin Flynn	C. minuta		9	3.80E+01	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	Cmin Flynn	15	1
-A	6	Std	9	Cmin Flynn	C. minuta		9	3.80E+01	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	Cmin Flynn	15	1
-A	7	Std	9	Cmin Flynn	C. minuta		9	3.80E+01	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	Cmin Flynn	15	1
-A	9	Std	17	1+2	C. minuta		9	3.80E+01	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	1_2	15	1
-A	10	Std	17	1+2	C. minuta		9	3.80E+01	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	1_2	15	1
-A	11	Std	17	1+2	C. minuta		9	3.80E+01	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	1_2	15	1
-B	1	Std	2	16S	C. minuta		9	3.80E+00	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	16S	15	1
-B	2	Std	2	16S	C. minuta		9	3.80E+00	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	16S	15	1
-B	3	Std	2	16S	C. minuta		9	3.80E+00	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	16S	15	1
-B	5	Std	10	Cmin Flynn	C. minuta		9	3.80E+00	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	Cmin Flynn	15	1
-B	6	Std	10	Cmin Flynn	C. minuta		9	3.80E+00	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	Cmin Flynn	15	1
-B	7	Std	10	Cmin Flynn	C. minuta		9	3.80E+00	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	Cmin Flynn	15	1
-B	9	Std	18	1+2	C. minuta		9	3.80E+00	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	1_2	15	1
-B	10	Std	18	1+2	C. minuta		9	3.80E+00	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	1_2	15	1
-B	11	Std	18	1+2	C. minuta		9	3.80E+00	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	1_2	15	1
-C	1	Std	3	16S	C. minuta		9	3.80E-01	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	16S	15	1
-C	2	Std	3	16S	C. minuta		9	3.80E-01	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	16S	15	1
-C	3	Std	3	16S	C. minuta		9	3.80E-01	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	16S	15	1
-C	5	Std	11	Cmin Flynn	C. minuta		9	3.80E-01	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	Cmin Flynn	15	1
-C	6	Std	11	Cmin Flynn	C. minuta		9	3.80E-01	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	Cmin Flynn	15	1
-C	7	Std	11	Cmin Flynn	C. minuta		9	3.80E-01	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	Cmin Flynn	15	1
-C	9	Std	19	1+2	C. minuta		9	3.80E-01	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	1_2	15	1
-C	10	Std	19	1+2	C. minuta		9	3.80E-01	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	1_2	15	1
-C	11	Std	19	1+2	C. minuta		9	3.80E-01	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	1_2	15	1
-D	1	Std	4	16S	C. minuta		9	3.80E-02	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	16S	15	1
-D	2	Std	4	16S	C. minuta		9	3.80E-02	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	16S	15	1
-D	3	Std	4	16S	C. minuta		9	3.80E-02	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	16S	15	1
-D	5	Std	12	Cmin Flynn	C. minuta		9	3.80E-02	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	Cmin Flynn	15	1
-D	6	Std	12	Cmin Flynn	C. minuta		9	3.80E-02	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	Cmin Flynn	15	1
-D	7	Std	12	Cmin Flynn	C. minuta		9	3.80E-02	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	Cmin Flynn	15	1
-D	9	Std	20	1+2	C. minuta		9	3.80E-02	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	1_2	15	1
-D	10	Std	20	1+2	C. minuta		9	3.80E-02	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	1_2	15	1
-D	11	Std	20	1+2	C. minuta		9	3.80E-02	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	1_2	15	1
-E	1	Std	5	16S	C. minuta		9	3.80E-03	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	16S	15	1
-E	2	Std	5	16S	C. minuta		9	3.80E-03	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	16S	15	1
-E	3	Std	5	16S	C. minuta		9	3.80E-03	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	16S	15	1
-E	5	Std	13	Cmin Flynn	C. minuta		9	3.80E-03	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	Cmin Flynn	15	1
-E	6	Std	13	Cmin Flynn	C. minuta		9	3.80E-03	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	Cmin Flynn	15	1
-E	7	Std	13	Cmin Flynn	C. minuta		9	3.80E-03	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	Cmin Flynn	15	1
-E	9	Std	21	1+2	C. minuta		9	3.80E-03	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	1_2	15	1
-E	10	Std	21	1+2	C. minuta		9	3.80E-03	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	1_2	15	1
-E	11	Std	21	1+2	C. minuta		9	3.80E-03	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	1_2	15	1
-F	1	Std	6	16S	C. minuta		9	3.80E-04	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	16S	15	1
-F	2	Std	6	16S	C. minuta		9	3.80E-04	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	16S	15	1
-F	3	Std	6	16S	C. minuta		9	3.80E-04	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	16S	15	1
-F	5	Std	14	Cmin Flynn	C. minuta		9	3.80E-04	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	Cmin Flynn	15	1
-F	6	Std	14	Cmin Flynn	C. minuta		9	3.80E-04	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	Cmin Flynn	15	1
-F	7	Std	14	Cmin Flynn	C. minuta		9	3.80E-04	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	Cmin Flynn	15	1
-F	9	Std	22	1+2	C. minuta		9	3.80E-04	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	1_2	15	1
-F	10	Std	22	1+2	C. minuta		9	3.80E-04	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	1_2	15	1
-F	11	Std	22	1+2	C. minuta		9	3.80E-04	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	1_2	15	1
-G	1	Std	7	16S	C. minuta		9	3.80E-05	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	16S	15	1
-G	2	Std	7	16S	C. minuta		9	3.80E-05	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	16S	15	1
-G	3	Std	7	16S	C. minuta		9	3.80E-05	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	16S	15	1
-G	5	Std	15	Cmin Flynn	C. minuta		9	3.80E-05	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	Cmin Flynn	15	1
-G	6	Std	15	Cmin Flynn	C. minuta		9	3.80E-05	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	Cmin Flynn	15	1
-G	7	Std	15	Cmin Flynn	C. minuta		9	3.80E-05	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	Cmin Flynn	15	1
-G	9	Std	23	1+2	C. minuta		9	3.80E-05	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	1_2	15	1
-G	10	Std	23	1+2	C. minuta		9	3.80E-05	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	1_2	15	1
-G	11	Std	23	1+2	C. minuta		9	3.80E-05	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	1_2	15	1
-H	1	Std	8	16S	C. minuta		9	3.80E-06	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	16S	15	1
-H	2	Std	8	16S	C. minuta		9	3.80E-06	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	16S	15	1
-H	3	Std	8	16S	C. minuta		9	3.80E-06	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	16S	15	1
-H	5	Std	16	Cmin Flynn	C. minuta		9	3.80E-06	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	Cmin Flynn	15	1
-H	6	Std	16	Cmin Flynn	C. minuta		9	3.80E-06	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	Cmin Flynn	15	1
-H	7	Std	16	Cmin Flynn	C. minuta		9	3.80E-06	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	Cmin Flynn	15	1
-H	9	Std	24	1+2	C. minuta		9	3.80E-06	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	1_2	15	1
-H	10	Std	24	1+2	C. minuta		9	3.80E-06	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	1_2	15	1
-H	11	Std	24	1+2	C. minuta		9	3.80E-06	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	1_2	15	1
-J	1	NTC	1	16S	H2O			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	2	4	16S	15	1
-J	2	NTC	1	16S	H2O			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	2	4	16S	15	1
-J	3	NTC	1	16S	H2O			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	2	4	16S	15	1
-J	5	NTC	2	Cmin Flynn	H2O			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	2	4	Cmin Flynn	15	1
-J	6	NTC	2	Cmin Flynn	H2O			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	2	4	Cmin Flynn	15	1
-J	7	NTC	2	Cmin Flynn	H2O			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	2	4	Cmin Flynn	15	1
-J	9	NTC	3	1+2	H2O			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	2	4	1_2	15	1
-J	10	NTC	3	1+2	H2O			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	2	4	1_2	15	1
-J	11	NTC	3	1+2	H2O			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	2	4	1_2	15	1
-K	1	Pos Ctrl	1	16S	C. minuta			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	16S	15	1
-K	2	Pos Ctrl	1	16S	C. minuta			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	16S	15	1
-K	3	Pos Ctrl	1	16S	C. minuta			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	16S	15	1
-K	5	Pos Ctrl	2	Cmin Flynn	C. minuta			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	Cmin Flynn	15	1
-K	6	Pos Ctrl	2	Cmin Flynn	C. minuta			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	Cmin Flynn	15	1
-K	7	Pos Ctrl	2	Cmin Flynn	C. minuta			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	Cmin Flynn	15	1
-K	9	Pos Ctrl	3	1+2	C. minuta			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	1_2	15	1
-K	10	Pos Ctrl	3	1+2	C. minuta			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	1_2	15	1
-K	11	Pos Ctrl	3	1+2	C. minuta			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	1	4	1_2	15	1
-L	1	Neg Ctrl	1	16S	E. coli			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	3	4	16S	15	1
-L	2	Neg Ctrl	1	16S	E. coli			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	3	4	16S	15	1
-L	3	Neg Ctrl	1	16S	E. coli			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	3	4	16S	15	1
-L	5	Neg Ctrl	2	Cmin Flynn	E. coli			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	3	4	Cmin Flynn	15	1
-L	6	Neg Ctrl	2	Cmin Flynn	E. coli			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	3	4	Cmin Flynn	15	1
-L	7	Neg Ctrl	2	Cmin Flynn	E. coli			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	3	4	Cmin Flynn	15	1
-L	9	Neg Ctrl	3	1+2	E. coli			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	3	4	1_2	15	1
-L	10	Neg Ctrl	3	1+2	E. coli			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	3	4	1_2	15	1
-L	11	Neg Ctrl	3	1+2	E. coli			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	3	4	1_2	15	1
-M	1	Unkn	1	16S	Mix 25.01			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	4	4	16S	15	1
-M	2	Unkn	1	16S	Mix 25.01			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	4	4	16S	15	1
-M	3	Unkn	1	16S	Mix 25.01			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	4	4	16S	15	1
-M	5	Unkn	2	Cmin Flynn	Mix 25.01			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	4	4	Cmin Flynn	15	1
-M	6	Unkn	2	Cmin Flynn	Mix 25.01			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	4	4	Cmin Flynn	15	1
-M	7	Unkn	2	Cmin Flynn	Mix 25.01			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	4	4	Cmin Flynn	15	1
-M	9	Unkn	3	1+2	Mix 25.01			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	4	4	1_2	15	1
-M	10	Unkn	3	1+2	Mix 25.01			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	4	4	1_2	15	1
-M	11	Unkn	3	1+2	Mix 25.01			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	4	4	1_2	15	1
-N	1	Unkn	4	16S	Mix16.01			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	5	4	16S	15	1
-N	2	Unkn	4	16S	Mix16.01			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	5	4	16S	15	1
-N	3	Unkn	4	16S	Mix16.01			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	5	4	16S	15	1
-N	5	Unkn	5	Cmin Flynn	Mix16.01			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	5	4	Cmin Flynn	15	1
-N	6	Unkn	5	Cmin Flynn	Mix16.01			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	5	4	Cmin Flynn	15	1
-N	7	Unkn	5	Cmin Flynn	Mix16.01			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	5	4	Cmin Flynn	15	1
-N	9	Unkn	6	1+2	Mix16.01			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	5	4	1_2	15	1
-N	10	Unkn	6	1+2	Mix16.01			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	5	4	1_2	15	1
-N	11	Unkn	6	1+2	Mix16.01			N/A	nanograms	sample plate	96 Well Eppendorf TwinTec PCR	5	4	1_2	15	1
+A	1	Std	1	16S	C. minuta		9	3.80E+01	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	16S	15	1
+A	2	Std	1	16S	C. minuta		9	3.80E+01	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	16S	15	1
+A	3	Std	1	16S	C. minuta		9	3.80E+01	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	16S	15	1
+A	5	Std	9	Cmin Flynn	C. minuta		9	3.80E+01	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	Cmin Flynn	15	1
+A	6	Std	9	Cmin Flynn	C. minuta		9	3.80E+01	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	Cmin Flynn	15	1
+A	7	Std	9	Cmin Flynn	C. minuta		9	3.80E+01	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	Cmin Flynn	15	1
+A	9	Std	17	1+2	C. minuta		9	3.80E+01	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	1_2	15	1
+A	10	Std	17	1+2	C. minuta		9	3.80E+01	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	1_2	15	1
+A	11	Std	17	1+2	C. minuta		9	3.80E+01	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	1_2	15	1
+B	1	Std	2	16S	C. minuta		9	3.80E+00	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	16S	15	1
+B	2	Std	2	16S	C. minuta		9	3.80E+00	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	16S	15	1
+B	3	Std	2	16S	C. minuta		9	3.80E+00	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	16S	15	1
+B	5	Std	10	Cmin Flynn	C. minuta		9	3.80E+00	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	Cmin Flynn	15	1
+B	6	Std	10	Cmin Flynn	C. minuta		9	3.80E+00	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	Cmin Flynn	15	1
+B	7	Std	10	Cmin Flynn	C. minuta		9	3.80E+00	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	Cmin Flynn	15	1
+B	9	Std	18	1+2	C. minuta		9	3.80E+00	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	1_2	15	1
+B	10	Std	18	1+2	C. minuta		9	3.80E+00	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	1_2	15	1
+B	11	Std	18	1+2	C. minuta		9	3.80E+00	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	1_2	15	1
+C	1	Std	3	16S	C. minuta		9	3.80E-01	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	16S	15	1
+C	2	Std	3	16S	C. minuta		9	3.80E-01	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	16S	15	1
+C	3	Std	3	16S	C. minuta		9	3.80E-01	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	16S	15	1
+C	5	Std	11	Cmin Flynn	C. minuta		9	3.80E-01	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	Cmin Flynn	15	1
+C	6	Std	11	Cmin Flynn	C. minuta		9	3.80E-01	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	Cmin Flynn	15	1
+C	7	Std	11	Cmin Flynn	C. minuta		9	3.80E-01	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	Cmin Flynn	15	1
+C	9	Std	19	1+2	C. minuta		9	3.80E-01	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	1_2	15	1
+C	10	Std	19	1+2	C. minuta		9	3.80E-01	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	1_2	15	1
+C	11	Std	19	1+2	C. minuta		9	3.80E-01	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	1_2	15	1
+D	1	Std	4	16S	C. minuta		9	3.80E-02	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	16S	15	1
+D	2	Std	4	16S	C. minuta		9	3.80E-02	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	16S	15	1
+D	3	Std	4	16S	C. minuta		9	3.80E-02	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	16S	15	1
+D	5	Std	12	Cmin Flynn	C. minuta		9	3.80E-02	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	Cmin Flynn	15	1
+D	6	Std	12	Cmin Flynn	C. minuta		9	3.80E-02	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	Cmin Flynn	15	1
+D	7	Std	12	Cmin Flynn	C. minuta		9	3.80E-02	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	Cmin Flynn	15	1
+D	9	Std	20	1+2	C. minuta		9	3.80E-02	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	1_2	15	1
+D	10	Std	20	1+2	C. minuta		9	3.80E-02	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	1_2	15	1
+D	11	Std	20	1+2	C. minuta		9	3.80E-02	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	1_2	15	1
+E	1	Std	5	16S	C. minuta		9	3.80E-03	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	16S	15	1
+E	2	Std	5	16S	C. minuta		9	3.80E-03	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	16S	15	1
+E	3	Std	5	16S	C. minuta		9	3.80E-03	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	16S	15	1
+E	5	Std	13	Cmin Flynn	C. minuta		9	3.80E-03	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	Cmin Flynn	15	1
+E	6	Std	13	Cmin Flynn	C. minuta		9	3.80E-03	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	Cmin Flynn	15	1
+E	7	Std	13	Cmin Flynn	C. minuta		9	3.80E-03	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	Cmin Flynn	15	1
+E	9	Std	21	1+2	C. minuta		9	3.80E-03	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	1_2	15	1
+E	10	Std	21	1+2	C. minuta		9	3.80E-03	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	1_2	15	1
+E	11	Std	21	1+2	C. minuta		9	3.80E-03	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	1_2	15	1
+F	1	Std	6	16S	C. minuta		9	3.80E-04	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	16S	15	1
+F	2	Std	6	16S	C. minuta		9	3.80E-04	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	16S	15	1
+F	3	Std	6	16S	C. minuta		9	3.80E-04	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	16S	15	1
+F	5	Std	14	Cmin Flynn	C. minuta		9	3.80E-04	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	Cmin Flynn	15	1
+F	6	Std	14	Cmin Flynn	C. minuta		9	3.80E-04	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	Cmin Flynn	15	1
+F	7	Std	14	Cmin Flynn	C. minuta		9	3.80E-04	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	Cmin Flynn	15	1
+F	9	Std	22	1+2	C. minuta		9	3.80E-04	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	1_2	15	1
+F	10	Std	22	1+2	C. minuta		9	3.80E-04	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	1_2	15	1
+F	11	Std	22	1+2	C. minuta		9	3.80E-04	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	1_2	15	1
+G	1	Std	7	16S	C. minuta		9	3.80E-05	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	16S	15	1
+G	2	Std	7	16S	C. minuta		9	3.80E-05	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	16S	15	1
+G	3	Std	7	16S	C. minuta		9	3.80E-05	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	16S	15	1
+G	5	Std	15	Cmin Flynn	C. minuta		9	3.80E-05	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	Cmin Flynn	15	1
+G	6	Std	15	Cmin Flynn	C. minuta		9	3.80E-05	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	Cmin Flynn	15	1
+G	7	Std	15	Cmin Flynn	C. minuta		9	3.80E-05	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	Cmin Flynn	15	1
+G	9	Std	23	1+2	C. minuta		9	3.80E-05	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	1_2	15	1
+G	10	Std	23	1+2	C. minuta		9	3.80E-05	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	1_2	15	1
+G	11	Std	23	1+2	C. minuta		9	3.80E-05	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	1_2	15	1
+H	1	Std	8	16S	C. minuta		9	3.80E-06	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	16S	15	1
+H	2	Std	8	16S	C. minuta		9	3.80E-06	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	16S	15	1
+H	3	Std	8	16S	C. minuta		9	3.80E-06	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	16S	15	1
+H	5	Std	16	Cmin Flynn	C. minuta		9	3.80E-06	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	Cmin Flynn	15	1
+H	6	Std	16	Cmin Flynn	C. minuta		9	3.80E-06	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	Cmin Flynn	15	1
+H	7	Std	16	Cmin Flynn	C. minuta		9	3.80E-06	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	Cmin Flynn	15	1
+H	9	Std	24	1+2	C. minuta		9	3.80E-06	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	1_2	15	1
+H	10	Std	24	1+2	C. minuta		9	3.80E-06	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	1_2	15	1
+H	11	Std	24	1+2	C. minuta		9	3.80E-06	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	1_2	15	1
+J	1	NTC	1	16S	H2O			N/A	nanograms	H2O tube	1.5ml Eppendorf	2	4	16S	15	1
+J	2	NTC	1	16S	H2O			N/A	nanograms	H2O tube	1.5ml Eppendorf	2	4	16S	15	1
+J	3	NTC	1	16S	H2O			N/A	nanograms	H2O tube	1.5ml Eppendorf	2	4	16S	15	1
+J	5	NTC	2	Cmin Flynn	H2O			N/A	nanograms	H2O tube	1.5ml Eppendorf	2	4	Cmin Flynn	15	1
+J	6	NTC	2	Cmin Flynn	H2O			N/A	nanograms	H2O tube	1.5ml Eppendorf	2	4	Cmin Flynn	15	1
+J	7	NTC	2	Cmin Flynn	H2O			N/A	nanograms	H2O tube	1.5ml Eppendorf	2	4	Cmin Flynn	15	1
+J	9	NTC	3	1+2	H2O			N/A	nanograms	H2O tube	1.5ml Eppendorf	2	4	1_2	15	1
+J	10	NTC	3	1+2	H2O			N/A	nanograms	H2O tube	1.5ml Eppendorf	2	4	1_2	15	1
+J	11	NTC	3	1+2	H2O			N/A	nanograms	H2O tube	1.5ml Eppendorf	2	4	1_2	15	1
+K	1	Pos Ctrl	1	16S	C. minuta			N/A	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	16S	15	1
+K	2	Pos Ctrl	1	16S	C. minuta			N/A	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	16S	15	1
+K	3	Pos Ctrl	1	16S	C. minuta			N/A	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	16S	15	1
+K	5	Pos Ctrl	2	Cmin Flynn	C. minuta			N/A	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	Cmin Flynn	15	1
+K	6	Pos Ctrl	2	Cmin Flynn	C. minuta			N/A	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	Cmin Flynn	15	1
+K	7	Pos Ctrl	2	Cmin Flynn	C. minuta			N/A	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	Cmin Flynn	15	1
+K	9	Pos Ctrl	3	1+2	C. minuta			N/A	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	1_2	15	1
+K	10	Pos Ctrl	3	1+2	C. minuta			N/A	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	1_2	15	1
+K	11	Pos Ctrl	3	1+2	C. minuta			N/A	nanograms	C. Minuta DNA tube	1.5ml Eppendorf	1	4	1_2	15	1
+L	1	Neg Ctrl	1	16S	E. coli			N/A	nanograms	E. coli tube	1.5ml Eppendorf	3	4	16S	15	1
+L	2	Neg Ctrl	1	16S	E. coli			N/A	nanograms	E. coli tube	1.5ml Eppendorf	3	4	16S	15	1
+L	3	Neg Ctrl	1	16S	E. coli			N/A	nanograms	E. coli tube	1.5ml Eppendorf	3	4	16S	15	1
+L	5	Neg Ctrl	2	Cmin Flynn	E. coli			N/A	nanograms	E. coli tube	1.5ml Eppendorf	3	4	Cmin Flynn	15	1
+L	6	Neg Ctrl	2	Cmin Flynn	E. coli			N/A	nanograms	E. coli tube	1.5ml Eppendorf	3	4	Cmin Flynn	15	1
+L	7	Neg Ctrl	2	Cmin Flynn	E. coli			N/A	nanograms	E. coli tube	1.5ml Eppendorf	3	4	Cmin Flynn	15	1
+L	9	Neg Ctrl	3	1+2	E. coli			N/A	nanograms	E. coli tube	1.5ml Eppendorf	3	4	1_2	15	1
+L	10	Neg Ctrl	3	1+2	E. coli			N/A	nanograms	E. coli tube	1.5ml Eppendorf	3	4	1_2	15	1
+L	11	Neg Ctrl	3	1+2	E. coli			N/A	nanograms	E. coli tube	1.5ml Eppendorf	3	4	1_2	15	1
+M	1	Unkn	1	16S	Mix 25.01			N/A	nanograms	Mix 25.01 tube	1.5ml Eppendorf	4	4	16S	15	1
+M	2	Unkn	1	16S	Mix 25.01			N/A	nanograms	Mix 25.01 tube	1.5ml Eppendorf	4	4	16S	15	1
+M	3	Unkn	1	16S	Mix 25.01			N/A	nanograms	Mix 25.01 tube	1.5ml Eppendorf	4	4	16S	15	1
+M	5	Unkn	2	Cmin Flynn	Mix 25.01			N/A	nanograms	Mix 25.01 tube	1.5ml Eppendorf	4	4	Cmin Flynn	15	1
+M	6	Unkn	2	Cmin Flynn	Mix 25.01			N/A	nanograms	Mix 25.01 tube	1.5ml Eppendorf	4	4	Cmin Flynn	15	1
+M	7	Unkn	2	Cmin Flynn	Mix 25.01			N/A	nanograms	Mix 25.01 tube	1.5ml Eppendorf	4	4	Cmin Flynn	15	1
+M	9	Unkn	3	1+2	Mix 25.01			N/A	nanograms	Mix 25.01 tube	1.5ml Eppendorf	4	4	1_2	15	1
+M	10	Unkn	3	1+2	Mix 25.01			N/A	nanograms	Mix 25.01 tube	1.5ml Eppendorf	4	4	1_2	15	1
+M	11	Unkn	3	1+2	Mix 25.01			N/A	nanograms	Mix 25.01 tube	1.5ml Eppendorf	4	4	1_2	15	1
+N	1	Unkn	4	16S	Mix16.01			N/A	nanograms	Mix 16.01 tube	1.5ml Eppendorf	5	4	16S	15	1
+N	2	Unkn	4	16S	Mix16.01			N/A	nanograms	Mix 16.01 tube	1.5ml Eppendorf	5	4	16S	15	1
+N	3	Unkn	4	16S	Mix16.01			N/A	nanograms	Mix 16.01 tube	1.5ml Eppendorf	5	4	16S	15	1
+N	5	Unkn	5	Cmin Flynn	Mix16.01			N/A	nanograms	Mix 16.01 tube	1.5ml Eppendorf	5	4	Cmin Flynn	15	1
+N	6	Unkn	5	Cmin Flynn	Mix16.01			N/A	nanograms	Mix 16.01 tube	1.5ml Eppendorf	5	4	Cmin Flynn	15	1
+N	7	Unkn	5	Cmin Flynn	Mix16.01			N/A	nanograms	Mix 16.01 tube	1.5ml Eppendorf	5	4	Cmin Flynn	15	1
+N	9	Unkn	6	1+2	Mix16.01			N/A	nanograms	Mix 16.01 tube	1.5ml Eppendorf	5	4	1_2	15	1
+N	10	Unkn	6	1+2	Mix16.01			N/A	nanograms	Mix 16.01 tube	1.5ml Eppendorf	5	4	1_2	15	1
+N	11	Unkn	6	1+2	Mix16.01			N/A	nanograms	Mix 16.01 tube	1.5ml Eppendorf	5	4	1_2	15	1
