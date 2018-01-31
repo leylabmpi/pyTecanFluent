@@ -146,10 +146,11 @@ class labware(object):
         cols = ['labware_name', 'labware_type',
                 'target_location', 'target_position']
         
-        # adding tip boxes
+        # adding tip boxes; sorting largest to smallest tip size; [001], [002], ...
         df_tips = []
-        func = lambda x: (x[1]['max_volume'], x[0])
+        func = lambda x: (x[1][1]['max_volume'], x[0][0])
         for RackLabel,v in sorted(self.tip_boxes.items(), key=func, reverse=True):
+            RackType_num,v = v
             # RackType
             try:
                 RackType = v['RackType']
@@ -288,7 +289,7 @@ class labware(object):
             n_boxes = int(round(count / wells + 0.5,0))
             for i in range(n_boxes):
                 tip_box_label = '{0}[{1:0>3}]'.format(tip_box, i + 1)
-                self.tip_boxes[tip_box_label] = gwl.db.get_labware(tip_box)
+                self.tip_boxes[tip_box_label] = [i, gwl.db.get_labware(tip_box)]
                         
     def _count_tips(self, commands):
         """Counting all tip usage in gwl commands and adding to self.

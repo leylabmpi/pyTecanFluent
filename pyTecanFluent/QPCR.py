@@ -472,6 +472,11 @@ def pip_water(df_setup, gwl, src_labware_type,
     
     # for each Sample, create asp/dispense commands
     for i in range(df.shape[0]):
+        if df.loc[i,'water volume'] <= 0:
+            msg = 'WARNING: skipping water asp/disp for sample (volue <= 0)'
+            print(msg, file=sys.stderr)
+            continue
+        
         # aspiration
         asp = Fluent.Aspirate()
         asp.RackLabel = 'Water source[{0:0>3}]'.format(1)        
