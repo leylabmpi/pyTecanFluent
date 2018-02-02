@@ -510,8 +510,8 @@ def pip_water(df_map, gwl, pcr_volume=25.0, mm_volume=13.1,
     for i in range(df_map.shape[0]):
         # aspiration
         asp = Fluent.Aspirate()
-        asp.RackLabel = '100ml_1_1'
-        asp.RackType = '100ml_1'
+        asp.RackLabel = '25ml_1[001]'
+        asp.RackType = '25ml_1 waste'
         asp.Position = 1 
         asp.Volume = water_volume[i]
         asp.LiquidClass = liq_cls

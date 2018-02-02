@@ -59,6 +59,18 @@
         "wells" : 1,
         "max_volume" : 100000
     },
+    "25ml_1" : {
+        "target_location" : ["Trough_100ml_3"],
+        "category" : "trough",
+        "wells" : 1,
+        "max_volume" : 25000
+    },
+    "25ml_1 waste" : {
+        "target_location" : ["Trough_100ml_3"],
+        "category" : "trough",
+        "wells" : 1,
+        "max_volume" : 25000
+    },
     "96 Well Eppendorf TwinTec PCR" : {
         "target_location" : ["Nest61mm_Pos"],
         "category" : "plate",
