@@ -71,7 +71,9 @@ def parse_args(test_args=None, subparsers=None):
     dil.add_argument('--dil-labware-name', type=str, default='Dilutant',
                      help='Name of labware containing the dilutant (default: %(default)s)')
     dil.add_argument('--dil-labware-type', type=str, default='100ml_1',
-                     choices=['100ml_1', '1.5ml Eppendorf', '2.0ml Eppendorf'], 
+                     choices=['100ml_1', '100ml_1 waste',
+                              '1.5ml Eppendorf', '1.5ml Eppendorf waste',
+                              '2.0ml Eppendorf', '2.0ml Eppendorf waste'], 
                      help='Labware type containing the dilutant (default: %(default)s)')
 
     ## destination plate
