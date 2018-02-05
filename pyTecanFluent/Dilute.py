@@ -71,11 +71,12 @@ def parse_args(test_args=None, subparsers=None):
     dil.add_argument('--dil-labware-name', type=str, default='Dilutant',
                      help='Name of labware containing the dilutant (default: %(default)s)')
     dil.add_argument('--dil-labware-type', type=str, default='100ml_1',
-                     choices=['100ml_1', '100ml_1 waste',
-                              '1.5ml Eppendorf', '1.5ml Eppendorf waste',
-                              '2.0ml Eppendorf', '2.0ml Eppendorf waste'], 
                      help='Labware type containing the dilutant (default: %(default)s)')
-
+    dil.add_argument('--dil-liq', type=str, default='Water Free Single Wall Disp',
+                      help='Dilutant liquid class (default: %(default)s)')
+    dil.add_argument('--samp-liq', type=str, default='Water Free Single Wall Disp',
+                      help='Sample liquid class (default: %(default)s)')
+        
     ## destination plate
     dest = parser.add_argument_group('Destination labware')
     dest.add_argument('--dest-name', type=str, default='Diluted sample plate',
@@ -133,9 +134,11 @@ def main(args=None):
     ## Dilutant
     pip_dilutant(df_conc, gwl=gwl,
                  src_labware_name=args.dil_labware_name,
-                 src_labware_type=args.dil_labware_type)
+                 src_labware_type=args.dil_labware_type,
+                 liq_cls=args.dil_liq)
     ## Sample
-    pip_samples(df_conc, gwl=gwl)
+    pip_samples(df_conc, gwl=gwl,
+                liq_cls=args.samp_liq)
     
     ## writing out worklist (gwl) file
     gwl_file = args.prefix + '.gwl'
@@ -433,9 +436,9 @@ def reorder_384well(df, reorder_col):
 #     MD.NoOfMultiDisp = n_disp
 #     MD.add(gwl, tip_frac)
 
-def pip_dilutant(df_conc, gwl, src_labware_name, src_labware_type=None):
+def pip_dilutant(df_conc, gwl, src_labware_name, src_labware_type=None,
+                 liq_cls='Water Free Single'):
     """Commands for aliquoting dilutant.
-    TODO: determine whether tips can be re-used by skipping "W;"
     """
     gwl.add(Fluent.Comment('Dilutant'))
     # for each sample, transfer aliquot via asp-disp 
@@ -451,7 +454,7 @@ def pip_dilutant(df_conc, gwl, src_labware_name, src_labware_type=None):
         asp.RackType = src_labware_type
         asp.Position = 1
         asp.Volume = volume
-        asp.LiquidClass = 'Water Free Single'
+        asp.LiquidClass = liq_cls
         gwl.add(asp)
         
         # dispensing
@@ -460,16 +463,16 @@ def pip_dilutant(df_conc, gwl, src_labware_name, src_labware_type=None):
         disp.RackType = df_conc.loc[i,'TECAN_dest_labware_type']        
         disp.Position = df_conc.loc[i,'TECAN_dest_target_position']
         disp.Volume = volume
-        disp.LiquidClass = 'Water Free Single'
+        disp.LiquidClass = liq_cls
         gwl.add(disp)
 
-        # waste
-        gwl.add(Fluent.Waste())
+    # waste
+    gwl.add(Fluent.Waste())
         
     # adding break
     gwl.add(Fluent.Break())
 
-def pip_samples(df_conc, gwl):
+def pip_samples(df_conc, gwl, liq_cls='Water Free Single'):
     """Commands for aliquoting samples into dilutant
     """
     gwl.add(Fluent.Comment('Samples'))
@@ -486,7 +489,7 @@ def pip_samples(df_conc, gwl):
         asp.RackType = df_conc.loc[i,'TECAN_labware_type']
         asp.Position = df_conc.loc[i,'TECAN_target_position']
         asp.Volume = volume
-        asp.LiquidClass = 'Water Free Single No-cLLD'
+        asp.LiquidClass = liq_cls
         gwl.add(asp)
         
         # dispensing
@@ -495,7 +498,7 @@ def pip_samples(df_conc, gwl):
         disp.RackType = df_conc.loc[i,'TECAN_dest_labware_type']        
         disp.Position = df_conc.loc[i,'TECAN_dest_target_position']
         disp.Volume = volume
-        disp.LiquidClass = 'Water Free Single No-cLLD'
+        disp.LiquidClass = liq_cls
         gwl.add(disp)
 
         # waste
