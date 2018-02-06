@@ -100,7 +100,6 @@ def parse_args(test_args=None, subparsers=None):
     dest.add_argument('--dest-name', type=str, default='Pooled DNA plate',
                       help='Destination labware name (default: %(default)s)')
     dest.add_argument('--dest-type', type=str, default='96 Well Eppendorf TwinTec PCR',
-                      choices=['96 Well Eppendorf TwinTec PCR', '384 Well Biorad PCR'],                          
                       help='Destination labware type (default: %(default)s)')
     dest.add_argument('--dest-start', type=int, default=1,
                       help='Starting position (well) on the destination labware (default: %(default)s)')

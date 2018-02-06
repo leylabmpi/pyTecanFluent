@@ -84,7 +84,6 @@ def parse_args(test_args=None, subparsers=None):
     dest.add_argument('--dest', type=str, default='Destination plate',
                       help='Destination plate labware name (default: %(default)s)')
     dest.add_argument('--dest-type', type=str, default='384 Well Biorad PCR',
-                      choices=['96 Well Eppendorf TwinTec PCR', '384 Well Biorad PCR'],
                       help='Destination plate labware type (default: %(default)s)')
 
     # Liquid classes
