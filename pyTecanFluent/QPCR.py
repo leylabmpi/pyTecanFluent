@@ -95,17 +95,6 @@ def parse_args(test_args=None, subparsers=None):
     liq.add_argument('--water-liq', type=str, default='Water Free Single Wall Disp',
                       help='Water liquid class (default: %(default)s)')
 
-    ## tip type
-    # tips = parser.add_argument_group('Tip type')
-    # tips.add_argument('--tip1000-type', type=str, default='FCA, 1000ul SBS',
-    #                   help='1000ul tip type (default: %(default)s)')
-    # tips.add_argument('--tip200-type', type=str, default='FCA, 200ul SBS',
-    #                   help='200ul tip type (default: %(default)s)')
-    # tips.add_argument('--tip50-type', type=str, default='FCA, 50ul SBS',
-    #                   help='50ul tip type (default: %(default)s)')
-    # tips.add_argument('--tip10-type', type=str, default='FCA, 10ul SBS',
-    #                   help='10ul tip type (default: %(default)s)')
-
     # parse & return
     if test_args:
         args = parser.parse_args(test_args)
