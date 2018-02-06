@@ -390,10 +390,11 @@ def pool_samples(df, gwl, sample_col, labware_name_col,
                  new_tips=False, lw_tracker=None):
     """Writing gwl commands for pooling sample replicates
     """
+    gwl.add(Fluent.Comment('Sample pooling'))
+
     # sorting by postion
     df = df.sort_values('TECAN_dest_target_position')
-
-    gwl.add(Fluent.Comment('Sample pooling'))
+    
     # for each Sample, generate asp/dispense commands
     ## optional: keep tips among sample replicates
     for sample in df[sample_col].unique():
@@ -421,6 +422,8 @@ def pool_samples(df, gwl, sample_col, labware_name_col,
             # tip to waste (each replicate)
             if new_tips == True:
                 gwl.add(Fluent.Waste())
+            else:
+                gwl.add(Fluent.Flush())
                 
         # tip to waste (between samples)
         if new_tips == False:            
