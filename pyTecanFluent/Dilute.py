@@ -399,75 +399,50 @@ def reorder_384well(df, reorder_col):
     df.index = range(df.shape[0])
     return df
 
-# def pip_dilutant(df_conc, gwl, src_labware_name, 
-#                  src_labware_type=None, lw_tracker=None):
-#     """Writing worklist commands for aliquoting dilutant.
-#     Using 1-asp-multi-disp with 200 ul tips.
-#     Method:
-#     * calc max multi-dispense for 50 or 200 ul tips 
-#     """
-#     # determing how many multi-disp per tip
-#     max_vol = max(df_conc.TECAN_dilutant_volume)
-#     tip_frac = 0.80 
-#     if max_vol > 1000 * tip_frac:
-#         raise ValueError('Max dilutant volume >{}ul'.format(1000 & tip_frac))
-#     if gwl.TipType_exists(10) and max_vol * 2 < 10 * tip_frac:
-#         n_disp = int(np.floor(10 * tip_frac / max_vol))   # using 10 ul tips
-#     elif gwl.TipType_exists(50) and max_vol * 2 < 50 * tip_frac:
-#         n_disp = int(np.floor(50 * tip_frac / max_vol))   # using 50 ul tips
-#     elif gwl.TipType_exists(200) and max_vol * 2 < 200 * tip_frac:
-#         n_disp = int(np.floor(200 * tip_frac / max_vol))  # using 200 ul tips
-#     elif gwl.TipType_exists(1000):
-#         n_disp = int(np.floor(1000 * tip_frac / max_vol))  # using 1000 ul tips
-#     else:
-#         raise ValueError('No TipType available for volume: {}ul'.format(max_vol))
-        
-#     # making multi-disp object
-#     gwl.add(Fluent.comment('Dilutant'))
-#     MD = Fluent.multi_disp()
-#     MD.SrcRackLabel = src_labware_name
-#     MD.SrcRackType = src_labware_type
-#     MD.SrcPosition = 1                                   
-#     MD.DestRackLabel = df_conc.TECAN_dest_labware_name
-#     MD.DestRackType = df_conc.TECAN_dest_labware_type
-#     MD.DestPositions = df_conc.TECAN_dest_target_position
-#     MD.Volume = df_conc.TECAN_dilutant_volume             
-#     MD.NoOfMultiDisp = n_disp
-#     MD.add(gwl, tip_frac)
-
 def pip_dilutant(df_conc, gwl, src_labware_name, src_labware_type=None,
                  liq_cls='Water Free Single'):
     """Commands for aliquoting dilutant.
     """
     gwl.add(Fluent.Comment('Dilutant'))
-    # for each sample, transfer aliquot via asp-disp 
-    for i in range(df_conc.shape[0]):
-        # skipping no-volume
-        volume = round(df_conc.loc[i,'TECAN_sample_volume'], 2)
-        if volume <= 0.0:
+    # filtering by volume range
+    DTH_vols = list(gwl.get_DTH_volumes().values())
+    DTH_vols = sorted(DTH_vols)
+    DTH_vols = zip([-1] + DTH_vols[:-1], DTH_vols)
+    
+    # filtering to just values for each DTH volume range
+    for DTH_vol in DTH_vols:
+        x = (df_conc['TECAN_sample_volume'] > DTH_vol[0]) & \
+            (df_conc['TECAN_sample_volume'] <= DTH_vol[1])
+        df_conc_tmp = df_conc.loc[x]
+        if df_conc_tmp.shape[0] <= 0:
             continue
-        
-        # aspiration
-        asp = Fluent.Aspirate()
-        asp.RackLabel = src_labware_name
-        asp.RackType = src_labware_type
-        asp.Position = 1
-        asp.Volume = volume
-        asp.LiquidClass = liq_cls
-        gwl.add(asp)
-        
-        # dispensing
-        disp = Fluent.Dispense()
-        disp.RackLabel = df_conc.loc[i,'TECAN_dest_labware_name']
-        disp.RackType = df_conc.loc[i,'TECAN_dest_labware_type']        
-        disp.Position = df_conc.loc[i,'TECAN_dest_target_position']
-        disp.Volume = volume
-        disp.LiquidClass = liq_cls
-        gwl.add(disp)
-
-    # waste
-    gwl.add(Fluent.Waste())
-        
+        df_conc_tmp.reset_index(inplace=True)
+        # for each sample, transfer aliquot via asp-disp
+        for i in range(df_conc_tmp.shape[0]):
+            # skipping no-volume
+            volume = round(df_conc_tmp.loc[i,'TECAN_sample_volume'], 2)
+            if volume <= 0.0:
+                continue        
+            # aspiration
+            asp = Fluent.Aspirate()
+            asp.RackLabel = src_labware_name
+            asp.RackType = src_labware_type
+            asp.Position = 1
+            asp.Volume = volume
+            asp.LiquidClass = liq_cls
+            gwl.add(asp)        
+            # dispensing
+            disp = Fluent.Dispense()
+            disp.RackLabel = df_conc_tmp.loc[i,'TECAN_dest_labware_name']
+            disp.RackType = df_conc_tmp.loc[i,'TECAN_dest_labware_type']        
+            disp.Position = df_conc_tmp.loc[i,'TECAN_dest_target_position']
+            disp.Volume = volume
+            disp.LiquidClass = liq_cls
+            gwl.add(disp)
+            # flush
+            gwl.add(Fluent.Flush())            
+        # waste
+        gwl.add(Fluent.Waste())        
     # adding break
     gwl.add(Fluent.Break())
 
@@ -475,13 +450,13 @@ def pip_samples(df_conc, gwl, liq_cls='Water Free Single'):
     """Commands for aliquoting samples into dilutant
     """
     gwl.add(Fluent.Comment('Samples'))
+    
     # for each sample, transfer aliquot via asp-disp 
     for i in range(df_conc.shape[0]):
         # skipping no-volume
         volume = round(df_conc.loc[i,'TECAN_sample_volume'], 2)
         if volume <= 0:
-            continue
-        
+            continue        
         # aspiration
         asp = Fluent.Aspirate()
         asp.RackLabel = df_conc.loc[i,'TECAN_labware_name']
@@ -489,8 +464,7 @@ def pip_samples(df_conc, gwl, liq_cls='Water Free Single'):
         asp.Position = df_conc.loc[i,'TECAN_target_position']
         asp.Volume = volume
         asp.LiquidClass = liq_cls
-        gwl.add(asp)
-        
+        gwl.add(asp)        
         # dispensing
         disp = Fluent.Dispense()
         disp.RackLabel = df_conc.loc[i,'TECAN_dest_labware_name']

@@ -191,6 +191,14 @@ class gwl(object):
                 print(msg.format(volume), file=sys.stderr)
             return False
 
+    def get_DTH_volumes(self):
+        """Getting the dynamic tip handling max volume for each TipType in gwl object
+        """
+        d = {}
+        for TipType in self.TipTypes:
+            d[TipType] = self.db.get_tip_DTH_volume(TipType)
+        return d
+        
     def RackType_count(self, RackType):
         """Counting labware with same RackType (different RackLabel, same RackType)
         """
