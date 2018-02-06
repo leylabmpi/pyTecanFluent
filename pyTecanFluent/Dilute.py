@@ -70,7 +70,7 @@ def parse_args(test_args=None, subparsers=None):
                      help='Minimum post-dilution total volume (default: %(default)s)')
     dil.add_argument('--dil-labware-name', type=str, default='Dilutant',
                      help='Name of labware containing the dilutant (default: %(default)s)')
-    dil.add_argument('--dil-labware-type', type=str, default='100ml_1',
+    dil.add_argument('--dil-labware-type', type=str, default='25ml_1 waste',
                      help='Labware type containing the dilutant (default: %(default)s)')
     dil.add_argument('--dil-liq', type=str, default='Water Free Single Wall Disp',
                       help='Dilutant liquid class (default: %(default)s)')
@@ -82,7 +82,6 @@ def parse_args(test_args=None, subparsers=None):
     dest.add_argument('--dest-name', type=str, default='Diluted sample plate',
                       help='Destination labware name (default: %(default)s)')
     dest.add_argument('--dest-type', type=str, default='96 Well Eppendorf TwinTec PCR',
-                      choices=['96 Well Eppendorf TwinTec PCR', '384 Well Biorad PCR'],
                       help='Destination labware type on TECAN worktable (default: %(default)s)')
         
     # parse & return
