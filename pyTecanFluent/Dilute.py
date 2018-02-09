@@ -137,7 +137,7 @@ def main(args=None):
                  src_labware_name=args.dil_labware_name,
                  src_labware_type=args.dil_labware_type,
                  liq_cls=args.dil_liq,
-                 reuse_tip=args.reuse_tip)
+                 reuse_tips=args.reuse_tips)
     ## Sample
     pip_samples(df_conc, gwl=gwl,
                 liq_cls=args.samp_liq)
@@ -403,7 +403,7 @@ def reorder_384well(df, reorder_col):
     return df
 
 def pip_dilutant(df_conc, gwl, src_labware_name, src_labware_type=None,
-                 liq_cls='Water Free Single'):
+                 liq_cls='Water Free Single', reuse_tips=False):
     """Commands for aliquoting dilutant.
     """
     gwl.add(Fluent.Comment('Dilutant'))
@@ -442,10 +442,14 @@ def pip_dilutant(df_conc, gwl, src_labware_name, src_labware_type=None,
             disp.Volume = volume
             disp.LiquidClass = liq_cls
             gwl.add(disp)
-            # flush
-            gwl.add(Fluent.Flush())            
+            # end
+            if reuse_tips is True:
+                gwl.add(Fluent.Flush())
+            else:
+                gwl.add(Fluent.Wash())
         # waste
-        gwl.add(Fluent.Waste())        
+        if reuse_tips is True:
+            gwl.add(Fluent.Waste())        
     # adding break
     gwl.add(Fluent.Break())
 
