@@ -76,6 +76,8 @@ def parse_args(test_args=None, subparsers=None):
                       help='Dilutant liquid class (default: %(default)s)')
     dil.add_argument('--samp-liq', type=str, default='Water Free Single Wall Disp',
                       help='Sample liquid class (default: %(default)s)')
+    dil.add_argument('--reuse-tips', action='store_true', default=True,
+                      help='Reuse tips when dispensing dilutant? (default: %(default)s)')
         
     ## destination plate
     dest = parser.add_argument_group('Destination labware')
@@ -116,7 +118,7 @@ def main(args=None):
                                max_vol=args.max_volume,
                                min_total=args.min_total,
                                dest_type=args.dest_type)
-    
+   
     # Adding destination data
     gwl.db.get_labware(args.dest_type)
     n_wells = gwl.db.get_labware_wells(args.dest_type)
@@ -134,7 +136,8 @@ def main(args=None):
     pip_dilutant(df_conc, gwl=gwl,
                  src_labware_name=args.dil_labware_name,
                  src_labware_type=args.dil_labware_type,
-                 liq_cls=args.dil_liq)
+                 liq_cls=args.dil_liq,
+                 reuse_tip=args.reuse_tip)
     ## Sample
     pip_samples(df_conc, gwl=gwl,
                 liq_cls=args.samp_liq)
@@ -411,8 +414,8 @@ def pip_dilutant(df_conc, gwl, src_labware_name, src_labware_type=None,
     
     # filtering to just values for each DTH volume range
     for DTH_vol in DTH_vols:
-        x = (df_conc['TECAN_sample_volume'] > DTH_vol[0]) & \
-            (df_conc['TECAN_sample_volume'] <= DTH_vol[1])
+        x = (df_conc['TECAN_dilutant_volume'] > DTH_vol[0]) & \
+            (df_conc['TECAN_dilutant_volume'] <= DTH_vol[1])
         df_conc_tmp = df_conc.loc[x]
         if df_conc_tmp.shape[0] <= 0:
             continue
@@ -420,7 +423,7 @@ def pip_dilutant(df_conc, gwl, src_labware_name, src_labware_type=None,
         # for each sample, transfer aliquot via asp-disp
         for i in range(df_conc_tmp.shape[0]):
             # skipping no-volume
-            volume = round(df_conc_tmp.loc[i,'TECAN_sample_volume'], 2)
+            volume = round(df_conc_tmp.loc[i,'TECAN_dilutant_volume'], 2)
             if volume <= 0.0:
                 continue        
             # aspiration
