@@ -41,6 +41,7 @@ def parse_args(test_args=None, subparsers=None):
     PRIMERS:
     * For single-indexed primers (eg., EMP primers), the non-barcoded primer should be pre-added to either
       the mastermix (adjust the volume used for this script!) or each of the barcoded primers.
+    * If --prm-volume set to 0, then primers are skipped. 
 
     CONTROLS:
     * For the positive & negative controls, include them in the mapping file.
@@ -150,9 +151,10 @@ def main(args=None):
                   mm_volume=args.mm_volume, 
                   liq_cls=args.mm_liq)
     ## primers
-    pip_primers(df_map, gwl,
-                prm_volume=args.prm_volume,
-                liq_cls=args.primer_liq)
+    if args.prm_volume > 0:
+        pip_primers(df_map, gwl,
+                    prm_volume=args.prm_volume,
+                    liq_cls=args.primer_liq)
     ## samples
     pip_samples(df_map, gwl, liq_cls=args.sample_liq)
     ## water
@@ -226,8 +228,8 @@ def check_args(args):
         msg = 'WARNING: MasterMix volume > half of PCR volume'
         print(msg, file=sys.stderr)
     ## primers
-    assert args.prm_volume > 0, 'Primer volume must be > 0'
-    assert args.pcr_volume > 0, 'PCR volume must be > 0'
+    assert args.prm_volume >= 0.0, 'Primer volume must be >= 0'
+    assert args.pcr_volume > 0.0, 'PCR volume must be > 0'
     
         
 def map2df(mapfile, row_select=None):
