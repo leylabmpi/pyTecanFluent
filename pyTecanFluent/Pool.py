@@ -33,6 +33,7 @@ def parse_args(test_args=None, subparsers=None):
     3) A column designating the sample labware name
     4) A column designating the sample labware type (eg., '96 Well Eppendorf TwinTec PCR')
     5) A column designating the sample position (well)
+    *) Note: you can designate the column names in the parameters
         
     Mapping file:
     If a mapping file is provided (same names as in the pooling file),
@@ -92,8 +93,8 @@ def parse_args(test_args=None, subparsers=None):
                          help='Per-sample volume to pool (default: %(default)s)')
     pooling.add_argument('--liq-cls', type=str, default='Water Free Single No-cLLD',
                          help='Liquid class for pooling (default: %(default)s)')
-    pooling.add_argument('--new-tips',  action='store_true', default=False,
-                        help='Use new tips between sample replicates? (default: %(default)s)')
+#    pooling.add_argument('--new-tips',  action='store_true', default=False,
+#                        help='Use new tips between sample replicates? (default: %(default)s)')
 
     ## destination plate
     dest = parser.add_argument_group('Destination labware')
@@ -150,7 +151,7 @@ def main(args=None):
                        dest_type=args.dest_type,
                        dest_start=args.dest_start)
     df_samp = check_rack_labels(df_samp)        
-    
+
     # gwl construction
     TipTypes = ['FCA, 1000ul SBS', 'FCA, 200ul SBS',
                 'FCA, 50ul SBS', 'FCA, 10ul SBS']     
@@ -172,8 +173,8 @@ def main(args=None):
                  dest_labware_name=args.dest_name,
                  dest_labware_type=args.dest_type,
                  volume=args.volume,
-                 liq_cls=args.liq_cls,
-                 new_tips=args.new_tips)
+                 liq_cls=args.liq_cls)
+                 #new_tips=args.new_tips)
     
     ## writing out worklist (gwl) file
     gwl_file = args.prefix + '.gwl'
@@ -337,6 +338,9 @@ def add_dest(df, dest_labware, sample_col, position_col,
     """
     dest_start= int(dest_start)
     lw_utils = Labware.utils()
+    # number of samples in final pool
+    n_samples = len(df['Sample'].unique())
+    
     # labware type found in DB?
     positions = lw_utils.get_wells(dest_type)
     if positions is None:
@@ -348,9 +352,9 @@ def add_dest(df, dest_labware, sample_col, position_col,
             'TECAN_dest_labware_type', 
             'TECAN_dest_target_position']    
     df_dest = pd.DataFrame(np.nan, index=range(df.shape[0]), columns=cols)
-
+    
     # number of destination plates required
-    n_dest_plates = round(df_dest.shape[0] / positions + 0.5, 0)
+    n_dest_plates = int(round(n_samples / positions + 0.5, 0))
     if n_dest_plates > 1:
         msg = ('WARNING: Not enough wells for the number of samples.' 
         ' Using multiple destination plates')
@@ -359,6 +363,7 @@ def add_dest(df, dest_labware, sample_col, position_col,
     # filling destination df
     ## for position, just 1 position per sample
     samples = {}
+    dest_labware_unmodified = dest_labware
     for i,sample in enumerate(df.loc[:,sample_col]):
         # dest position
         try:
@@ -371,7 +376,7 @@ def add_dest(df, dest_labware, sample_col, position_col,
         # destination plate name
         if n_dest_plates > 1:
             x = round((i + dest_start) / positions + 0.499, 0)        
-            dest_labware = '{} {}'.format(orig_dest_labware, int(x))
+            dest_labware = '{} {}'.format(dest_labware_unmodified, int(x))
         # adding values DF; sample left off
         df_dest.iloc[i] = [dest_labware, dest_type, dest_position]
 
@@ -386,8 +391,7 @@ def add_dest(df, dest_labware, sample_col, position_col,
 def pool_samples(df, gwl, sample_col, labware_name_col,
                  labware_type_col, position_col,
                  dest_labware_name, dest_labware_type,
-                 volume, liq_cls='Water Free Single No-cLLD',
-                 new_tips=False, lw_tracker=None):
+                 volume, liq_cls='Water Free Single No-cLLD'):
     """Writing gwl commands for pooling sample replicates
     """
     gwl.add(Fluent.Comment('Sample pooling'))
@@ -420,14 +424,12 @@ def pool_samples(df, gwl, sample_col, labware_name_col,
             gwl.add(disp)
 
             # tip to waste (each replicate)
-            if new_tips == True:
-                gwl.add(Fluent.Waste())
-            else:
-                gwl.add(Fluent.Flush())
+            #if new_tips == True:
+            gwl.add(Fluent.Waste())
                 
         # tip to waste (between samples)
-        if new_tips == False:            
-            gwl.add(Fluent.Waste())
+        #if new_tips == False:            
+        #    gwl.add(Fluent.Waste())
 
 
 def filter_map(df_map, df_samp, sample_col):
