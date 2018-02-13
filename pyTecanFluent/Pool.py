@@ -148,6 +148,7 @@ def main(args=None):
                        dest_labware=args.dest_name,
                        sample_col=args.sample_col,
                        position_col=args.position_col,
+                       labware_name_col=args.sample_labware_name,
                        dest_type=args.dest_type,
                        dest_start=args.dest_start)
     df_samp = check_rack_labels(df_samp)        
@@ -324,7 +325,7 @@ def map2df(mapfile, file_format=None, header=True):
     return df
 
     
-def add_dest(df, dest_labware, sample_col, position_col,
+def add_dest(df, dest_labware, sample_col, position_col, labware_name_col,
              dest_type='96 Well Eppendorf TwinTec PCR',
              dest_start=1):
     """Setting destination locations for samples & primers.
@@ -336,10 +337,14 @@ def add_dest(df, dest_labware, sample_col, position_col,
         * well = i * (ii+1) + (ii+1) + start_offset
     Joining to df
     """
-    dest_start= int(dest_start)
+    dest_start= int(dest_start) - 1 
     lw_utils = Labware.utils()
+    
     # number of samples in final pool
     n_samples = len(df['Sample'].unique())
+
+    # reordering df
+    df.sort_values([labware_name_col, position_col], inplace=True)
     
     # labware type found in DB?
     positions = lw_utils.get_wells(dest_type)
@@ -367,11 +372,11 @@ def add_dest(df, dest_labware, sample_col, position_col,
     for i,sample in enumerate(df.loc[:,sample_col]):
         # dest position
         try:
-            dest_position = samples[sample]
+            dest_position = samples[sample] 
         except KeyError:
-            dest_position = len(samples.keys()) + 1
-            samples[sample] = dest_position                                
-        # dest location
+            dest_position = len(samples.keys()) + 1 + dest_start
+            samples[sample] = dest_position                       
+        # dest location per plate
         dest_position = positions if dest_position % positions == 0 else dest_position % positions 
         # destination plate name
         if n_dest_plates > 1:
