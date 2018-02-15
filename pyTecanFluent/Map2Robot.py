@@ -275,13 +275,13 @@ def check_df_map(df_map, args):
 
     # checking for unique samples
     if any(df_map.duplicated(df_map.columns.values[0])):
-        msg = 'WARNING: duplicated sample values in the mapping file'
+        msg = 'WARNING: Duplicated sample values in the mapping file. Did intend for this?'
         print(msg, file=sys.stderr)
 
     # checking for unique barcode locations (NaN's filtered out)
     dups = df_map[req_cols].dropna().duplicated(keep=False)
     if any(dups):
-        msg = 'WARNING: duplicated barcodes in the mapping file'
+        msg = 'WARNING: Duplicated barcodes in the mapping file!'
         print(msg, file=sys.stderr)
         
     # checking sample volumes
@@ -474,7 +474,7 @@ def pip_samples(df_map, gwl, liq_cls='Water Free Single'):
         asp.RackLabel = df_map.loc[i,'TECAN_sample_labware_name']
         asp.RackType = df_map.loc[i,'TECAN_sample_labware_type']
         asp.Position = df_map.loc[i,'TECAN_sample_target_position']
-        asp.Volume = df_map.loc[i,'TECAN_sample_rxn_volume']
+        asp.Volume = round(df_map.loc[i,'TECAN_sample_rxn_volume'], 1)
         asp.LiquidClass = liq_cls
         gwl.add(asp)
 
@@ -483,7 +483,7 @@ def pip_samples(df_map, gwl, liq_cls='Water Free Single'):
         disp.RackLabel = df_map.loc[i,'TECAN_dest_labware_name']
         disp.RackType = df_map.loc[i,'TECAN_dest_labware_type']
         disp.Position = df_map.loc[i,'TECAN_dest_target_position']
-        disp.Volume = df_map.loc[i,'TECAN_sample_rxn_volume']
+        disp.Volume = round(df_map.loc[i,'TECAN_sample_rxn_volume'], 1)
         disp.LiquidClass = liq_cls
         gwl.add(disp)
 
@@ -545,7 +545,7 @@ def PrimerPCR_plate_map(df_map, prefix='PrimerPCR'):
     Return: list of pandas dataframes (1 dataframe per file)
     """
     # Plate import file for Bio-Rad PrimePCR software
-    dest_pos_max = 96 if df_map['TECAN_dest_target_position'].shape[0] <= 96 else 384    
+    dest_pos_max = 96 if df_map['TECAN_dest_target_position'].max() <= 96 else 384
     f = functools.partial(map2biorad, positions=dest_pos_max)
     df_biorad = df_map.groupby('TECAN_dest_labware_name').apply(f)
     biorad_files = []

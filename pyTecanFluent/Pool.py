@@ -343,7 +343,7 @@ def add_dest(df, dest_labware, sample_col, position_col, labware_name_col,
     # number of samples in final pool
     n_samples = len(df['Sample'].unique())
 
-    # reordering df
+    # reordering df; TODO: instead of re-ordering, parse df by labware_name, and process each group one at a time; this retains user-input order
     df.sort_values([labware_name_col, position_col], inplace=True)
     
     # labware type found in DB?
