@@ -534,7 +534,7 @@ def pip_water(df_map, gwl, pcr_volume=25.0, mm_volume=13.1,
     # adding break
     gwl.add(Fluent.Break())
 
-def PrimerPCR_plate_map(df_map, prefix='PrimerPCR'):
+def PrimerPCR_plate_map(df_map, prefix='PrimerPCR', sep=','):
     """Create a PrimerPCR plate map table.
     This table is imported by PrimerPCR to designate: sampleID <--> wellID
     Table columns: Row     Column  *Target Name    *Sample Name
@@ -552,11 +552,11 @@ def PrimerPCR_plate_map(df_map, prefix='PrimerPCR'):
     if isinstance(df_biorad.index, pd.core.index.MultiIndex):
         for labware in df_biorad.index.get_level_values(0).unique():
             biorad_file = prefix + '_BIORAD-{}.txt'.format(labware.replace(' ', '_'))
-            df_biorad.loc[labware].to_csv(biorad_file, sep='\t', index=False, na_rep='')
+            df_biorad.loc[labware].to_csv(biorad_file, sep=sep, index=False, na_rep='')
             biorad_files.append(biorad_file)
     else:
         biorad_file = prefix + '_BIORAD.txt'
-        df_biorad.to_csv(biorad_file, sep='\t', index=False, na_rep='')
+        df_biorad.to_csv(biorad_file, sep=sep, index=False, na_rep='')
         biorad_files.append(biorad_file)
     
     return biorad_files
