@@ -89,6 +89,12 @@
         "wells" : 384,
         "max_volume" : 40
     },
+    "PCR Adapter 384 Well and 384 Well Biorad PCR" : {
+        "target_location" : ["Nest61mm_Pos"],
+        "category" : "plate",
+        "wells" : 384,
+        "max_volume" : 40
+    },
     "OptiPlate_96F" : {
         "target_location" : ["Nest61mm_Pos"],
         "category" : "plate",
