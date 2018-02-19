@@ -266,7 +266,7 @@ def sample2df(samplefile, sample_col, include_col,
     # selecting relevant columns
     df = df.loc[:,req_cols]
     # ordering by position
-    df = df.sort_values(position_col)
+    #df = df.sort_values(position_col)
     
     # return
     return df
@@ -325,7 +325,7 @@ def map2df(mapfile, file_format=None, header=True):
     return df
 
     
-def add_dest(df, dest_labware, sample_col, position_col, labware_name_col,
+def add_dest_OLD(df, dest_labware, sample_col, position_col, labware_name_col,
              dest_type='96 Well Eppendorf TwinTec PCR',
              dest_start=1):
     """Setting destination locations for samples & primers.
@@ -358,8 +358,8 @@ def add_dest(df, dest_labware, sample_col, position_col, labware_name_col,
             'TECAN_dest_target_position']    
     df_dest = pd.DataFrame(np.nan, index=range(df.shape[0]), columns=cols)
     
-    # number of destination plates required
-    n_dest_plates = int(round(n_samples / positions + 0.5, 0))
+    # number of destination plates required; accounting for possibly partially used plate
+    n_dest_plates = int(round((n_samples + dest_start) / positions + 0.5, 0))
     if n_dest_plates > 1:
         msg = ('WARNING: Not enough wells for the number of samples.' 
         ' Using multiple destination plates')
@@ -388,8 +388,61 @@ def add_dest(df, dest_labware, sample_col, position_col, labware_name_col,
     # df join (map + destination)
     df.index = df_dest.index
     df_j = pd.concat([df, df_dest], axis=1)
-    
+
     # return
+    return df_j
+
+def add_dest(df, dest_labware, sample_col, position_col, labware_name_col,
+             dest_type='96 Well Eppendorf TwinTec PCR', dest_start=1):
+    """Setting destination locations for samples & primers.
+    Making a new dataframe with:
+      [sample, sample_rep, dest_labware, dest_location]
+    * For each sample (i):
+      * For each replicate (ii):
+        * plate = destination plate type
+        * well = i * (ii+1) + (ii+1) + start_offset
+    Joining to df
+    """
+    assert isinstance(dest_start, int)
+    # number of wells in destination plate type
+    lw_utils = Labware.utils()
+    n_dest_wells = lw_utils.get_wells(dest_type)
+    if n_dest_wells is None:
+        msg = 'RackType has no "wells" value: "{}"'
+        raise ValueError(msg.format(dest_type))
+
+    # number of samples in final pool
+    n_samples = len(df['Sample'].unique())
+    
+    # init destination df
+    cols = ['TECAN_dest_labware_name',
+            'TECAN_dest_labware_type', 
+            'TECAN_dest_target_position']    
+    df_dest = pd.DataFrame(np.nan, index=range(df.shape[0]), columns=cols)
+
+    # for each source plate, iterating through and adding location info to df_dest
+    dest_plate_cnt = 1
+    cur_dest = int(dest_start)
+    sample_cnt = 0
+    for i,src_labware_name in enumerate(df['labware_name'].unique()):
+        df_src = df.loc[df['labware_name']==src_labware_name].copy()
+        df_src.sort_values([position_col], inplace=True)
+        for ii in range(df_src.shape[0]):
+            # adding dest location
+            dest_labware_tmp = '{0}[{1:0>3}]'.format(dest_labware, dest_plate_cnt)
+            df_dest.iloc[sample_cnt] = [dest_labware_tmp, dest_type, cur_dest]
+            # resetting destination if end of plate
+            cur_dest += 1
+            sample_cnt += 1
+            # next plate
+            if cur_dest > n_dest_wells:
+                cur_dest = 1
+                dest_plate_cnt += 1
+
+    # combining src & dest dataframes
+    df.index = df_dest.index
+    df_j = pd.concat([df, df_dest], axis=1)
+                
     return df_j
 
 
@@ -400,9 +453,6 @@ def pool_samples(df, gwl, sample_col, labware_name_col,
     """Writing gwl commands for pooling sample replicates
     """
     gwl.add(Fluent.Comment('Sample pooling'))
-
-    # sorting by postion
-    df = df.sort_values('TECAN_dest_target_position')
     
     # for each Sample, generate asp/dispense commands
     ## optional: keep tips among sample replicates
@@ -429,7 +479,6 @@ def pool_samples(df, gwl, sample_col, labware_name_col,
             gwl.add(disp)
 
             # tip to waste (each replicate)
-            #if new_tips == True:
             gwl.add(Fluent.Waste())
                 
         # tip to waste (between samples)
