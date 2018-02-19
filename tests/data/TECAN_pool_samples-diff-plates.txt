@@ -1,0 +1,13 @@
+Sample	labware_name	labware_type	Well	Call
+Pos_control_1	Georg PCR1 plate 4	96 Well Eppendorf TwinTec PCR	A01	Success
+Pos_control_1	Georg PCR1 plate 5	96 Well Eppendorf TwinTec PCR	B01	Success
+Pos_control_1	Georg PCR1 plate 6	96 Well Eppendorf TwinTec PCR	C01	Success
+Neg_control_1	Georg PCR1 plate 4	96 Well Eppendorf TwinTec PCR	A01	Success
+Neg_control_1	Georg PCR1 plate 5	96 Well Eppendorf TwinTec PCR	B01	Success
+Neg_control_1	Georg PCR1 plate 6	96 Well Eppendorf TwinTec PCR	C01	Success
+263.White.Stork	Georg PCR1 plate 4	96 Well Eppendorf TwinTec PCR	A01	Success
+263.White.Stork	Georg PCR1 plate 5	96 Well Eppendorf TwinTec PCR	B01	Success
+263.White.Stork	Georg PCR1 plate 6	96 Well Eppendorf TwinTec PCR	C01	Success
+265.Western.Marsh.Harrier	Georg PCR1 plate 4	96 Well Eppendorf TwinTec PCR	A01	Success
+265.Western.Marsh.Harrier	Georg PCR1 plate 5	96 Well Eppendorf TwinTec PCR	B01	Success
+265.Western.Marsh.Harrier	Georg PCR1 plate 6	96 Well Eppendorf TwinTec PCR	C01	Success

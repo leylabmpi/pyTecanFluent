@@ -395,14 +395,10 @@ def add_dest_OLD(df, dest_labware, sample_col, position_col, labware_name_col,
 def add_dest(df, dest_labware, sample_col, position_col, labware_name_col,
              dest_type='96 Well Eppendorf TwinTec PCR', dest_start=1):
     """Setting destination locations for samples & primers.
-    Making a new dataframe with:
-      [sample, sample_rep, dest_labware, dest_location]
-    * For each sample (i):
-      * For each replicate (ii):
-        * plate = destination plate type
-        * well = i * (ii+1) + (ii+1) + start_offset
-    Joining to df
+    Add destination location columns:
+      [dest_labware_name, dest_labware_type, dest_location]
     """
+    df.reset_index(inplace=True)
     assert isinstance(dest_start, int)
     # number of wells in destination plate type
     lw_utils = Labware.utils()
@@ -415,35 +411,36 @@ def add_dest(df, dest_labware, sample_col, position_col, labware_name_col,
     n_samples = len(df['Sample'].unique())
     
     # init destination df
-    cols = ['TECAN_dest_labware_name',
-            'TECAN_dest_labware_type', 
-            'TECAN_dest_target_position']    
-    df_dest = pd.DataFrame(np.nan, index=range(df.shape[0]), columns=cols)
+    df['TECAN_dest_labware_name'] = ''
+    df['TECAN_dest_labware_type'] = ''
+    df['TECAN_dest_target_position'] = np.nan
 
-    # for each source plate, iterating through and adding location info to df_dest
+    # iterating through df and adding dest
+    dest_pos_idx = {}
+    cur_pos = dest_start
     dest_plate_cnt = 1
-    cur_dest = int(dest_start)
-    sample_cnt = 0
-    for i,src_labware_name in enumerate(df['labware_name'].unique()):
-        df_src = df.loc[df['labware_name']==src_labware_name].copy()
-        df_src.sort_values([position_col], inplace=True)
-        for ii in range(df_src.shape[0]):
-            # adding dest location
-            dest_labware_tmp = '{0}[{1:0>3}]'.format(dest_labware, dest_plate_cnt)
-            df_dest.iloc[sample_cnt] = [dest_labware_tmp, dest_type, cur_dest]
-            # resetting destination if end of plate
-            cur_dest += 1
-            sample_cnt += 1
-            # next plate
-            if cur_dest > n_dest_wells:
-                cur_dest = 1
-                dest_plate_cnt += 1
+    for i in range(df.shape[0]):
+        # sample destination position
+        cur_sample = df.loc[i,'Sample']
+        try:
+            # destination location for that sample
+            dest_pos_tmp = dest_pos_idx[cur_sample]
+        except KeyError:
+            x = ['{0}[{1:0>3}]'.format(dest_labware, dest_plate_cnt), cur_pos]
+            dest_pos_idx[cur_sample] = x
+            cur_pos += 1
+        # destination labware name
+        ## dest row
+        df.set_value(i,'TECAN_dest_labware_name', dest_pos_idx[cur_sample][0])
+        df.set_value(i,'TECAN_dest_labware_type', dest_type)
+        df.set_value(i,'TECAN_dest_target_position', dest_pos_idx[cur_sample][1])
+        # next plate
+        if cur_pos > n_dest_wells:
+            cur_pos = 1
+            dest_plate_cnt += 1
 
-    # combining src & dest dataframes
-    df.index = df_dest.index
-    df_j = pd.concat([df, df_dest], axis=1)
-                
-    return df_j
+    #df.to_csv(sys.stdout, sep='\t'); sys.exit()
+    return df
 
 
 def pool_samples(df, gwl, sample_col, labware_name_col,
