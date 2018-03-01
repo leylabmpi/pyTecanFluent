@@ -68,15 +68,17 @@ def parse_args(test_args=None, subparsers=None):
                      help='Maximum sample volume to use (default: %(default)s)')
     dil.add_argument('--min-total', type=float, default=10.0,
                      help='Minimum post-dilution total volume (default: %(default)s)')
+    dil.add_argument('--only-dil', action='store_true', default=False,
+                      help='If sample conc. is <=0, only add dilutant (default: %(default)s)')    
     dil.add_argument('--dil-labware-name', type=str, default='Dilutant',
                      help='Name of labware containing the dilutant (default: %(default)s)')
     dil.add_argument('--dil-labware-type', type=str, default='25ml_1 waste',
                      help='Labware type containing the dilutant (default: %(default)s)')
     dil.add_argument('--dil-liq', type=str, default='Water Free Single Wall Disp',
                       help='Dilutant liquid class (default: %(default)s)')
-    dil.add_argument('--samp-liq', type=str, default='Water Free Single Wall Disp',
+    dil.add_argument('--samp-liq', type=str, default='Water Free Single Wall Disp Aspirate Anyway',
                       help='Sample liquid class (default: %(default)s)')
-    dil.add_argument('--new-tips', action='store_true', default=False,
+    dil.add_argument('--new-tips', action='store_false', default=True,
                       help='Use new tips for each dispense of dilutant? (default: %(default)s)')
         
     ## destination plate
@@ -117,7 +119,8 @@ def main(args=None):
                                min_vol=args.min_volume,
                                max_vol=args.max_volume,
                                min_total=args.min_total,
-                               dest_type=args.dest_type)
+                               dest_type=args.dest_type,
+                               only_dilutant=args.only_dil)
    
     # Adding destination data
     gwl.db.get_labware(args.dest_type)
@@ -257,14 +260,17 @@ def check_rack_labels(df_conc):
         df_conc[x] = [y.replace('.', '_') for y in df_conc[x].tolist()]
     return df_conc
             
-def calc_sample_volume(row, dilute_conc, min_vol, max_vol):
+def calc_sample_volume(row, dilute_conc, min_vol, max_vol, only_dilutant):
     """sample_volume = dilute_conc * total_volume / conc 
     (v1 = c2*v2/c1)
     If sample_volume > max possibl volume to use, then just use max
     """
-    # return 0 if conc <= 0 (this will be skipped)
+    # if conc <= 0
     if row['TECAN_sample_conc'] <= 0:
-        return 0
+        if only_dilutant == True:
+            return 0         # skipping sample
+        else:
+            return max_vol   # using max volume
     # calc volume to use
     x = dilute_conc * row['TECAN_total_volume'] / row['TECAN_sample_conc']
     # ceiling
@@ -303,7 +309,7 @@ def calc_final_conc(row):
     return x
     
 def dilution_volumes(df_conc, dilute_conc, min_vol, max_vol, 
-                     min_total, dest_type):
+                     min_total, dest_type, only_dilutant=False):
     """Setting the amoutn of sample to aliquot for dilution
     df_conc: pd.dataframe
     dilute_conc: concentration to dilute to 
@@ -338,7 +344,7 @@ def dilution_volumes(df_conc, dilute_conc, min_vol, max_vol,
     df_conc.loc[df_conc.TECAN_total_volume < min_total, 'TECAN_total_volume'] = min_total
     # setting volumes
     f = functools.partial(calc_sample_volume, dilute_conc=dilute_conc,
-                          min_vol=min_vol, max_vol=max_vol)
+                          min_vol=min_vol, max_vol=max_vol, only_dilutant=only_dilutant)
     df_conc['TECAN_sample_volume'] = df_conc.apply(f, axis=1)
     # dilutatant volume = total_volume - sample_volume
     df_conc['TECAN_dilutant_volume'] = df_conc.apply(calc_dilutant_volume, axis=1)
@@ -411,7 +417,7 @@ def pip_dilutant(df_conc, gwl, src_labware_name, src_labware_type=None,
     DTH_vols = list(gwl.get_DTH_volumes().values())
     DTH_vols = sorted(DTH_vols)
     DTH_vols = zip([-1] + DTH_vols[:-1], DTH_vols)
-    
+
     # filtering to just values for each DTH volume range
     for DTH_vol in DTH_vols:
         x = (df_conc['TECAN_dilutant_volume'] > DTH_vol[0]) & \
