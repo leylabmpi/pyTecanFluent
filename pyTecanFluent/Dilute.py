@@ -78,8 +78,8 @@ def parse_args(test_args=None, subparsers=None):
                       help='Dilutant liquid class (default: %(default)s)')
     dil.add_argument('--samp-liq', type=str, default='Water Free Single Wall Disp Aspirate Anyway',
                       help='Sample liquid class (default: %(default)s)')
-    dil.add_argument('--new-tips', action='store_false', default=True,
-                      help='Use new tips for each dispense of dilutant? (default: %(default)s)')
+    dil.add_argument('--reuse-tips', action='store_true', default=False,
+                      help='Re-use tips for each dispense of dilutant? (default: %(default)s)')
         
     ## destination plate
     dest = parser.add_argument_group('Destination labware')
@@ -140,7 +140,7 @@ def main(args=None):
                  src_labware_name=args.dil_labware_name,
                  src_labware_type=args.dil_labware_type,
                  liq_cls=args.dil_liq,
-                 new_tips=args.new_tips)
+                 reuse_tips=args.reuse_tips)
     ## Sample
     pip_samples(df_conc, gwl=gwl,
                 liq_cls=args.samp_liq)
@@ -409,7 +409,7 @@ def reorder_384well(df, reorder_col):
     return df
 
 def pip_dilutant(df_conc, gwl, src_labware_name, src_labware_type=None,
-                 liq_cls='Water Free Single', new_tips=False):
+                 liq_cls='Water Free Single', reuse_tips=False):
     """Commands for aliquoting dilutant.
     """
     gwl.add(Fluent.Comment('Dilutant'))
@@ -449,12 +449,12 @@ def pip_dilutant(df_conc, gwl, src_labware_name, src_labware_type=None,
             disp.LiquidClass = liq_cls
             gwl.add(disp)
             # end
-            if new_tips is False:
+            if reuse_tips is True:
                 gwl.add(Fluent.Flush())
             else:
                 gwl.add(Fluent.Waste())
         # waste
-        if new_tips is False:
+        if reuse_tips is True:
             gwl.add(Fluent.Waste())        
     # adding break
     gwl.add(Fluent.Break())
