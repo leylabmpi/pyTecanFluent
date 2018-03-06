@@ -10,6 +10,7 @@ from pyTecanFluent import Map2Robot
 from pyTecanFluent import Dilute
 from pyTecanFluent import QPCR
 from pyTecanFluent import Pool
+from pyTecanFluent import LITE
 
 # main
 def main(args=None):
@@ -39,6 +40,9 @@ def main(args=None):
   ## qpcr
   qpcr = QPCR.parse_args(subparsers=subparsers)
   qpcr.set_defaults(func=QPCR.main)
+  ## LITE-tagmentation
+  lite = LITE.parse_args(subparsers=subparsers)
+  lite.set_defaults(func=LITE.main)
 
   # parsing args
   if args:
