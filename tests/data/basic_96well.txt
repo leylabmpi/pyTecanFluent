@@ -1,15 +1,15 @@
 #SampleID	BarcodeSequence	LinkerPrimerSequence	TECAN_sample_labware_name	TECAN_sample_labware_type	TECAN_sample_target_position	TECAN_primer_labware_name	TECAN_primer_labware_type	TECAN_primer_target_position	TECAN_sample_rxn_volume	Notes
 A1	CACCGAAATCTG	GTGCCAGCMGCCGCGGTAA	Diluted sample plate 1	96 Well Eppendorf TwinTec PCR	1	S5_N7	96 Well Eppendorf TwinTec PCR	1	1	DNA sample in a 96-well plate
-A2	TATGGTACCCAG	GTGCCAGCMGCCGCGGTAA	Diluted sample plate 1	96 Well Eppendorf TwinTec PCR	2	S5_N7	96 Well Eppendorf TwinTec PCR	2	0.5	DNA sample in a 96-well plate
-A3	ACACCAACACCA	GTGCCAGCMGCCGCGGTAA	Diluted sample plate 1	96 Well Eppendorf TwinTec PCR	3	S5_N7	96 Well Eppendorf TwinTec PCR	3	2	DNA sample in a 96-well plate
-A4	ACATACTGAGCA	GTGCCAGCMGCCGCGGTAA	Diluted sample plate 1	96 Well Eppendorf TwinTec PCR	4	S5_N7	96 Well Eppendorf TwinTec PCR	4	5	DNA sample in a 96-well plate
+A2	TATGGTACCCAG	GTGCCAGCMGCCGCGGTAA	Diluted sample plate 1	96 Well Eppendorf TwinTec PCR	2	S5_N7	96 Well Eppendorf TwinTec PCR	2	1	DNA sample in a 96-well plate
+A3	ACACCAACACCA	GTGCCAGCMGCCGCGGTAA	Diluted sample plate 1	96 Well Eppendorf TwinTec PCR	3	S5_N7	96 Well Eppendorf TwinTec PCR	3	1	DNA sample in a 96-well plate
+A4	ACATACTGAGCA	GTGCCAGCMGCCGCGGTAA	Diluted sample plate 1	96 Well Eppendorf TwinTec PCR	4	S5_N7	96 Well Eppendorf TwinTec PCR	4	1	DNA sample in a 96-well plate
 A5	CGAATGAGTCAT	GTGCCAGCMGCCGCGGTAA	Diluted sample plate 1	96 Well Eppendorf TwinTec PCR	5	S5_N7	96 Well Eppendorf TwinTec PCR	5	1	DNA sample in a 96-well plate
-A6	CGATATCAGTAG	GTGCCAGCMGCCGCGGTAA	Diluted sample plate 1	96 Well Eppendorf TwinTec PCR	6	S5_N7	96 Well Eppendorf TwinTec PCR	6	0.5	DNA sample in a 96-well plate
-A7	ACGGGATACAGG	GTGCCAGCMGCCGCGGTAA	Diluted sample plate 1	96 Well Eppendorf TwinTec PCR	7	S5_N7	96 Well Eppendorf TwinTec PCR	7	2	DNA sample in a 96-well plate
-A8	CAGGGCCTTTGT	GTGCCAGCMGCCGCGGTAA	Diluted sample plate 1	96 Well Eppendorf TwinTec PCR	8	S5_N7	96 Well Eppendorf TwinTec PCR	8	5	DNA sample in a 96-well plate
+A6	CGATATCAGTAG	GTGCCAGCMGCCGCGGTAA	Diluted sample plate 1	96 Well Eppendorf TwinTec PCR	6	S5_N7	96 Well Eppendorf TwinTec PCR	6	1	DNA sample in a 96-well plate
+A7	ACGGGATACAGG	GTGCCAGCMGCCGCGGTAA	Diluted sample plate 1	96 Well Eppendorf TwinTec PCR	7	S5_N7	96 Well Eppendorf TwinTec PCR	7	1	DNA sample in a 96-well plate
+A8	CAGGGCCTTTGT	GTGCCAGCMGCCGCGGTAA	Diluted sample plate 1	96 Well Eppendorf TwinTec PCR	8	S5_N7	96 Well Eppendorf TwinTec PCR	8	1	DNA sample in a 96-well plate
 A9	TGACGTAGAACT	GTGCCAGCMGCCGCGGTAA	Diluted sample plate 1	96 Well Eppendorf TwinTec PCR	9	S5_N7	96 Well Eppendorf TwinTec PCR	9	1	DNA sample in a 96-well plate
-B1	CACGACTTGACA	GTGCCAGCMGCCGCGGTAA	Diluted sample plate 1	96 Well Eppendorf TwinTec PCR	10	S5_N7	96 Well Eppendorf TwinTec PCR	10	0.5	DNA sample in a 96-well plate
-B2	CCATCACATAGG	GTGCCAGCMGCCGCGGTAA	Diluted sample plate 1	96 Well Eppendorf TwinTec PCR	11	S5_N7	96 Well Eppendorf TwinTec PCR	11	2	DNA sample in a 96-well plate
+B1	CACGACTTGACA	GTGCCAGCMGCCGCGGTAA	Diluted sample plate 1	96 Well Eppendorf TwinTec PCR	10	S5_N7	96 Well Eppendorf TwinTec PCR	10	1	DNA sample in a 96-well plate
+B2	CCATCACATAGG	GTGCCAGCMGCCGCGGTAA	Diluted sample plate 1	96 Well Eppendorf TwinTec PCR	11	S5_N7	96 Well Eppendorf TwinTec PCR	11	1	DNA sample in a 96-well plate
 Pos_control_sequenced	TGTGTTACTCCT	GTGCCAGCMGCCGCGGTAA	Mock community DNA	1.5ml Eppendorf	1	S5_N7	96 Well Eppendorf TwinTec PCR	21	1	Mock community to be sequenced with barcoded primers
 Neg_control_sequenced	TCCGTCATGGGT	GTGCCAGCMGCCGCGGTAA	Water	1.5ml Eppendorf	1	S5_N7	96 Well Eppendorf TwinTec PCR	22	1	Negative control to be sequenced with barcoded primers
 Pos_control_not-sequenced	NA	NA	E. coli DNA	1.5ml Eppendorf	1	PrimerF-PrimerR	1.5ml Eppendorf	1	1	Positive control to NOT be sequenced; Forward & Reverse primers non-barcoded

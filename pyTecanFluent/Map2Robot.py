@@ -51,7 +51,11 @@ def parse_args(test_args=None, subparsers=None):
     LABWARE:
     * In order to use a plate adapter, use "PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR"
 
+    WATER:
+    * If  mastermix + primer + sample = total_reaction_volume, then no water is aliquoted
+
     MISC NOTES:
+    * By default, water is assumed to be in the mastermix, and a 25ml trough will be used to hold the mastermix
     * All volumes are in ul
     * Plate well locations are 1 to n-wells; numbering by column
     * PicoGreen should be added to the MasterMix *prior* to loading on robot
@@ -89,15 +93,17 @@ def parse_args(test_args=None, subparsers=None):
     
     ## Reagents
     rgnt = parser.add_argument_group('Reagents')
-    rgnt.add_argument('--mm-volume', type=float, default=13.1,
+    rgnt.add_argument('--pcr-volume', type=float, default=25.0,
+                        help='Total volume per PCR (default: %(default)s)')
+    rgnt.add_argument('--mm-volume', type=float, default=23.0,
                       help='MasterMix volume per PCR (default: %(default)s)')
     rgnt.add_argument('--prm-volume', type=float, default=1.0,
                          help='Primer volume per PCR (default: %(default)s)')
-    rgnt.add_argument('--pcr-volume', type=float, default=25.0,
-                        help='Total volume per PCR (default: %(default)s)')
     rgnt.add_argument('--error-perc', type=float, default=10.0,
                         help='Percent of extra total reagent volume to include (default: %(default)s)')
-        
+    rgnt.add_argument('--mm-labware-type', type=str, default='25ml_1 waste',
+                      help='Labware type for mastermix (default: %(default)s)')
+    
     # Liquid classes
     liq = parser.add_argument_group('Liquid classes')
     liq.add_argument('--mm-liq', type=str, default='MasterMix Free Multi Wall Disp',
@@ -108,7 +114,11 @@ def parse_args(test_args=None, subparsers=None):
                       help='Sample liquid class (default: %(default)s)')
     liq.add_argument('--water-liq', type=str, default='Water Free Single Wall Disp',
                       help='Water liquid class (default: %(default)s)')
-
+    liq.add_argument('--n-tip-reuse', type=int, default=4,
+                     help='Number of tip reuses for multi-dispense (default: %(default)s)')
+    liq.add_argument('--n-multi-disp', type=int, default=6,
+                     help='Number of multi-dispenses per tip (default: %(default)s)')
+    
     # running test args
     if test_args:
         args = parser.parse_args(test_args)
@@ -148,8 +158,11 @@ def main(args=None):
 
     ## mastermix
     pip_mastermix(df_map, gwl,
+                  mm_labware_type=args.mm_labware_type,
                   mm_volume=args.mm_volume, 
-                  liq_cls=args.mm_liq)
+                  liq_cls=args.mm_liq,
+                  n_tip_reuse=args.n_tip_reuse,
+                  n_multi_disp=args.n_multi_disp)
     ## primers
     if args.prm_volume > 0:
         pip_primers(df_map, gwl,
@@ -372,7 +385,8 @@ def reorder_384well(df, reorder_col):
     df.index = range(df.shape[0])
     return df
 
-def pip_mastermix(df_map, gwl, mm_volume=13.1, multi_disp=6,
+def pip_mastermix(df_map, gwl, mm_labware_type='25ml_1 waste',
+                  mm_volume=13.1, n_tip_reuse=6, n_multi_disp=4,
                   liq_cls='MasterMix Free Multi'):
     """Writing worklist commands for aliquoting mastermix.
     Using 1-asp-multi-disp with 200 ul tips.
@@ -399,8 +413,8 @@ def pip_mastermix(df_map, gwl, mm_volume=13.1, multi_disp=6,
         to_exclude = set(all_wells) - set(target_pos)
         # creating reagnet distribution command
         rd = Fluent.Reagent_distribution()
-        rd.SrcRackLabel = 'Mastermix tube[{0:0>3}]'.format(i + 1)
-        rd.SrcRackType = '1.5ml Eppendorf waste'
+        rd.SrcRackLabel = 'Mastermix[{0:0>3}]'.format(i + 1)
+        rd.SrcRackType = mm_labware_type
         rd.SrcPosStart = 1
         rd.SrcPosEnd = 1
         # dispense parameters
@@ -411,8 +425,8 @@ def pip_mastermix(df_map, gwl, mm_volume=13.1, multi_disp=6,
         # other
         rd.Volume = mm_volume
         rd.LiquidClass = liq_cls
-        rd.NoOfDiTiReuses = 2
-        rd.NoOfMultiDisp = multi_disp
+        rd.NoOfDiTiReuses = n_tip_reuse
+        rd.NoOfMultiDisp = n_multi_disp
         rd.Direction = 0
         rd.ExcludedDestWell = ';'.join([str(x) for x in list(to_exclude)])
         # adding to gwl object
@@ -504,12 +518,16 @@ def pip_water(df_map, gwl, pcr_volume=25.0, mm_volume=13.1,
     for i in range(df_map.shape[0]):
         samp_volume = df_map.loc[i,'TECAN_sample_rxn_volume']
         w_need = pcr_volume - (samp_volume + mm_volume + prm_volume)
-        assert w_need >= 0, 'Water volume is negative: {}'.format(w_need)
+        if w_need <= 0:
+            w_need = 0
+        #assert w_need >= 0, 'Water volume is negative: {}'.format(w_need)
         water_volume.append(w_need)
     df_map['TECAN_water_rxn_volume'] = water_volume
         
     # for each Sample-PCR_rxn_rep, write out asp/dispense commands
     for i in range(df_map.shape[0]):
+        if water_volume[i] <= 0:
+            continue
         # aspiration
         asp = Fluent.Aspirate()
         asp.RackLabel = '25ml_1[001]'

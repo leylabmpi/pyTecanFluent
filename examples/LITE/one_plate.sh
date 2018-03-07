@@ -3,8 +3,8 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # 96-well source plate
-pyTecanFluent LITE --prefix /tmp/LITE_basic_96well \
-  $DIR/../../tests/data/basic_96well.txt
+pyTecanFluent LITE --prefix /tmp/LITE_1plate \
+  $DIR/../../tests/data/LITE_1plate.xlsx
 
 
 # # 384-well source plate

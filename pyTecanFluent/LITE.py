@@ -88,15 +88,17 @@ def parse_args(test_args=None, subparsers=None):
     rgnt = parser.add_argument_group('Reagents')
     rgnt.add_argument('--tag-mm-volume', type=float, default=3.0,
                       help='Tagmentation masterMix volume per well (default: %(default)s)')
-    rgnt.add_argument('--pcr-mm-volume', type=float, default=10.0,
+    rgnt.add_argument('--pcr-mm-volume', type=float, default=18.0,
                       help='PCR masterMix volume per well (default: %(default)s)')
     rgnt.add_argument('--sample-volume', type=float, default=2.0,
                       help='Sample volume per PCR (default: %(default)s)')
-    rgnt.add_argument('--primer-volume', type=float, default=10.0,
+    rgnt.add_argument('--primer-volume', type=float, default=2.0,
                          help='Primer volume per PCR, assuming foward+reverse are already combined (default: %(default)s)')
     rgnt.add_argument('--error-perc', type=float, default=10.0,
                         help='Percent of extra total reagent volume to include (default: %(default)s)')
-        
+    rgnt.add_argument('--mm-labware-type', type=str, default='25ml_1 waste',
+                      help='Labware type for mastermix (default: %(default)s)')
+    
     # Liquid classes
     liq = parser.add_argument_group('Liquid classes')
     liq.add_argument('--mm-liq', type=str, default='MasterMix Free Multi Wall Disp',
@@ -105,11 +107,16 @@ def parse_args(test_args=None, subparsers=None):
                       help='Sample liquid class (default: %(default)s)')
     liq.add_argument('--primer-liq', type=str, default='Water Free Single Wall Disp',
                      help='Primer liquid class (default: %(default)s)')
-    liq.add_argument('--n-tip-reuse', type=int, default=6,
-                     help='Number of tip reuses for multi-dispense (default: %(default)s)')
-    liq.add_argument('--n-multi-disp', type=int, default=4,
-                     help='Number of multi-dispenses per tip (default: %(default)s)')
+    liq.add_argument('--tag-n-tip-reuse', type=int, default=4,
+                     help='Tagmentation: number of tip reuses for multi-dispense (default: %(default)s)')
+    liq.add_argument('--tag-n-multi-disp', type=int, default=6,
+                     help='Tagmentation: number of multi-dispenses per tip (default: %(default)s)')
+    liq.add_argument('--pcr-n-tip-reuse', type=int, default=4,
+                     help='PCR: number of tip reuses for multi-dispense (default: %(default)s)')
+    liq.add_argument('--pcr-n-multi-disp', type=int, default=6,
+                     help='PCR: number of multi-dispenses per tip (default: %(default)s)')
 
+    
     # running test args
     if test_args:
         args = parser.parse_args(test_args)
@@ -157,10 +164,11 @@ def main_tagmentation(df_map, args):
         
     ## mastermix
     pip_mastermix(df_map, gwl,
+                  mm_labware_type=args.mm_labware_type,                  
                   mm_volume=args.tag_mm_volume, 
                   liq_cls=args.mm_liq,
-                  n_tip_reuse=args.n_tip_reuse,
-                  n_multi_disp=args.n_multi_disp)
+                  n_tip_reuse=args.tag_n_tip_reuse,
+                  n_multi_disp=args.tag_n_multi_disp)
     ## samples
     pip_samples(df_map, gwl, sample_volume=args.sample_volume, liq_cls=args.sample_liq)
 
@@ -207,10 +215,11 @@ def main_PCR(df_map, args):
         
     ## mastermix
     pip_mastermix(df_map, gwl,
+                  mm_labware_type=args.mm_labware_type,
                   mm_volume=args.pcr_mm_volume, 
                   liq_cls=args.mm_liq,
-                  n_tip_reuse=args.n_tip_reuse,
-                  n_multi_disp=args.n_multi_disp)
+                  n_tip_reuse=args.pcr_n_tip_reuse,
+                  n_multi_disp=args.pcr_n_multi_disp)
 
     ## primers
     if args.primer_volume > 0:
@@ -408,7 +417,8 @@ def reorder_384well(df, reorder_col):
     df.index = range(df.shape[0])
     return df
 
-def pip_mastermix(df_map, gwl, mm_volume=13.1, n_tip_reuse=2, n_multi_disp=6,
+def pip_mastermix(df_map, gwl,  mm_labware_type='25ml_1 waste',
+                  mm_volume=13.1, n_tip_reuse=2, n_multi_disp=6,
                   liq_cls='MasterMix Free Multi'):
     """Writing worklist commands for aliquoting mastermix.
     Using 1-asp-multi-disp with 200 ul tips.
@@ -435,8 +445,8 @@ def pip_mastermix(df_map, gwl, mm_volume=13.1, n_tip_reuse=2, n_multi_disp=6,
         to_exclude = set(all_wells) - set(target_pos)
         # creating reagnet distribution command
         rd = Fluent.Reagent_distribution()
-        rd.SrcRackLabel = 'Mastermix tube[{0:0>3}]'.format(i + 1)
-        rd.SrcRackType = '1.5ml Eppendorf waste'
+        rd.SrcRackLabel = 'Mastermix[{0:0>3}]'.format(i + 1)
+        rd.SrcRackType = mm_labware_type
         rd.SrcPosStart = 1
         rd.SrcPosEnd = 1
         # dispense parameters
