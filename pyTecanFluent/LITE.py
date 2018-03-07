@@ -96,8 +96,10 @@ def parse_args(test_args=None, subparsers=None):
                          help='Primer volume per PCR, assuming foward+reverse are already combined (default: %(default)s)')
     rgnt.add_argument('--error-perc', type=float, default=10.0,
                         help='Percent of extra total reagent volume to include (default: %(default)s)')
-    rgnt.add_argument('--mm-labware-type', type=str, default='25ml_1 waste',
-                      help='Labware type for mastermix (default: %(default)s)')
+    rgnt.add_argument('--tag-mm-labware-type', type=str, default='1.5ml Eppendorf waste',
+                      help='Tagmentation: labware type for mastermix (default: %(default)s)')
+    rgnt.add_argument('--pcr-mm-labware-type', type=str, default='25ml_1 waste',
+                      help='PCR: labware type for mastermix (default: %(default)s)')
     
     # Liquid classes
     liq = parser.add_argument_group('Liquid classes')
@@ -164,7 +166,7 @@ def main_tagmentation(df_map, args):
         
     ## mastermix
     pip_mastermix(df_map, gwl,
-                  mm_labware_type=args.mm_labware_type,                  
+                  mm_labware_type=args.tag_mm_labware_type,                  
                   mm_volume=args.tag_mm_volume, 
                   liq_cls=args.mm_liq,
                   n_tip_reuse=args.tag_n_tip_reuse,
@@ -215,7 +217,7 @@ def main_PCR(df_map, args):
         
     ## mastermix
     pip_mastermix(df_map, gwl,
-                  mm_labware_type=args.mm_labware_type,
+                  mm_labware_type=args.pcr_mm_labware_type,
                   mm_volume=args.pcr_mm_volume, 
                   liq_cls=args.mm_liq,
                   n_tip_reuse=args.pcr_n_tip_reuse,
