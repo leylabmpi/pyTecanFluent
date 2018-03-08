@@ -103,8 +103,10 @@ def parse_args(test_args=None, subparsers=None):
     
     # Liquid classes
     liq = parser.add_argument_group('Liquid classes')
-    liq.add_argument('--mm-liq', type=str, default='MasterMix Free Multi Wall Disp',
-                      help='Mastermix liquid class (default: %(default)s)')
+    liq.add_argument('--tag-mm-liq', type=str, default='MasterMix Free Multi Bottom Disp',
+                      help='Tagmentation: Mastermix liquid class (default: %(default)s)')
+    liq.add_argument('--pcr-mm-liq', type=str, default='MasterMix Free Multi Rapid Disp',
+                      help='PCR: Mastermix liquid class (default: %(default)s)')
     liq.add_argument('--sample-liq', type=str, default='Water Free Single Wall Disp',
                       help='Sample liquid class (default: %(default)s)')
     liq.add_argument('--primer-liq', type=str, default='Water Free Single Wall Disp',
@@ -168,7 +170,7 @@ def main_tagmentation(df_map, args):
     pip_mastermix(df_map, gwl,
                   mm_labware_type=args.tag_mm_labware_type,                  
                   mm_volume=args.tag_mm_volume, 
-                  liq_cls=args.mm_liq,
+                  liq_cls=args.tag_mm_liq,
                   n_tip_reuse=args.tag_n_tip_reuse,
                   n_multi_disp=args.tag_n_multi_disp)
     ## samples
@@ -219,7 +221,7 @@ def main_PCR(df_map, args):
     pip_mastermix(df_map, gwl,
                   mm_labware_type=args.pcr_mm_labware_type,
                   mm_volume=args.pcr_mm_volume, 
-                  liq_cls=args.mm_liq,
+                  liq_cls=args.pcr_mm_liq,
                   n_tip_reuse=args.pcr_n_tip_reuse,
                   n_multi_disp=args.pcr_n_multi_disp)
 
