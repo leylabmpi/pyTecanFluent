@@ -119,13 +119,13 @@
         "wells" : 1,
         "max_volume" : 1200
     },
-    "2.0ml Eppendorf" : {
+    "2ml Eppendorf" : {
         "target_location" : ["eppendorf"],
         "category" : "tube",
         "wells" : 1,
         "max_volume" : 1800
     },
-    "2.0ml Eppendorf waste" : {
+    "2ml Eppendorf waste" : {
         "target_location" : ["eppendorf"],
         "category" : "tube",
         "wells" : 1,
