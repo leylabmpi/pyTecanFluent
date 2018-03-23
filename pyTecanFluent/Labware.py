@@ -103,8 +103,12 @@ class utils(object):
         try:
             position = well_idx[well]
         except KeyError:
-            msg = 'Cannot find well "{}"'
-            raise KeyError(msg.format(well))
+            try:
+                # adding zero-padding
+                position = well_idx[well[0] + '0' + well[1:]]
+            except KeyError:
+                msg = 'Cannot find well "{}"'
+                raise KeyError(msg.format(well))
         # return 
         return position
 

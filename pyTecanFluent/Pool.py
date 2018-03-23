@@ -262,11 +262,10 @@ def sample2df(samplefile, sample_col, include_col,
     f = lambda row: lw_utils.well2position(row[position_col],
                                            RackType=row[labware_type_col])
     df[position_col] = df.apply(f, axis=1)
-        
+
+    
     # selecting relevant columns
     df = df.loc[:,req_cols]
-    # ordering by position
-    #df = df.sort_values(position_col)
     
     # return
     return df
