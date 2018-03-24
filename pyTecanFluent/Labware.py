@@ -112,7 +112,7 @@ class utils(object):
         # return 
         return position
 
-
+    
 class labware(object):
     """Class for summarizing labware in a gwl object.
     Note: tip boxes are considered separate from other labware

@@ -4,7 +4,9 @@ from __future__ import print_function
 import os
 import sys
 import logging
+from functools import partial
 import numpy as np
+import pandas as pd
 
 # functions
 def file_written(file_name):
@@ -101,7 +103,34 @@ def backup_file(f):
     else:
         logging.warning('{0} doesn\'t exist'.format(f))
 
+        
+def _reorder_384well(df, gwl, labware_type_col, position_col):
+    odd_even = lambda x: (x % 2, x)
+
+    # n-wells for labware type
+    labware_type = df[labware_type_col].unique()[0]
+    n_wells = gwl.db.get_labware_wells(labware_type)
+    # sorting if 384 well
+    if n_wells == 384:
+        df = pd.concat([df.loc[df[position_col] % 2 != 0],
+                        df.loc[df[position_col] % 2 == 0]])
+    return df
+
     
+def reorder_384well(df, gwl, labware_name_col, labware_type_col, position_col):
+    """Reordering target positions of any 384-well labware types in df.
+    Reordering to all odd-even in order to account for channel offset (reordering speeds up asp/disp)
+    Method:
+    # group by labware name and iter by groups
+    ## if labware type is 384 well `n_wells = gwl.db.get_labware_wells(labware_type)`
+    ### reorder by odd-even
+    """
+    f = partial(_reorder_384well, gwl=gwl,
+                labware_type_col=labware_type_col,
+                position_col=position_col)
+    df = df.groupby([labware_name_col, labware_type_col]).apply(f).reset_index(drop=True)
+    return df
+        
     
 # main
 if __name__ == '__main__':

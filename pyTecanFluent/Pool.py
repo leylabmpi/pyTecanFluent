@@ -158,12 +158,12 @@ def main(args=None):
                 'FCA, 50ul SBS', 'FCA, 10ul SBS']     
     gwl = Fluent.gwl(TipTypes)
     
-    # Reordering dest if plate type is 384-well
-    gwl.db.get_labware(args.dest_type)
-    n_wells = gwl.db.get_labware_wells(args.dest_type)
-    if n_wells == '384':
-        df_samp = reorder_384well(df_samp, args.position_col)
-
+    # Reordering src if plate type is 384-well
+    df_samp = Utils.reorder_384well(df_samp, gwl,
+                                    labware_name_col=args.sample_labware_name,
+                                    labware_type_col=args.sample_labware_type,
+                                    position_col=args.position_col)
+    
     # samples
     pool_samples(df_samp,
                  gwl,
@@ -324,73 +324,6 @@ def map2df(mapfile, file_format=None, header=True):
     return df
 
     
-def add_dest_OLD(df, dest_labware, sample_col, position_col, labware_name_col,
-             dest_type='96 Well Eppendorf TwinTec PCR',
-             dest_start=1):
-    """Setting destination locations for samples & primers.
-    Making a new dataframe with:
-      [sample, sample_rep, dest_labware, dest_location]
-    * For each sample (i):
-      * For each replicate (ii):
-        * plate = destination plate type
-        * well = i * (ii+1) + (ii+1) + start_offset
-    Joining to df
-    """
-    dest_start= int(dest_start) - 1 
-    lw_utils = Labware.utils()
-    
-    # number of samples in final pool
-    n_samples = len(df['Sample'].unique())
-
-    # reordering df; TODO: instead of re-ordering, parse df by labware_name, and process each group one at a time; this retains user-input order
-    df.sort_values([labware_name_col, position_col], inplace=True)
-    
-    # labware type found in DB?
-    positions = lw_utils.get_wells(dest_type)
-    if positions is None:
-        msg = 'RackType has no "wells" value: "{}"'
-        raise ValueError(msg.format(dest_type))
-
-    # init destination df
-    cols = ['TECAN_dest_labware_name',
-            'TECAN_dest_labware_type', 
-            'TECAN_dest_target_position']    
-    df_dest = pd.DataFrame(np.nan, index=range(df.shape[0]), columns=cols)
-    
-    # number of destination plates required; accounting for possibly partially used plate
-    n_dest_plates = int(round((n_samples + dest_start) / positions + 0.5, 0))
-    if n_dest_plates > 1:
-        msg = ('WARNING: Not enough wells for the number of samples.' 
-        ' Using multiple destination plates')
-        print(msg, file=sys.stderr)
-        
-    # filling destination df
-    ## for position, just 1 position per sample
-    samples = {}
-    dest_labware_unmodified = dest_labware
-    for i,sample in enumerate(df.loc[:,sample_col]):
-        # dest position
-        try:
-            dest_position = samples[sample] 
-        except KeyError:
-            dest_position = len(samples.keys()) + 1 + dest_start
-            samples[sample] = dest_position                       
-        # dest location per plate
-        dest_position = positions if dest_position % positions == 0 else dest_position % positions 
-        # destination plate name
-        if n_dest_plates > 1:
-            x = round((i + dest_start) / positions + 0.499, 0)        
-            dest_labware = '{} {}'.format(dest_labware_unmodified, int(x))
-        # adding values DF; sample left off
-        df_dest.iloc[i] = [dest_labware, dest_type, dest_position]
-
-    # df join (map + destination)
-    df.index = df_dest.index
-    df_j = pd.concat([df, df_dest], axis=1)
-
-    # return
-    return df_j
-
 def add_dest(df, dest_labware, sample_col, position_col, labware_name_col,
              dest_type='96 Well Eppendorf TwinTec PCR', dest_start=1):
     """Setting destination locations for samples & primers.

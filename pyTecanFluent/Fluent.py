@@ -154,14 +154,14 @@ class gwl(object):
         self.commands.append(obj)
 
     def write(self, file_obj):
-        """Writing out gwl fileC
+        """Writing out gwl file.
         Commands written in the order of addition
         """
         try:
             outF = open(file_obj, 'w')
         except IOError:
             outF = file_obj
-        
+            
         for x in self.commands:
             outF.write(x.cmd() + '\n')
         outF.close()
