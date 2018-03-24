@@ -155,6 +155,8 @@ def main(args=None):
     return None   #return (gwl_file, report_file, df_file, lw_file)
 
 def main_tagmentation(df_map, args):
+    """Tagmentation step of the LITE method
+    """
     # gwl construction
     TipTypes = ['FCA, 1000ul SBS', 'FCA, 200ul SBS',
                 'FCA, 50ul SBS', 'FCA, 10ul SBS']     
@@ -206,16 +208,18 @@ def main_tagmentation(df_map, args):
     Utils.file_written(df_file)    
 
 def main_PCR(df_map, args):
+    """PCR step of the LITE method
+    """
     # gwl construction
     TipTypes = ['FCA, 1000ul SBS', 'FCA, 200ul SBS',
                 'FCA, 50ul SBS', 'FCA, 10ul SBS']     
     gwl = Fluent.gwl(TipTypes)
 
     # Reordering dest if plate type is 384-well
-    gwl.db.get_labware(args.dest_type)
-    n_wells = gwl.db.get_labware_wells(args.dest_type)
-    if n_wells == '384':
-        df_map = reorder_384well(df_map, 'TECAN_dest_target_position')
+    df_map = Utils.reorder_384well(df_map, gwl,
+                                   labware_name_col='TECAN_dest_labware_name',
+                                   labware_type_col='TECAN_dest_labware_type',
+                                   position_col='TECAN_dest_target_position')
         
     ## mastermix
     pip_mastermix(df_map, gwl,

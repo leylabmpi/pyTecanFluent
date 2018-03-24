@@ -125,7 +125,10 @@ def main(args=None):
     
     # Reordering dest for optimal pipetting
     if n_wells == 384:
-        df_setup = reorder_384well(df_setup, 'dest_target_position')
+        df_setup = Utils.reorder_384well(df_setup, gwl,
+                                       labware_name_col='dest_labware_name',
+                                       labware_type_col='dest_labware_type',
+                                       position_col='dest_target_position')
     elif n_wells == 96:
         df_setup.sort(['dest_target_position'], inplace=True)
     else:

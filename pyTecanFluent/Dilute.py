@@ -132,8 +132,10 @@ def main(args=None):
     df_conc = check_rack_labels(df_conc)
     
     # Reordering dest if plate type is 384-well
-    if n_wells == '384':
-        df_conc = reorder_384well(df_conc, 'TECAN_dest_target_position')
+    df_conc = Utils.reorder_384well(df_conc, gwl,
+                                   labware_name_col='TECAN_dest_labware_name',
+                                   labware_type_col='TECAN_dest_labware_type',
+                                   position_col='TECAN_dest_target_position')
         
     ## Dilutant
     pip_dilutant(df_conc, gwl=gwl,
