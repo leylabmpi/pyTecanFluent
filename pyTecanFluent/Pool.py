@@ -33,6 +33,7 @@ def parse_args(test_args=None, subparsers=None):
     3) A column designating the sample labware name
     4) A column designating the sample labware type (eg., '96 Well Eppendorf TwinTec PCR')
     5) A column designating the sample position (well)
+    6) [optional] A column designating the volume of each sample (overrides --volume)
     *) Note: you can designate the column names in the parameters
         
     Mapping file:
@@ -81,6 +82,9 @@ def parse_args(test_args=None, subparsers=None):
                         help='Name of column designating the sample labware type (default: %(default)s)')
     filef.add_argument('--position-col', type=str, default='Well',
                         help='Name of column designating sample location in the plate (default: %(default)s)')
+    filef.add_argument('--volume-col', type=str, default='None',
+                        help='Name of column designating volumes per sample. Use "None" to skip (default: %(default)s)')
+
     ### mapping file
     filef.add_argument('--map-format', type=str, default=None,
                         help='File format (excel or tab). If not provided, the format is determined from the file extension') 
@@ -129,6 +133,7 @@ def main(args=None):
                             labware_name_col=args.sample_labware_name,
                             labware_type_col=args.sample_labware_type,
                             position_col=args.position_col,
+                            volume_col=args.volume_col,
                             file_format=args.sample_format,
                             row_select=args.sample_rows, 
                             header=args.sample_header)
@@ -170,7 +175,8 @@ def main(args=None):
                  sample_col=args.sample_col,
                  labware_name_col=args.sample_labware_name,
                  labware_type_col=args.sample_labware_type,
-                 position_col=args.position_col,                     
+                 position_col=args.position_col,
+                 volume_col=args.volume_col,
                  dest_labware_name=args.dest_name,
                  dest_labware_type=args.dest_type,
                  volume=args.volume,
@@ -215,7 +221,7 @@ def check_args(args):
     assert args.volume >= 0.0, '--volume must be >= 0'
                          
 def sample2df(samplefile, sample_col, include_col,
-              labware_name_col, labware_type_col, position_col,
+              labware_name_col, labware_type_col, position_col, volume_col,
               row_select=None, file_format=None, header=True):
     """Loading a sample file as a pandas dataframe
     """
@@ -223,6 +229,7 @@ def sample2df(samplefile, sample_col, include_col,
         header=0
     else:
         header=None
+        
     # format
     if file_format is None:
         if samplefile.endswith('.csv'):
@@ -248,6 +255,8 @@ def sample2df(samplefile, sample_col, include_col,
     # checking dataframe format
     ## columns
     req_cols = [sample_col, include_col, labware_name_col, labware_type_col, position_col]
+    if volume_col.lower() != 'none':
+        req_cols += [volume_col]
     msg = 'Column "{}" not found in sample table'
     for req_col in req_cols:
         if req_col not in df.columns.values:
@@ -263,7 +272,6 @@ def sample2df(samplefile, sample_col, include_col,
                                            RackType=row[labware_type_col])
     df[position_col] = df.apply(f, axis=1)
 
-    
     # selecting relevant columns
     df = df.loc[:,req_cols]
     
@@ -376,7 +384,7 @@ def add_dest(df, dest_labware, sample_col, position_col, labware_name_col,
 
 
 def pool_samples(df, gwl, sample_col, labware_name_col,
-                 labware_type_col, position_col,
+                 labware_type_col, position_col, volume_col,
                  dest_labware_name, dest_labware_type,
                  volume, liq_cls='Water Free Single No-cLLD'):
     """Writing gwl commands for pooling sample replicates
@@ -394,7 +402,14 @@ def pool_samples(df, gwl, sample_col, labware_name_col,
             asp.RackLabel = df_sub.loc[i, labware_name_col]
             asp.RackType = df_sub.loc[i, labware_type_col]
             asp.Position = df_sub.loc[i, position_col]
-            asp.Volume = volume 
+            if volume_col.lower() == 'none':
+                asp.Volume = volume
+            else:
+                asp.Volume = df_sub.loc[i, volume_col]
+            if asp.Volume <= 0:
+                msg = 'WARNING: skipping sample because volume <= 0\n'
+                sys.stderr.write(msg)
+                continue
             asp.LiquidClass = liq_cls
             gwl.add(asp)
 
@@ -403,7 +418,7 @@ def pool_samples(df, gwl, sample_col, labware_name_col,
             disp.RackLabel = df_sub.loc[i,'TECAN_dest_labware_name']
             disp.RackType = df_sub.loc[i,'TECAN_dest_labware_type']
             disp.Position = df_sub.loc[i,'TECAN_dest_target_position']
-            disp.Volume = volume
+            disp.Volume = asp.Volume
             disp.LiquidClass = liq_cls
             gwl.add(disp)
 

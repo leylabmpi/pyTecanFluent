@@ -173,7 +173,7 @@ class labware(object):
                        'target_position' : pos})
         # adding other labware
         df_labware = []
-        adapter_cnt = 0
+        adapter_cnt = {'96 well' : 0, '384 well' : 0}
         for RackLabel,v in self.labware.items():
             # RackType
             try:
@@ -187,17 +187,28 @@ class labware(object):
                 msg = 'No possible target location for labware: "{}"'
                 raise ValueError(msg.format(RackLabel))
             ## if Racktype includes adapter, adding adapter + plate
-            if RackType == 'PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR':
-                adapter_cnt += 1
+            if RackType.startswith('PCR Adapter 96 Well and '):
+                adapter_cnt['96 well'] += 1
                 # adding adapter to labware table
-                df_labware.append({'labware_name' : 'PCR Adapter 96 Well[{0:0>3}]'.format(adapter_cnt),
+                df_labware.append({'labware_name' : 'PCR Adapter 96 Well[{0:0>3}]'.format(adapter_cnt['96 well']),
                                    'labware_type' : 'PCR Adapter 96 Well',
                                    'target_location' : loc,
                                    'target_position' : pos})
                 # editing info for plate on adapter
-                RackType = '96 Well Eppendorf TwinTec PCR'
+                RackType = RackType.replace('PCR Adapter 96 Well and ', '')
                 loc = 'PCR96WellAdapter_CoverSite'
-                pos = adapter_cnt
+                pos = adapter_cnt['96 well']
+            elif RackType.startswith('PCR Adapter 384 Well and '):
+                adapter_cnt['384 well'] += 1
+                # adding adapter to labware table
+                df_labware.append({'labware_name' : 'PCR Adapter 384 Well[{0:0>3}]'.format(adapter_cnt['384 well']),
+                                   'labware_type' : 'PCR Adapter 384 Well',
+                                   'target_location' : loc,
+                                   'target_position' : pos})
+                # editing info for plate on adapter
+                RackType = RackType.replace('PCR Adapter 384 Well and ', '')
+                loc = 'PCR96WellAdapter_CoverSite_1'     # yes, it's correct
+                pos = adapter_cnt['384 well']
             # creating table entry            
             df_labware.append({'labware_name' : RackLabel,
                                'labware_type' : RackType,
