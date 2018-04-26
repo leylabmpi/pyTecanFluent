@@ -443,6 +443,14 @@ def pip_mastermix(df_map, gwl,  mm_labware_type='25ml_1 waste',
     df_map_f.reset_index(inplace=True)
     func = lambda row: gwl.db.get_labware_wells(row['TECAN_dest_labware_type'])
     df_map_f['wells'] = df_map_f.apply(func, axis=1)
+    # check that total mastermix volume can fit in tube
+    mm_lab_max_volume = gwl.db.get_labware_max_volume(mm_labware_type)
+    if mm_volume * df_map_f.shape[0] > mm_lab_max_volume:
+        msg = 'Mastermix volume is > max volume for labware: "{}".'
+        msg += ' Use larger labware or split the samples into multiple runs'
+        print(msg.format(mm_labware))
+        sys.exit(1)
+    # create gwl commands
     for i in range(df_map_f.shape[0]):
         # all records for 1 plate
         RackLabel = df_map_f.loc[i,'TECAN_dest_labware_name']
@@ -451,7 +459,7 @@ def pip_mastermix(df_map, gwl,  mm_labware_type='25ml_1 waste',
         all_wells = [x+1 for x in range(df_map_f.loc[i,'wells'])]
         target_pos = df_tmp['TECAN_dest_target_position'].tolist()
         to_exclude = set(all_wells) - set(target_pos)
-        # creating reagnet distribution command
+        # creating reagent distribution command
         rd = Fluent.Reagent_distribution()
         rd.SrcRackLabel = 'Mastermix[{0:0>3}]'.format(i + 1)
         rd.SrcRackType = mm_labware_type
@@ -474,7 +482,6 @@ def pip_mastermix(df_map, gwl,  mm_labware_type='25ml_1 waste',
 
     # adding break
     gwl.add(Fluent.Break())
-
         
 def pip_primer(i, gwl, df_map, primer_labware_name, 
                primer_labware_type, primer_target_position,

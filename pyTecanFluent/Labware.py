@@ -111,7 +111,6 @@ class utils(object):
                 raise KeyError(msg.format(well))
         # return 
         return position
-
     
 class labware(object):
     """Class for summarizing labware in a gwl object.
