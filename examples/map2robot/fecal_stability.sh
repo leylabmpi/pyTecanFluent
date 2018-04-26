@@ -8,5 +8,6 @@ pyTecanFluent map2robot --prefix /tmp/fecal_stab_96well \
 
 # 394-well destination plate
 pyTecanFluent map2robot --prefix /tmp/fecal_stab_384well \
-  --desttype '384 Well Biorad PCR' \
-  $DIR/../../tests/data/mapping_file_fecal_stability.txt
+	      --dest-type '384 Well Biorad PCR' \
+	      --mm-one-source \
+	      $DIR/../../tests/data/mapping_file_fecal_stability.txt

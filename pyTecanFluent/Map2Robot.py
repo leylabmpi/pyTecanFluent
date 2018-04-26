@@ -103,6 +103,8 @@ def parse_args(test_args=None, subparsers=None):
                         help='Percent of extra total reagent volume to include (default: %(default)s)')
     rgnt.add_argument('--mm-labware-type', type=str, default='25ml_1 waste',
                       help='Labware type for mastermix (default: %(default)s)')
+    rgnt.add_argument('--mm-one-source', action='store_true', default=False,
+                      help='Just one mastermix labware instead of one per destination plate? (default: %(default)s)')
     
     # Liquid classes
     liq = parser.add_argument_group('Liquid classes')
@@ -163,7 +165,8 @@ def main(args=None):
                   mm_volume=args.mm_volume, 
                   liq_cls=args.mm_liq,
                   n_tip_reuse=args.n_tip_reuse,
-                  n_multi_disp=args.n_multi_disp)
+                  n_multi_disp=args.n_multi_disp,
+                  mm_one_source=args.mm_one_source)
     ## primers
     if args.prm_volume > 0:
         pip_primers(df_map, gwl,
@@ -388,7 +391,7 @@ def reorder_384well(df, reorder_col):
 
 def pip_mastermix(df_map, gwl, mm_labware_type='25ml_1 waste',
                   mm_volume=13.1, n_tip_reuse=6, n_multi_disp=4,
-                  liq_cls='MasterMix Free Multi'):
+                  liq_cls='MasterMix Free Multi', mm_one_source=False):
     """Writing worklist commands for aliquoting mastermix.
     Using 1-asp-multi-disp with 200 ul tips.
     Method:
@@ -398,7 +401,7 @@ def pip_mastermix(df_map, gwl, mm_labware_type='25ml_1 waste',
       * if n_disp_left < n_disp: n_disp = n_disp_left
       * calc total volume: n_disp * mm_volume
     """
-    # separate regent dispense per designation plate (new source tube)
+    # separate regent dispense per designation plate
     cols = ['TECAN_dest_labware_name', 'TECAN_dest_labware_type']
     df_map_f = df_map.loc[:,cols].drop_duplicates()
     df_map_f.reset_index(inplace=True)
@@ -414,7 +417,10 @@ def pip_mastermix(df_map, gwl, mm_labware_type='25ml_1 waste',
         to_exclude = set(all_wells) - set(target_pos)
         # creating reagnet distribution command
         rd = Fluent.Reagent_distribution()
-        rd.SrcRackLabel = 'Mastermix[{0:0>3}]'.format(i + 1)
+        if mm_one_source == True:
+            rd.SrcRackLabel = 'Mastermix'
+        else:
+            rd.SrcRackLabel = 'Mastermix[{0:0>3}]'.format(i + 1)
         rd.SrcRackType = mm_labware_type
         rd.SrcPosStart = 1
         rd.SrcPosEnd = 1
