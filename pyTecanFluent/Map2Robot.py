@@ -576,11 +576,11 @@ def PrimerPCR_plate_map(df_map, prefix='PrimerPCR', sep=','):
     biorad_files = []
     if isinstance(df_biorad.index, pd.core.index.MultiIndex):
         for labware in df_biorad.index.get_level_values(0).unique():
-            biorad_file = prefix + '_BIORAD-{}.txt'.format(labware.replace(' ', '_'))
+            biorad_file = prefix + '_BIORAD-{}.csv'.format(labware.replace(' ', '_'))
             df_biorad.loc[labware].to_csv(biorad_file, sep=sep, index=False, na_rep='')
             biorad_files.append(biorad_file)
     else:
-        biorad_file = prefix + '_BIORAD.txt'
+        biorad_file = prefix + '_BIORAD.csv'
         df_biorad.to_csv(biorad_file, sep=sep, index=False, na_rep='')
         biorad_files.append(biorad_file)
     
