@@ -168,7 +168,7 @@ def main(args=None):
                                     labware_name_col=args.sample_labware_name,
                                     labware_type_col=args.sample_labware_type,
                                     position_col=args.position_col)
-    
+
     # samples
     pool_samples(df_samp,
                  gwl,
@@ -199,18 +199,24 @@ def main(args=None):
         df_map = filter_map(df_map, df_samp, args.sample_col)
         map_file = args.prefix + '_map.txt'        
         df_map.round(1).to_csv(map_file, sep='\t', index=False)
-
-    # # status
+    else:
+        df_samp = filter_samp(df_samp, args.sample_col)
+        samp_file = args.prefix + '_samples.txt'
+        df_samp.round(1).to_csv(samp_file, sep='\t', index=False)
+        
+    # status
     Utils.file_written(gwl_file)
     Utils.file_written(lw_file)
     if df_map is not None:
         Utils.file_written(map_file)
+    else:
+        Utils.file_written(samp_file)        
         
     # end
     if df_map is not None:
         return (gwl_file, lw_file, map_file)
     else:
-        return (gwl_file, lw_file) 
+        return (gwl_file, lw_file, samp_file) 
     
 def check_args(args):
     """Checking user input
@@ -371,9 +377,9 @@ def add_dest(df, dest_labware, sample_col, position_col, labware_name_col,
             cur_pos += 1
         # destination labware name
         ## dest row
-        df.set_value(i,'TECAN_dest_labware_name', dest_pos_idx[cur_sample][0])
-        df.set_value(i,'TECAN_dest_labware_type', dest_type)
-        df.set_value(i,'TECAN_dest_target_position', dest_pos_idx[cur_sample][1])
+        df.at[i,'TECAN_dest_labware_name'] = dest_pos_idx[cur_sample][0]
+        df.at[i,'TECAN_dest_labware_type'] =  dest_type
+        df.at[i,'TECAN_dest_target_position'] = dest_pos_idx[cur_sample][1]
         # next plate
         if cur_pos > n_dest_wells:
             cur_pos = 1
@@ -430,11 +436,9 @@ def pool_samples(df, gwl, sample_col, labware_name_col,
         #    gwl.add(Fluent.Waste())
 
 
-def filter_map(df_map, df_samp, sample_col):
-    """Filtering df_sample to just destination position, 
-    then adding values to df_map
+def filter_samp(df_samp, sample_col):
+    """Filtering df_samp to just distination position
     """
-    # formatting sample table
     cols = [sample_col, 'TECAN_dest_labware_name',
             'TECAN_dest_labware_type', 'TECAN_dest_target_position']
     df_samp = df_samp[cols].drop_duplicates()
@@ -444,11 +448,23 @@ def filter_map(df_map, df_samp, sample_col):
                        'TECAN_postPool_labware_name',
                        'TECAN_postPool_labware_type',
                        'TECAN_postPool_target_position']
+    df_samp.sort_values('TECAN_postPool_target_position', inplace=True)
+    return(df_samp)
+    
+        
+def filter_map(df_map, df_samp, sample_col):
+    """Filtering df_sample to just destination position, 
+    then adding values to df_map
+    """
+    # formatting sample table
+    df_samp = filter_samp(df_samp, sample_col)
     # formatting mapping table
     df_map = df_map.drop_duplicates(subset='#SampleID')
     # joining 
     df_map = pd.merge(df_map, df_samp, how='inner',
                       left_on=['#SampleID'], right_on=[sample_col])
+    # sorting by destination position
+    df_map.sort_values('TECAN_postPool_target_position', inplace=True)
     return df_map
 
             
