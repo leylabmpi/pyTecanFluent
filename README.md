@@ -75,8 +75,3 @@ Install:
 
 * Free software: MIT license
 
-# TODO
-
-[ ] Map2Robot: option for primer in master mix
-[ ] Map2Robot: calc amounts of primer & tubes needed
-

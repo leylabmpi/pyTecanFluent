@@ -246,8 +246,7 @@ def check_args(args):
         print(msg, file=sys.stderr)
     ## primers
     assert args.prm_volume >= 0.0, 'Primer volume must be >= 0'
-    assert args.pcr_volume > 0.0, 'PCR volume must be > 0'
-    
+    assert args.pcr_volume > 0.0, 'PCR volume must be > 0'    
         
 def map2df(mapfile, row_select=None):
     """Loading a mapping file as a pandas dataframe
@@ -633,6 +632,8 @@ def write_report(df_map, outFH, pcr_volume, mm_volume,
     total_pcr_volume = pcr_volume * n_rxn
     ## total mastermix
     total_mm_volume = mm_volume * n_rxn
+    ## total primers
+    total_prm_volume = prm_volume * n_rxn
     ## total water
     total_water_volume = sum(df_map['TECAN_water_rxn_volume'])
 
@@ -650,10 +651,12 @@ def write_report(df_map, outFH, pcr_volume, mm_volume,
     outFH.write('# Total volumes (ul)\n')
     write_report_line(outFH, 'Master Mix', total_mm_volume)
     write_report_line(outFH, 'Water', total_water_volume)
+    write_report_line(outFH, 'Primers', total_prm_volume)
     ## total volumes with error
     outFH.write('# Total volumes with (ul; {}% error)\n'.format(error_perc))
     write_report_line(outFH, 'Master Mix', total_mm_volume, error_perc=error_perc)
     write_report_line(outFH, 'Water', total_water_volume, error_perc=error_perc)
+    write_report_line(outFH, 'Primers', total_prm_volume, error_perc=error_perc)
     # samples
     outFH.write('')
 
