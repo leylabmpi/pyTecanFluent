@@ -448,7 +448,9 @@ def filter_samp(df_samp, sample_col):
                        'TECAN_postPool_labware_name',
                        'TECAN_postPool_labware_type',
                        'TECAN_postPool_target_position']
-    df_samp.sort_values('TECAN_postPool_target_position', inplace=True)
+    sort_vals = ['TECAN_postPool_labware_name',
+                 'TECAN_postPool_target_position']
+    df_samp.sort_values(sort_vals, inplace=True)
     return(df_samp)
     
         
