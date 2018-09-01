@@ -41,7 +41,7 @@ def parse_args(test_args=None, subparsers=None):
     PRIMERS:
     * For single-indexed primers (eg., EMP primers), the non-barcoded primer should be pre-added to either
       the mastermix (adjust the volume used for this script!) or each of the barcoded primers.
-    * If --prm-volume set to 0, then primers are skipped. 
+    * If --prm-volume set to 0 or --prm-in-mm, then primers are skipped. 
 
     CONTROLS:
     * For the positive & negative controls, include them in the mapping file.
@@ -53,6 +53,7 @@ def parse_args(test_args=None, subparsers=None):
 
     WATER:
     * If  mastermix + primer + sample = total_reaction_volume, then no water is aliquoted
+    * If --water-in-mm, then water is skipped
 
     MISC NOTES:
     * By default, water is assumed to be in the mastermix, and a 25ml trough will be used to hold the mastermix
@@ -95,16 +96,20 @@ def parse_args(test_args=None, subparsers=None):
     rgnt = parser.add_argument_group('Reagents')
     rgnt.add_argument('--pcr-volume', type=float, default=25.0,
                         help='Total volume per PCR (default: %(default)s)')
-    rgnt.add_argument('--mm-volume', type=float, default=23.0,
+    rgnt.add_argument('--mm-volume', type=float, default=13.1,
                       help='MasterMix volume per PCR (default: %(default)s)')
-    rgnt.add_argument('--prm-volume', type=float, default=1.0,
-                         help='Primer volume per PCR (default: %(default)s)')
+    rgnt.add_argument('--prm-volume', type=float, default=2.0,
+                         help='Primer volume per PCR (default: %(default)s)')    
     rgnt.add_argument('--error-perc', type=float, default=10.0,
                         help='Percent of extra total reagent volume to include (default: %(default)s)')
     rgnt.add_argument('--mm-labware-type', type=str, default='25ml_1 waste',
                       help='Labware type for mastermix (default: %(default)s)')
     rgnt.add_argument('--mm-one-source', action='store_true', default=False,
                       help='Just one mastermix labware instead of one per destination plate? (default: %(default)s)')
+    rgnt.add_argument('--prm-in-mm', action='store_true', default=False,
+                         help='Primer pre-added to mastermix? (default: %(default)s)')
+    rgnt.add_argument('--water-in-mm', action='store_true', default=False,
+                         help='Water pre-added to mastermix? (default: %(default)s)')
     
     # Liquid classes
     liq = parser.add_argument_group('Liquid classes')
@@ -168,18 +173,30 @@ def main(args=None):
                   n_multi_disp=args.n_multi_disp,
                   mm_one_source=args.mm_one_source)
     ## primers
+    if args.prm_in_mm == True:
+        args.prm_volume = 0
     if args.prm_volume > 0:
         pip_primers(df_map, gwl,
                     prm_volume=args.prm_volume,
                     liq_cls=args.primer_liq)
+    else:
+        msg = 'WARNING: primers skipped; make sure that primers are added to the mastermix!'
+        print(msg, file=sys.stderr)
+
     ## samples
     pip_samples(df_map, gwl, liq_cls=args.sample_liq)
+    
     ## water
-    pip_water(df_map, gwl,
-              pcr_volume=args.pcr_volume,
-              mm_volume=args.mm_volume,
-              prm_volume=args.prm_volume,
-              liq_cls=args.water_liq)
+    df_map = calc_water_needed(df_map,
+                               pcr_volume=args.pcr_volume,
+                               mm_volume=args.mm_volume,
+                               prm_volume=args.prm_volume,
+                               water_in_mm=args.water_in_mm)
+    if sum(df_map['TECAN_water_rxn_volume']) > 0:
+        pip_water(df_map, gwl, liq_cls=args.water_liq)
+    else:
+        msg = 'WARNING: water skipped; make sure that water is added to the mastermix!'
+        print(msg, file=sys.stderr)
     
     ## writing out worklist (gwl) file
     gwl_file = args.prefix + '.gwl'
@@ -513,33 +530,39 @@ def pip_samples(df_map, gwl, liq_cls='Water Free Single'):
     # adding break
     gwl.add(Fluent.Break())
 
-def pip_water(df_map, gwl, pcr_volume=25.0, mm_volume=13.1,
-              prm_volume=2.0, liq_cls='Water Free Single'):
+def calc_water_needed(df_map, pcr_volume=25.0, mm_volume=13.1,
+                      prm_volume=2.0, water_in_mm=False):
+    """Calculating the amount of water to reach full rxn volume
+    """
+    if water_in_mm == True:
+        df_map['TECAN_water_rxn_volume'] = 0
+    else:
+        water_volume = []
+        for i in range(df_map.shape[0]):
+            samp_volume = df_map.loc[i,'TECAN_sample_rxn_volume']
+            w_need = pcr_volume - (samp_volume + mm_volume + prm_volume)
+            if w_need <= 0:
+                w_need = 0
+                #assert w_need >= 0, 'Water volume is negative: {}'.format(w_need)
+            water_volume.append(w_need)
+        df_map['TECAN_water_rxn_volume'] = water_volume
+    return df_map
+        
+def pip_water(df_map, gwl, liq_cls='Water Free Single'):
     """Commands for aliquoting water to each PCR rxn
     """
     gwl.add(Fluent.Comment('Water'))
     
-    # calculate the amount of water
-    water_volume = []
-    for i in range(df_map.shape[0]):
-        samp_volume = df_map.loc[i,'TECAN_sample_rxn_volume']
-        w_need = pcr_volume - (samp_volume + mm_volume + prm_volume)
-        if w_need <= 0:
-            w_need = 0
-        #assert w_need >= 0, 'Water volume is negative: {}'.format(w_need)
-        water_volume.append(w_need)
-    df_map['TECAN_water_rxn_volume'] = water_volume
-        
     # for each Sample-PCR_rxn_rep, write out asp/dispense commands
     for i in range(df_map.shape[0]):
-        if water_volume[i] <= 0:
+        if df_map.loc[i,'TECAN_water_rxn_volume'] <= 0:
             continue
         # aspiration
         asp = Fluent.Aspirate()
         asp.RackLabel = '25ml_1[001]'
         asp.RackType = '25ml_1 waste'
         asp.Position = 1 
-        asp.Volume = water_volume[i]
+        asp.Volume = round(df_map.loc[i,'TECAN_water_rxn_volume'], 1)
         asp.LiquidClass = liq_cls
         gwl.add(asp)
 
@@ -549,7 +572,7 @@ def pip_water(df_map, gwl, pcr_volume=25.0, mm_volume=13.1,
         disp.RackType = df_map.loc[i,'TECAN_dest_labware_type']
         disp.Position = df_map.loc[i,'TECAN_dest_target_position']
         disp.LiquidClass = liq_cls
-        disp.Volume = water_volume[i]
+        disp.Volume = round(df_map.loc[i,'TECAN_water_rxn_volume'], 1)
         gwl.add(disp)
 
         ## waste
@@ -625,7 +648,7 @@ def write_report_line(outFH, subject, volume, round_digits=1, error_perc=None):
 def write_report(df_map, outFH, pcr_volume, mm_volume,
                  prm_volume, n_rxn_reps, error_perc=10.0):
     """Writing a report on
-    """
+    """    
     # calculating total volumes
     n_rxn = df_map.shape[0]
     ## total PCR
