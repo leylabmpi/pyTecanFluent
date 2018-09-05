@@ -417,43 +417,77 @@ def pip_mastermix(df_map, gwl, mm_labware_type='25ml_1 waste',
       * if n_disp_left < n_disp: n_disp = n_disp_left
       * calc total volume: n_disp * mm_volume
     """
+    gwl.add(Fluent.Comment('MasterMix'))
+
     # separate regent dispense per designation plate
     cols = ['TECAN_dest_labware_name', 'TECAN_dest_labware_type']
     df_map_f = df_map.loc[:,cols].drop_duplicates()
     df_map_f.reset_index(inplace=True)
     func = lambda row: gwl.db.get_labware_wells(row['TECAN_dest_labware_type'])
     df_map_f['wells'] = df_map_f.apply(func, axis=1)
+
+    # dispense
     for i in range(df_map_f.shape[0]):
         # all records for 1 plate
         RackLabel = df_map_f.loc[i,'TECAN_dest_labware_name']
         df_tmp = df_map.loc[df_map['TECAN_dest_labware_name'] == RackLabel,]
-        # finding positions to exclude
-        all_wells = [x+1 for x in range(df_map_f.loc[i,'wells'])]
-        target_pos = df_tmp['TECAN_dest_target_position'].tolist()
-        to_exclude = set(all_wells) - set(target_pos)
-        # creating reagnet distribution command
-        rd = Fluent.Reagent_distribution()
-        if mm_one_source == True:
-            rd.SrcRackLabel = 'Mastermix'
+        # dispense single or with reagent distribution
+        if n_multi_disp == 1:
+            # creating asp-dispense
+            for ii in range(df_tmp.shape[0]):
+                # aspiration
+                asp = Fluent.Aspirate()
+                if mm_one_source == True:
+                    asp.RackLabel = 'Mastermix'
+                else:
+                    asp.RackLabel = 'Mastermix[{0:0>3}]'.format(i + 1)
+                asp.RackType = mm_labware_type
+                asp.Position = 1
+                asp.Volume = mm_volume
+                asp.LiquidClass = liq_cls
+                gwl.add(asp)
+
+                # dispensing
+                disp = Fluent.Dispense()
+                disp.RackLabel = df_tmp.loc[ii,'TECAN_dest_labware_name']
+                disp.RackType = df_tmp.loc[ii,'TECAN_dest_labware_type']
+                disp.Position = df_tmp.loc[ii,'TECAN_dest_target_position']
+                disp.Volume = mm_volume
+                disp.LiquidClass = liq_cls
+                gwl.add(disp)
+
+                # waste
+                if (ii + 1) % n_tip_reuse == 0 or ii + 1 == df_tmp.shape[0]:
+                    gwl.add(Fluent.Waste())
+        # using reagent distribution
         else:
-            rd.SrcRackLabel = 'Mastermix[{0:0>3}]'.format(i + 1)
-        rd.SrcRackType = mm_labware_type
-        rd.SrcPosStart = 1
-        rd.SrcPosEnd = 1
-        # dispense parameters
-        rd.DestRackLabel = df_map_f.loc[i,'TECAN_dest_labware_name']
-        rd.DestRackType = df_map_f.loc[i,'TECAN_dest_labware_type']
-        rd.DestPosStart = 1
-        rd.DestPosEnd = df_map_f.loc[i,'wells']
-        # other
-        rd.Volume = mm_volume
-        rd.LiquidClass = liq_cls
-        rd.NoOfDiTiReuses = n_tip_reuse
-        rd.NoOfMultiDisp = n_multi_disp
-        rd.Direction = 0
-        rd.ExcludedDestWell = ';'.join([str(x) for x in list(to_exclude)])
-        # adding to gwl object
-        gwl.add(rd)
+            # finding positions to exclude
+            all_wells = [x+1 for x in range(df_map_f.loc[i,'wells'])]
+            target_pos = df_tmp['TECAN_dest_target_position'].tolist()
+            to_exclude = set(all_wells) - set(target_pos)            
+            # creating reagnet distribution command
+            rd = Fluent.Reagent_distribution()
+            if mm_one_source == True:
+                rd.SrcRackLabel = 'Mastermix'
+            else:
+                rd.SrcRackLabel = 'Mastermix[{0:0>3}]'.format(i + 1)
+            rd.SrcRackType = mm_labware_type
+            rd.SrcPosStart = 1
+            rd.SrcPosEnd = 1
+            # dispense parameters
+            rd.DestRackLabel = df_map_f.loc[i,'TECAN_dest_labware_name']
+            rd.DestRackType = df_map_f.loc[i,'TECAN_dest_labware_type']
+            rd.DestPosStart = 1
+            rd.DestPosEnd = df_map_f.loc[i,'wells']
+            # other
+            rd.Volume = mm_volume
+            rd.LiquidClass = liq_cls
+            rd.NoOfDiTiReuses = n_tip_reuse
+            rd.NoOfMultiDisp = n_multi_disp
+            rd.Direction = 0
+            rd.ExcludedDestWell = ';'.join([str(x) for x in list(to_exclude)])
+            # adding to gwl object
+            gwl.add(rd)
 
     # adding break
     gwl.add(Fluent.Break())
