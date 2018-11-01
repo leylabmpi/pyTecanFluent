@@ -167,9 +167,11 @@ class labware(object):
                 raise ValueError(msg.format(RackLabel))
             # creating table entry
             df_tips.append({'labware_name' : RackLabel,
-                       'labware_type' : RackType,
-                       'target_location' : loc,
-                       'target_position' : pos})
+                            'labware_type' : RackType,
+                            'target_location' : loc,
+                            'target_position' : pos,
+                            'target_location_prompt' : loc,
+                            'target_position_prompt' : pos})  # prompt = what is prompted for user
         # adding other labware
         df_labware = []
         adapter_cnt = {'96 well' : 0, '384 well' : 0}
@@ -182,6 +184,8 @@ class labware(object):
                 raise KeyError(msg.format(RackLabel))
             # location & position
             loc,pos = self._next(v, loc_tracker, keep_empty=True)
+            loc_prompt = loc
+            pos_prompt = pos
             if loc is None:
                 msg = 'No possible target location for labware: "{}"'
                 raise ValueError(msg.format(RackLabel))
@@ -192,7 +196,9 @@ class labware(object):
                 df_labware.append({'labware_name' : 'PCR Adapter 96 Well[{0:0>3}]'.format(adapter_cnt['96 well']),
                                    'labware_type' : 'PCR Adapter 96 Well',
                                    'target_location' : loc,
-                                   'target_position' : pos})
+                                   'target_position' : pos,
+                                   'target_location_prompt' : loc,
+                                   'target_position_prompt' : pos})
                 # editing info for plate on adapter
                 RackType = RackType.replace('PCR Adapter 96 Well and ', '')
                 loc = 'PCR96WellAdapter_CoverSite'
@@ -203,7 +209,9 @@ class labware(object):
                 df_labware.append({'labware_name' : 'PCR Adapter 384 Well[{0:0>3}]'.format(adapter_cnt['384 well']),
                                    'labware_type' : 'PCR Adapter 384 Well',
                                    'target_location' : loc,
-                                   'target_position' : pos})
+                                   'target_position' : pos,
+                                   'target_location_prompt' : loc,
+                                   'target_position_prompt' : pos})
                 # editing info for plate on adapter
                 RackType = RackType.replace('PCR Adapter 384 Well and ', '')
                 loc = 'PCR96WellAdapter_CoverSite_1'     # yes, it's correct
@@ -212,7 +220,9 @@ class labware(object):
             df_labware.append({'labware_name' : RackLabel,
                                'labware_type' : RackType,
                                'target_location' : loc,
-                               'target_position' : pos})
+                               'target_position' : pos,
+                               'target_location_prompt' : loc_prompt,
+                               'target_position_prompt' : pos_prompt})  # txt = what is prompted for user
             
         # covert to dataframe & return
         df_tips = pd.DataFrame.from_dict(df_tips)
