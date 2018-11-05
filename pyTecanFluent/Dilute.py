@@ -160,7 +160,7 @@ def main(args=None):
     
     # Writing conc. out table
     conc_file = args.prefix + '_conc.txt'
-    df_conc.round(1).to_csv(conc_file, sep='\t', index=False)
+    df_conc.round(2).to_csv(conc_file, sep='\t', index=False)
 
     # status
     Utils.file_written(gwl_file)
@@ -248,12 +248,6 @@ def check_df_conc(df_conc):
         if loc < 1:
             print(msg.format(i), file=sys.stderr)
     
-    # checking sample conc
-    msg = 'WARNING (concfile, line={}): concentration is <= 0'
-    for i,sc in enumerate(df_conc['TECAN_sample_conc']):
-        if sc <= 0.0:
-            print(msg.format(i), file=sys.stderr)
-
 def check_rack_labels(df_conc):
     """Removing '.' for rack labels (causes execution failures)
     """
@@ -262,61 +256,78 @@ def check_rack_labels(df_conc):
         df_conc[x] = [y.replace('.', '_') for y in df_conc[x].tolist()]
     return df_conc
             
-def calc_sample_volume(row, dilute_conc, min_vol, max_vol, only_dilutant):
-    """sample_volume = dilute_conc * total_volume / conc 
-    (v1 = c2*v2/c1)
-    If sample_volume > max possibl volume to use, then just use max
+def calc_final_volume(row, dilute_conc, min_vol, max_vol, min_total, max_total): 
+    """Calculating post-dlution volume.
+    row : row in pd.dataframe  (c1 = row['TECAN_sample_conc'])
+    dilute_conc: target concentration to dilute to
+    min_vol: min volume of sample to use  (min v1)
+    max_vol: max volume of sample to use  (max v1)
+    min_total: minimum total post-dilution volume (min v2)
+    max_total: maximum total post-dilution volume (max v2)
+
+    # algorithm (v2 = ?)
+    # v2 = (v1 * c1) / c2
+    ## min sample required to reach >= min_total while <= max_total
     """
-    # if conc <= 0
-    if row['TECAN_sample_conc'] <= 0:
-        if only_dilutant == True:
-            return 0         # skipping sample
+    c1 = row['TECAN_sample_conc']
+    # if can't dilute  take just sample (min_total volume)
+    if c1 <= dilute_conc:
+        msg = 'WARNING: (concfile, line{}): cannot dilute due to low conc.'
+        print(msg.format(row.name + 1), file=sys.stderr)
+        row['TECAN_total_volume'] = min_total
+        row['TECAN_sample_volume'] = min_total
+        row['TECAN_final_conc'] = c1
+        return row
+    # stepping from min to max possible sample volumes 
+    v2_all = []
+    c2_all = []
+    for v1 in np.linspace(min_vol, max_vol, (max_vol - min_vol) * 10):
+        v1 = round(v1, 2)
+        v2 = round((v1 * c1) / dilute_conc, 2)
+        if v2 == 0:
+            c2 = 0
         else:
-            return max_vol   # using max volume
-    # calc volume to use
-    x = dilute_conc * row['TECAN_total_volume'] / row['TECAN_sample_conc']
-    # ceiling
-    if x > max_vol:
-        x = max_vol
-    # floor
-    if x < min_vol:
-        x = min_vol
-    return x
+            c2 = round((v1 * c1) / v2, 2)
+        if v2 >= min_total and v2 <= max_total:
+            row['TECAN_total_volume'] = v2
+            row['TECAN_sample_volume'] = v1
+            row['TECAN_final_conc'] = c2
+            return row
+        else:
+            v2_all.append(v2)
+            c2_all.append(c2)
+    # if no volumes work, then use volume with closest to conc
+    ## Note: must be >= min_total
+    min_delta_c = [abs(dilute_conc - c2) for c2 in c2_all]
+    c2 = c2_all[min_delta_c.index(min(min_delta_c))]
+    v2 = v2_all[min_delta_c.index(min(min_delta_c))]
+    v2 = v2 if v2 >= min_total else min_total
+    v2 = round(v2, 2)
+    c2 = round((v1 * c1) / v2, 2)
+    if c2 != dilute_conc:
+        msg = 'WARNING: (concfile, line{}): final concentration is {}'
+        print(msg.format(row.name + 1, c2), file=sys.stderr)
+    row['TECAN_total_volume'] = v2
+    row['TECAN_sample_volume'] = v1
+    row['TECAN_final_conc'] = c2
+    return row
 
 def calc_dilutant_volume(row):
     """ dilutatant volume = total_volume - sample_volume
     """
-    if row['TECAN_sample_volume'] <= 0:
-        return 0
-    x = row['TECAN_total_volume'] - row['TECAN_sample_volume']
+    x =  row['TECAN_total_volume'] - row['TECAN_sample_volume']
     if x < 0:
-        x = 0
-    return x
-
-def calc_total_volume(row, min_vol, max_vol, dilute_conc):
-    """Calculating post-dlution volume
-    """
-    x = row['TECAN_sample_conc'] * min_vol / dilute_conc
-    if x > max_vol:
-        x = max_vol
-    return x    
-
-def calc_final_conc(row):
-    """Calculating final conc (post-dilution sample conc.
-    """
-    if row['TECAN_sample_volume'] <= 0:
-        return 0
-    x = row['TECAN_sample_conc'] * row['TECAN_sample_volume']
-    x = x / row['TECAN_total_volume']
+        msg = 'ERROR: (concfile, line{}): dilutant volume = {}'
+        raise ValueError(msg.format(row.name + 1, x))
     return x
     
 def dilution_volumes(df_conc, dilute_conc, min_vol, max_vol, 
                      min_total, dest_type, only_dilutant=False):
-    """Setting the amoutn of sample to aliquot for dilution
+    """Setting the amount of sample to aliquot for dilution
     df_conc: pd.dataframe
     dilute_conc: concentration to dilute to 
     min_vol: min volume of sample to use
-    max_vol: max total volume to use
+    max_vol: max volume of sample to use
     min_total: minimum total post-dilution volume
     dest_type: labware type for destination labware
     """
@@ -329,42 +340,23 @@ def dilution_volumes(df_conc, dilute_conc, min_vol, max_vol,
     f = lambda row: 0 if row['TECAN_sample_conc'] < 0 else row['TECAN_sample_conc']
     df_conc['TECAN_sample_conc'] = df_conc.apply(f, axis=1)
     
-    # range of dilutions
-    samp_vol_range = max_vol - min_vol
-    target_total_vol = round(samp_vol_range / 2 + min_vol)
-    
-    # final volume
-    f = functools.partial(calc_total_volume, dilute_conc=dilute_conc,
-                          min_vol=min_vol, max_vol=max_vol)
-    df_conc['TECAN_total_volume'] = df_conc.apply(f, axis=1)
+    # calc final volume
+    f = functools.partial(calc_final_volume,
+                          dilute_conc=dilute_conc,
+                          min_vol=min_vol,
+                          max_vol=max_vol,
+                          min_total=min_total,
+                          max_total=max_well_vol)
+    df_conc = df_conc.apply(f, axis=1)
     if max(df_conc['TECAN_total_volume']) > max_well_vol:
         msg = 'ERROR: post-dilution volume exceeds max possible well volume.'
         msg += ' Lower --minvolume or chane destination labware type.'
         raise ValueError(msg)
-    
-    # raising total post-dilute volume if too low of dilute volume (if small dilution factor)
-    df_conc.loc[df_conc.TECAN_total_volume < min_total, 'TECAN_total_volume'] = min_total
-    # setting volumes
-    f = functools.partial(calc_sample_volume, dilute_conc=dilute_conc,
-                          min_vol=min_vol, max_vol=max_vol, only_dilutant=only_dilutant)
-    df_conc['TECAN_sample_volume'] = df_conc.apply(f, axis=1)
-    # dilutatant volume = total_volume - sample_volume
-    df_conc['TECAN_dilutant_volume'] = df_conc.apply(calc_dilutant_volume, axis=1)
-    # updating total volume
-    f = lambda row: row['TECAN_sample_volume'] + row['TECAN_dilutant_volume']
-    df_conc['TECAN_total_volume'] = df_conc.apply(f, axis=1)
-    # calculating final conc
-    df_conc['TECAN_final_conc'] = df_conc.apply(calc_final_conc, axis=1)
-    ## target conc hit?
-    msg_low = 'WARNING: (concfile, line{}): final concentration is low: {}'
-    msg_high = 'WARNING: (concfile, line{}): final concentration is high: {}'
-    for i,fc in enumerate(df_conc['TECAN_final_conc']):
-        fc = round(fc, 1)
-        if fc < round(dilute_conc, 1):            
-            print(msg_low.format(i, fc), file=sys.stderr)
-        if fc > round(dilute_conc, 1):
-            print(msg_high.format(i, fc), file=sys.stderr)
-
+        
+    # calc dilutant volume (final_volume - sample_volume)
+    f = functools.partial(calc_dilutant_volume)
+    df_conc['TECAN_dilutant_volume'] = df_conc.apply(f, axis=1)
+        
     # return
     return df_conc
         
@@ -395,6 +387,20 @@ def add_dest(df_conc, dest_name, dest_type,  dest_wells=96):
     positions = [next(positions) for x in range(df_conc.shape[0])]
     df_conc['TECAN_dest_target_position'] = positions
 
+    # reorder columns
+    cols = ['TECAN_labware_name',
+            'TECAN_labware_type',
+            'TECAN_target_position',
+            'TECAN_dest_labware_name',
+            'TECAN_dest_labware_type',
+            'TECAN_dest_target_position',
+            'TECAN_sample_conc',
+            'TECAN_sample_volume',
+            'TECAN_dilutant_volume',
+            'TECAN_total_volume',
+            'TECAN_final_conc']
+    df_conc = df_conc[cols]
+    
     # return
     return df_conc
 
