@@ -280,6 +280,9 @@ def sample2df(samplefile, sample_col, include_col,
 
     # selecting relevant columns
     df = df.loc[:,req_cols]
+
+    # making sure labware names are "TECAN worklist friendly"
+    Utils.df_rm_special_chars(df, labware_name_col)
     
     # return
     return df

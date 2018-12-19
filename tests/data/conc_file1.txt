@@ -1,7 +1,7 @@
 TECAN_labware_name	TECAN_labware_type	TECAN_target_position	TECAN_sample_conc
-Sample plate 1	96 Well Eppendorf TwinTec PCR	1	10.1
-Sample plate 1	96 Well Eppendorf TwinTec PCR	2	6.3
-Sample plate 1	96 Well Eppendorf TwinTec PCR	3	21
-Sample plate 1	96 Well Eppendorf TwinTec PCR	4	2.2
-Sample plate 1	96 Well Eppendorf TwinTec PCR	5	3.1
-Sample plate 1	96 Well Eppendorf TwinTec PCR	6	8.5
+Sample plate #!@/.	96 Well Eppendorf TwinTec PCR	1	10.1
+Sample plate #!@/.	96 Well Eppendorf TwinTec PCR	2	6.3
+Sample plate #!@/.	96 Well Eppendorf TwinTec PCR	3	21
+Sample plate #!@/.	96 Well Eppendorf TwinTec PCR	4	2.2
+Sample plate #!@/.	96 Well Eppendorf TwinTec PCR	5	3.1
+Sample plate #!@/.	96 Well Eppendorf TwinTec PCR	6	8.5

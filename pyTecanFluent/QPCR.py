@@ -111,7 +111,6 @@ def main(args=None):
     # Load input assay setup table
     df_setup = load_setup(args.setup, 
                           file_format=args.format)
-    check_df_setup(df_setup)
 
     # gwl object init 
     TipTypes = ['FCA, 1000ul SBS', 'FCA, 200ul SBS',
@@ -205,6 +204,12 @@ def load_setup(input_file, file_format=None, header=0):
     # caps-invariant column IDs
     df.columns = [x.lower() for x in df.columns]
 
+    # checking format of table
+    check_df_setup(df)
+    
+    # making sure labware names are "TECAN worklist friendly"
+    Utils.df_rm_special_chars(df, 'sample labware name')
+    
     # assert & return
     assert df.shape[1] > 1, 'Input file is only 1 column; wrong delimiter used?'    
     return df

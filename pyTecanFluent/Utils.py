@@ -3,12 +3,18 @@ from __future__ import print_function
 # import
 import os
 import sys
+import re
 import logging
 from functools import partial
 import numpy as np
 import pandas as pd
 
 # functions
+def df_rm_special_chars(df, colname):
+    """Remove all special characters from column in pandas data.frame (in-place edit)
+    """
+    df[colname] = df[colname].apply(lambda x: re.sub('[^A-Za-z0-9_ ]', '_', x))
+
 def file_written(file_name):
     """Status on writing file
     file_name: string

@@ -136,7 +136,6 @@ def main(args=None):
     
     # Import
     df_map = map2df(args.mapfile, row_select=args.rows)
-    check_df_map(df_map, args)
     
     # Making destination dataframe
     df_map = add_dest(df_map,
@@ -312,7 +311,7 @@ def map2df(mapfile, row_select=None):
     # selecting particular rows
     if row_select is not None:
         df = df.iloc[row_select]
-
+        
     # return
     return df
 
@@ -344,6 +343,10 @@ def check_df_map(df_map, args):
     if any(dups):
         msg = 'WARNING: Duplicated barcodes in the mapping file!'
         print(msg, file=sys.stderr)
+
+    # making sure labware names are "TECAN worklist friendly"
+    Utils.df_rm_special_chars(df_map, 'TECAN_sample_labware_name')
+
         
 def check_rack_labels(df_map):
     """Removing '.' for rack labels (causes execution failures)

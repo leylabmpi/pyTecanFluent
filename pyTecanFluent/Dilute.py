@@ -216,6 +216,9 @@ def conc2df(concfile, row_select=None, file_format=None, header=True):
     # checking file format
     check_df_conc(df)
 
+    # making sure labware names are "TECAN worklist friendly"
+    Utils.df_rm_special_chars(df, 'TECAN_labware_name')
+
     # return
     return df
 
