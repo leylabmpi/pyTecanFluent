@@ -103,9 +103,9 @@ def parse_args(test_args=None, subparsers=None):
     
     # Liquid classes
     liq = parser.add_argument_group('Liquid classes')
-    liq.add_argument('--tag-mm-liq', type=str, default='MasterMix Free Multi Bottom Disp',
+    liq.add_argument('--tag-mm-liq', type=str, default='MasterMix Free Single Wall Disp',
                       help='Tagmentation: Mastermix liquid class (default: %(default)s)')
-    liq.add_argument('--pcr-mm-liq', type=str, default='MasterMix Free Multi Rapid Disp',
+    liq.add_argument('--pcr-mm-liq', type=str, default='MasterMix Free Single',
                       help='PCR: Mastermix liquid class (default: %(default)s)')
     liq.add_argument('--sample-liq', type=str, default='Water Free Single Wall Disp',
                       help='Sample liquid class (default: %(default)s)')
@@ -113,12 +113,8 @@ def parse_args(test_args=None, subparsers=None):
                      help='Primer liquid class (default: %(default)s)')
     liq.add_argument('--tag-n-tip-reuse', type=int, default=4,
                      help='Tagmentation: number of tip reuses for multi-dispense (default: %(default)s)')
-    liq.add_argument('--tag-n-multi-disp', type=int, default=6,
-                     help='Tagmentation: number of multi-dispenses per tip (default: %(default)s)')
     liq.add_argument('--pcr-n-tip-reuse', type=int, default=4,
                      help='PCR: number of tip reuses for multi-dispense (default: %(default)s)')
-    liq.add_argument('--pcr-n-multi-disp', type=int, default=6,
-                     help='PCR: number of multi-dispenses per tip (default: %(default)s)')
 
     
     # running test args
@@ -172,8 +168,7 @@ def main_tagmentation(df_map, args):
                   mm_labware_type=args.tag_mm_labware_type,                  
                   mm_volume=args.tag_mm_volume, 
                   liq_cls=args.tag_mm_liq,
-                  n_tip_reuse=args.tag_n_tip_reuse,
-                  n_multi_disp=args.tag_n_multi_disp)
+                  n_tip_reuse=args.tag_n_tip_reuse)
     ## samples
     pip_samples(df_map, gwl, sample_volume=args.sample_volume, liq_cls=args.sample_liq)
 
@@ -225,8 +220,7 @@ def main_PCR(df_map, args):
                   mm_labware_type=args.pcr_mm_labware_type,
                   mm_volume=args.pcr_mm_volume, 
                   liq_cls=args.pcr_mm_liq,
-                  n_tip_reuse=args.pcr_n_tip_reuse,
-                  n_multi_disp=args.pcr_n_multi_disp)
+                  n_tip_reuse=args.pcr_n_tip_reuse)
 
     ## primers
     if args.primer_volume > 0:
@@ -429,8 +423,8 @@ def reorder_384well(df, reorder_col):
     return df
 
 def pip_mastermix(df_map, gwl,  mm_labware_type='25ml_1 waste',
-                  mm_volume=13.1, n_tip_reuse=2, n_multi_disp=6,
-                  liq_cls='MasterMix Free Multi'):
+                  mm_volume=13.1, n_tip_reuse=6,
+                  liq_cls='MasterMix Free Single'):
     """Writing worklist commands for aliquoting mastermix.
     Using 1-asp-multi-disp with 200 ul tips.
     Method:
@@ -440,52 +434,36 @@ def pip_mastermix(df_map, gwl,  mm_labware_type='25ml_1 waste',
       * if n_disp_left < n_disp: n_disp = n_disp_left
       * calc total volume: n_disp * mm_volume
     """
-    # separate regent dispense per designation plate (new source tube)
-    cols = ['TECAN_dest_labware_name', 'TECAN_dest_labware_type']
-    df_map_f = df_map.loc[:,cols].drop_duplicates()
-    df_map_f.reset_index(inplace=True)
-    func = lambda row: gwl.db.get_labware_wells(row['TECAN_dest_labware_type'])
-    df_map_f['wells'] = df_map_f.apply(func, axis=1)
-    # check that total mastermix volume can fit in tube
-    mm_lab_max_volume = gwl.db.get_labware_max_volume(mm_labware_type)
-    if mm_volume * df_map_f.shape[0] > mm_lab_max_volume:
-        msg = 'Mastermix volume is > max volume for labware: "{}".'
-        msg += ' Use larger labware or split the samples into multiple runs'
-        print(msg.format(mm_labware))
-        sys.exit(1)
-    # create gwl commands
-    for i in range(df_map_f.shape[0]):
-        # all records for 1 plate
-        RackLabel = df_map_f.loc[i,'TECAN_dest_labware_name']
-        df_tmp = df_map.loc[df_map['TECAN_dest_labware_name'] == RackLabel,]
-        # finding positions to exclude
-        all_wells = [x+1 for x in range(df_map_f.loc[i,'wells'])]
-        target_pos = df_tmp['TECAN_dest_target_position'].tolist()
-        to_exclude = set(all_wells) - set(target_pos)
-        # creating reagent distribution command
-        rd = Fluent.Reagent_distribution()
-        rd.SrcRackLabel = 'Mastermix[{0:0>3}]'.format(i + 1)
-        rd.SrcRackType = mm_labware_type
-        rd.SrcPosStart = 1
-        rd.SrcPosEnd = 1
-        # dispense parameters
-        rd.DestRackLabel = df_map_f.loc[i,'TECAN_dest_labware_name']
-        rd.DestRackType = df_map_f.loc[i,'TECAN_dest_labware_type']
-        rd.DestPosStart = 1
-        rd.DestPosEnd = df_map_f.loc[i,'wells']
-        # other
-        rd.Volume = mm_volume
-        rd.LiquidClass = liq_cls
-        rd.NoOfDiTiReuses = n_tip_reuse
-        rd.NoOfMultiDisp = n_multi_disp
-        rd.Direction = 0
-        rd.ExcludedDestWell = ';'.join([str(x) for x in list(to_exclude)])
-        # adding to gwl object
-        gwl.add(rd)
+    gwl.add(Fluent.Comment('MasterMix'))
+    # for each Sample-PCR, write out asp/dispense commands
+    for i in range(df_map.shape[0]):
+        # aspiration
+        asp = Fluent.Aspirate()
+        asp.RackLabel = 'Mastermix[{0:0>3}]'.format(1)
+        asp.RackType = mm_labware_type
+        asp.Position = 1
+        asp.Volume = mm_volume
+        asp.LiquidClass = liq_cls
+        gwl.add(asp)
 
+        # dispensing
+        disp = Fluent.Dispense()
+        disp.RackLabel = df_map.loc[i,'TECAN_dest_labware_name']
+        disp.RackType = df_map.loc[i,'TECAN_dest_labware_type']
+        disp.Position = df_map.loc[i,'TECAN_dest_target_position']
+        disp.Volume = mm_volume
+        disp.LiquidClass = liq_cls
+        gwl.add(disp)
+        # tip flush or waste
+        if ((i+1) / 8.0) % n_tip_reuse == 0:
+            gwl.add(Fluent.Waste())
+        else:
+            gwl.add(Fluent.Flush())
+            
     # adding break
     gwl.add(Fluent.Break())
-        
+
+
 def pip_primer(i, gwl, df_map, primer_labware_name, 
                primer_labware_type, primer_target_position,
                primer_volume, liq_cls):
