@@ -131,7 +131,7 @@ def main(args=None):
     check_args(args)
     
     # Import
-    df_map = map2df(args.mapfile, row_select=args.rows)
+    df_map = map2df(args.mapfile, args, row_select=args.rows)
     
     # Making destination dataframe
     df_map = add_dest(df_map,
@@ -260,6 +260,8 @@ def main_PCR(df_map, args):
     Utils.file_written(lw_file)
     Utils.file_written(report_file)
     Utils.file_written(df_file)
+    for F in biorad_files:
+        Utils.file_written(F)        
        
 def check_args(args):
     """Checking user input
@@ -286,7 +288,7 @@ def check_args(args):
         args.primer_volume = 0
     
         
-def map2df(mapfile, row_select=None):
+def map2df(mapfile, args, row_select=None):
     """Loading a mapping file as a pandas dataframe
     mapfile: string; mapping file path
     row_select: select particular rows of table in map file
@@ -305,6 +307,9 @@ def map2df(mapfile, row_select=None):
     # selecting particular rows
     if row_select is not None:
         df = df.iloc[row_select]
+
+    # checking format
+    df = check_df_map(df, args)
         
     # return
     return df
@@ -322,24 +327,45 @@ def check_df_map(df_map, args):
     """
     # checking columns
     ## universal
+    to_rename = {}
+    if 'TECAN_labware_name' in df_map.columns.values and 'TECAN_sample_labware_name' not in df_map.columns.values:
+        to_rename['TECAN_labware_name'] = 'TECAN_sample_labware_name'
+    if 'TECAN_labware_type' in df_map.columns.values and 'TECAN_sample_labware_type' not in df_map.columns.values:
+        to_rename['TECAN_labware_type'] = 'TECAN_sample_labware_type'
+    if 'TECAN_target_position' in df_map.columns.values and 'TECAN_sample_target_position' not in df_map.columns.values:
+        to_rename['TECAN_target_position'] = 'TECAN_sample_target_position'
+    df_map.rename(columns=to_rename, inplace=True)    
     req_cols = ['TECAN_sample_labware_name', 'TECAN_sample_labware_type',
                 'TECAN_sample_target_position', 'TECAN_primer_labware_name',
-                'TECAN_primer_labware_type']
+                'TECAN_primer_labware_type', 'TECAN_primer_target_position']
     missing_cols(df_map, req_cols)
 
+    # adding samples column if not present
+    if '#SampleID' in df_map.columns.values:
+        df_map.rename(columns={'#SampleID':'SampleID'}, inplace=True)
+    if 'SampleID' not in df_map.columns.values:
+        df_map['SampleID'] = [x + 1 for x in range(df_map.shape[0])]
+
     # checking for unique samples
-    if any(df_map.duplicated(df_map.columns.values[0])):
-        msg = 'WARNING: Duplicated sample values in the mapping file. Did intend for this?'
+    if any(df_map.duplicated('SampleID')):
+        msg = 'WARNING: Duplicated sample values in the mapping file. Adding plate name to SampleID to make values unique'
         print(msg, file=sys.stderr)
+        df_map['SampleID'] = df_map[['SampleID', 'TECAN_sample_labware_name']].apply(lambda x: '__'.join([str(y) for y in x]), axis=1)
+        if any(df_map.duplicated('SampleID')):
+            msg = 'ERROR: Duplicated sample values in the mapping file on the same plate! Not acceptable!'
+            raise IOError(msg)
 
     # checking for unique barcode locations (NaN's filtered out)
     dups = df_map[req_cols].dropna().duplicated(keep=False)
     if any(dups):
         msg = 'WARNING: Duplicated barcodes in the mapping file!'
-        print(msg, file=sys.stderr)
+        print(msg, file=sys.stderr)        
 
     # making sure labware names are "TECAN worklist friendly"
     Utils.df_rm_special_chars(df_map, 'TECAN_sample_labware_name')
+
+    # return
+    return df_map
 
         
 def check_rack_labels(df_map):
@@ -355,11 +381,7 @@ def check_rack_labels(df_map):
 def add_dest(df_map, dest_labware, dest_type='384 Well Biorad PCR', dest_start=1):
     """Setting destination locations for samples & primers.
     Making a new dataframe with:
-      [sample, sample_rep, dest_labware, dest_location]
-    * For each sample (i):
-      * For each replicate (ii):
-        * plate = destination plate type
-        * well = i * (ii+1) + (ii+1) + start_offset
+    [dest_labware, dest_location]
     Joining to df_map
     """
     db = Fluent.db()    
@@ -370,7 +392,7 @@ def add_dest(df_map, dest_labware, dest_type='384 Well Biorad PCR', dest_start=1
     positions = db.get_labware_wells(dest_type)
 
     # init destination df
-    sample_col = df_map.columns[0]
+    sample_col = 'SampleID'
     cols = [sample_col, 
             'TECAN_dest_labware_name',
             'TECAN_dest_labware_type', 
@@ -385,11 +407,10 @@ def add_dest(df_map, dest_labware, dest_type='384 Well Biorad PCR', dest_start=1
         msg = ('WARNING: Not enough wells for the number of samples.' 
         ' Using multiple destination plates')
         print(msg, file=sys.stderr)
-        
-    
+            
     # filling destination df
     orig_dest_labware = dest_labware
-    for i,sample in enumerate(df_map.iloc[:,0]):
+    for i,sample in enumerate(df_map['SampleID']):
         # dest location
         dest_position = i + dest_start
         dest_position = positions if dest_position % positions == 0 else dest_position % positions 
@@ -403,6 +424,7 @@ def add_dest(df_map, dest_labware, dest_type='384 Well Biorad PCR', dest_start=1
         df_dest.iloc[i] = [sample, dest_labware, dest_type, dest_position]
 
     # df join (map + destination)
+    assert df_map.shape[0] == df_dest.shape[0], 'df_map and df_dest are different lengths' 
     df_j = pd.merge(df_map, df_dest, on=sample_col, how='inner')
     assert df_j.shape[0] == df_dest.shape[0], 'map-dest DF join error'
     assert df_j.shape[0] > 0, 'DF has len=0 after adding destinations'
@@ -570,7 +592,7 @@ def map2biorad(df_map, positions):
       Column = numeric
     """
     df_biorad = df_map.copy()
-    df_biorad = df_biorad[['#SampleID', 'TECAN_dest_target_position']]
+    df_biorad = df_biorad[['SampleID', 'TECAN_dest_target_position']]
     df_biorad.columns = ['*Sample Name', 'TECAN_dest_target_position']
     lw_utils = Labware.utils()
     f = functools.partial(lw_utils.position2well, wells = positions)
