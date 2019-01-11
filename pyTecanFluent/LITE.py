@@ -162,15 +162,26 @@ def main_tagmentation(df_map, args):
                                    labware_name_col='TECAN_dest_labware_name',
                                    labware_type_col='TECAN_dest_labware_type',
                                    position_col='TECAN_dest_target_position')
-        
-    ## mastermix
-    pip_mastermix(df_map, gwl,
-                  mm_labware_type=args.tag_mm_labware_type,                  
-                  mm_volume=args.tag_mm_volume, 
-                  liq_cls=args.tag_mm_liq,
-                  n_tip_reuse=args.tag_n_tip_reuse)
-    ## samples
-    pip_samples(df_map, gwl, sample_volume=args.sample_volume, liq_cls=args.sample_liq)
+
+    # dispensing reagents (greater volume first)
+    if args.tag_mm_volume >= args.sample_volume:
+        ## mastermix
+        pip_mastermix(df_map, gwl,
+                      mm_labware_type=args.tag_mm_labware_type,
+                      mm_volume=args.tag_mm_volume, 
+                      liq_cls=args.tag_mm_liq,
+                      n_tip_reuse=args.tag_n_tip_reuse)
+        ## samples
+        pip_samples(df_map, gwl, sample_volume=args.sample_volume, liq_cls=args.sample_liq)
+    else:
+        ## samples
+        pip_samples(df_map, gwl, sample_volume=args.sample_volume, liq_cls=args.sample_liq)
+        ## mastermix
+        pip_mastermix(df_map, gwl,
+                      mm_labware_type=args.tag_mm_labware_type,
+                      mm_volume=args.tag_mm_volume, 
+                      liq_cls=args.tag_mm_liq,
+                      n_tip_reuse=args.tag_n_tip_reuse)
 
     ## writing out worklist (gwl) file
     gwl_file = args.prefix + '_tag.gwl'
