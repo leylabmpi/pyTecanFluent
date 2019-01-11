@@ -141,7 +141,7 @@ def main(args=None):
     df_map = check_rack_labels(df_map)
     
     # tagmentation assay setup
-    main_tagmentation(df_map, args)
+    df_map = main_tagmentation(df_map, args)
     
     # PCR assay setup
     main_PCR(df_map, args)
@@ -210,7 +210,10 @@ def main_tagmentation(df_map, args):
     Utils.file_written(gwl_file)
     Utils.file_written(lw_file)
     Utils.file_written(report_file)
-    Utils.file_written(df_file)    
+    Utils.file_written(df_file)
+
+    # returning modified df_map
+    return df_map
 
 def main_PCR(df_map, args):
     """PCR step of the LITE method
@@ -219,21 +222,21 @@ def main_PCR(df_map, args):
     TipTypes = ['FCA, 1000ul SBS', 'FCA, 200ul SBS',
                 'FCA, 50ul SBS', 'FCA, 10ul SBS']     
     gwl = Fluent.gwl(TipTypes)
-
+    
     # Reordering dest if plate type is 384-well
     df_map = Utils.reorder_384well(df_map, gwl,
                                    labware_name_col='TECAN_dest_labware_name',
                                    labware_type_col='TECAN_dest_labware_type',
                                    position_col='TECAN_dest_target_position')
-        
-    ## mastermix
+
+    ## mastermix into tagmentation dest plate
     pip_mastermix(df_map, gwl,
                   mm_labware_type=args.pcr_mm_labware_type,
                   mm_volume=args.pcr_mm_volume, 
                   liq_cls=args.pcr_mm_liq,
                   n_tip_reuse=args.pcr_n_tip_reuse)
 
-    ## primers
+    ## primers into tagmentation dest plate
     if args.primer_volume > 0:
         pip_primers(df_map, gwl,
                     prm_volume=args.primer_volume,
@@ -489,9 +492,9 @@ def pip_mastermix(df_map, gwl,  mm_labware_type='25ml_1 waste',
         gwl.add(disp)
         # tip flush or waste
         if i > 7 and (i + 1) % (8 * n_tip_reuse) < 9:
-            gwl.add(Fluent.Waste())
-        else:
             gwl.add(Fluent.Flush())
+        else:
+            gwl.add(Fluent.Waste())
             
     # adding break
     gwl.add(Fluent.Break())
