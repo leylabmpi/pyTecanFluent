@@ -477,14 +477,13 @@ def pip_mastermix(df_map, gwl,  mm_labware_type='25ml_1 waste',
         disp.LiquidClass = liq_cls
         gwl.add(disp)
         # tip flush or waste
-        if ((i+1) / 8.0) % n_tip_reuse == 0:
+        if i > 7 and (i + 1) % (8 * n_tip_reuse) < 9:
             gwl.add(Fluent.Waste())
         else:
             gwl.add(Fluent.Flush())
             
     # adding break
     gwl.add(Fluent.Break())
-
 
 def pip_primer(i, gwl, df_map, primer_labware_name, 
                primer_labware_type, primer_target_position,
