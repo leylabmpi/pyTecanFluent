@@ -470,6 +470,9 @@ def pip_mastermix(df_map, gwl,  mm_labware_type='25ml_1 waste',
       * if n_disp_left < n_disp: n_disp = n_disp_left
       * calc total volume: n_disp * mm_volume
     """
+    if mm_volume <= 0:
+        return None
+    
     gwl.add(Fluent.Comment('MasterMix'))
     # for each Sample-PCR, write out asp/dispense commands
     for i in range(df_map.shape[0]):
@@ -530,6 +533,8 @@ def pip_primers(df_map, gwl, prm_volume=0, liq_cls='Water Free Single'):
     """
     gwl.add(Fluent.Comment('Primers'))    
     for i in range(df_map.shape[0]):
+        if prm_volume <= 0:
+            continue
         pip_primer(i, gwl, df_map,
                    'TECAN_primer_labware_name', 
                    'TECAN_primer_labware_type',
@@ -545,6 +550,9 @@ def pip_samples(df_map, gwl, sample_volume, liq_cls='Water Free Single'):
     gwl.add(Fluent.Comment('Samples'))
     # for each Sample-PCR, write out asp/dispense commands
     for i in range(df_map.shape[0]):
+        if sample_volume <= 0:
+            continue
+        
         # aspiration
         asp = Fluent.Aspirate()
         asp.RackLabel = df_map.loc[i,'TECAN_sample_labware_name']
