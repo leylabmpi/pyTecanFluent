@@ -334,6 +334,15 @@ def missing_cols(df, req_cols):
         if req_col not in df.columns.values:
             raise ValueError(msg.format(req_col))    
 
+def filter_nan_cols(df, col):
+    """Filtering nan columns if present
+    """
+    if df[col].isnull().values.any():
+        msg = 'WARNING: nan values found in column: "{}". Filtering these nan rows\n'
+        sys.stderr.write(msg.format(col))
+        
+    return df.dropna(subset=[col])
+    
 def check_df_map(df_map, args):
     """Assertions of df_map object formatting
     * Assumes `sample` field = 1st column
@@ -360,6 +369,10 @@ def check_df_map(df_map, args):
     if 'SampleID' not in df_map.columns.values:
         df_map['SampleID'] = [x + 1 for x in range(df_map.shape[0])]
 
+    # filtering nan columns if present
+    for x in req_cols:
+        df_map = filter_nan_cols(df_map, x)
+        
     # checking for unique samples
     if any(df_map.duplicated('SampleID')):
         msg = 'WARNING: Duplicated sample values in the mapping file. Adding plate name to SampleID to make values unique'
