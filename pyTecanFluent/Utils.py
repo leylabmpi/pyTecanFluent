@@ -13,8 +13,11 @@ import pandas as pd
 def df_rm_special_chars(df, colname):
     """Remove all special characters from column in pandas data.frame (in-place edit)
     """
-    df[colname] = df[colname].apply(lambda x: re.sub('[^A-Za-z0-9_ ]', '_', x))
-
+    try:
+        df[colname] = df[colname].astype(str).apply(lambda x: re.sub(r'[^A-Za-z0-9_ ]', '_', x))
+    except TypeError:
+        raise TypeError('Cannot remove special characters in column: {}'.format(colname))
+    
 def file_written(file_name):
     """Status on writing file
     file_name: string
