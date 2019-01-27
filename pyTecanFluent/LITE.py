@@ -111,9 +111,9 @@ def parse_args(test_args=None, subparsers=None):
                       help='Sample liquid class (default: %(default)s)')
     liq.add_argument('--primer-liq', type=str, default='Water Free Single Wall Disp',
                      help='Primer liquid class (default: %(default)s)')
-    liq.add_argument('--tag-n-tip-reuse', type=int, default=4,
+    liq.add_argument('--tag-n-tip-reuse', type=int, default=1,
                      help='Tagmentation: number of tip reuses for multi-dispense (default: %(default)s)')
-    liq.add_argument('--pcr-n-tip-reuse', type=int, default=4,
+    liq.add_argument('--pcr-n-tip-reuse', type=int, default=1,
                      help='PCR: number of tip reuses for multi-dispense (default: %(default)s)')
 
     

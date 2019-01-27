@@ -72,14 +72,14 @@ def parse_args(test_args=None, subparsers=None):
                          choices=[None, 'excel', 'csv', 'tsv'],
                          help='File format (excel, csv, or tsv). If not provided, the format is determined from the file extension (default: %(default)s)') 
 
-    ## source labware 
+    ## Source labware 
     src = parser.add_argument_group('Source labware')
     src.add_argument('--mm-type', type=str, default='1.5ml Eppendorf waste',
                       help='Mastermix labware type (default: %(default)s)')
     src.add_argument('--water-type', type=str, default='100ml_1 waste',
                       help='Water labware type (default: %(default)s)')
     
-    ## destination labware
+    ## Destination labware
     dest = parser.add_argument_group('Destination labware')
     dest.add_argument('--dest', type=str, default='Destination plate',
                       help='Destination plate labware name (default: %(default)s)')
@@ -95,7 +95,7 @@ def parse_args(test_args=None, subparsers=None):
     liq.add_argument('--water-liq', type=str, default='Water Free Single Wall Disp',
                       help='Water liquid class (default: %(default)s)')
 
-    # parse & return
+    # Parse & return
     if test_args:
         args = parser.parse_args(test_args)
         return args
@@ -135,11 +135,9 @@ def main(args=None):
         raise ValueError(msg.format(args.desttype))
     
     # Adding commands to gwl object
-    pip_mastermix(df_setup, gwl=gwl, 
-                  src_labware_type=args.mm_type,
-                  multi_disp=6,
-                  liq_cls=args.mm_liq)
-
+    pip_mastermixes(df_setup, gwl=gwl, 
+                    src_labware_type=args.mm_type,
+                    liq_cls=args.mm_liq)
     
     ## Samples
     pip_samples(df_setup, gwl=gwl,
@@ -306,43 +304,33 @@ def reorder_384well(df, reorder_col):
     df.index = range(df.shape[0])
     return df
 
-def pip_mastermix(df_setup, gwl, src_labware_type, multi_disp=6,
+def pip_mastermixes(df_setup, gwl, src_labware_type,
                   liq_cls='Mastermix Free Single'):
     """Writing worklist commands for aliquoting mastermix.
     Re-using tips
     """
     # split by mastermix names (different master mixes)
     MM_names = np.unique(df_setup['mm name'])
-
-    gwl.add(Fluent.Comment('MasterMix'))    
+    
+    gwl.add(Fluent.Comment('Mastermixes'))
     for i,MM_name in enumerate(MM_names):
-        # partitioning to just one mastermix
+        # partitioning to just focal mastermix
         df = df_setup.loc[df_setup['mm name'] == MM_name]        
         df.reset_index(inplace=True)
 
         # all same volumes for mastermix?
-        x = df.drop_duplicates(['mm name', 'mm volume']).shape[0]
-        y = df.drop_duplicates(['mm name']).shape[0]
-        if x == y:
-            # multi-disp same volume per mastermix
-            liq_cls = liq_cls.replace('Single', 'Multi')
-            pip_mastermix_multi_disp(df, gwl=gwl,
-                                     MM_name=MM_name,
-                                     src_labware_type=src_labware_type,
-                                     multi_disp=6,
-                                     liq_cls=liq_cls)
-        else:
-            pip_mastermix_reuse_tips(df, gwl=gwl,
-                                     MM_name=MM_name,                                     
-                                     src_labware_type=src_labware_type,
-                                     liq_cls=liq_cls)
+        pip_mastermix(df, gwl=gwl,
+                      MM_name=MM_name,                                     
+                      src_labware_type=src_labware_type,
+                      liq_cls=liq_cls)
 
 
-def pip_mastermix_reuse_tips(df, gwl, MM_name, src_labware_type,
-                             liq_cls='Mastermix Free Single'):  
-    """re-use tips (flush) for varying volumes
+def pip_mastermix(df, gwl, MM_name, src_labware_type,
+                  liq_cls='Mastermix Free Single'):  
+    """Single tip-use dispense of mastermix
     """                
     # iterating mastermix records in setup table (single mastermix)
+    gwl.add(Fluent.Comment('Mastermix: {}'.format(MM_name)))
     for i in range(df.shape[0]):
         # aspiration
         asp = Fluent.Aspirate()
@@ -363,10 +351,9 @@ def pip_mastermix_reuse_tips(df, gwl, MM_name, src_labware_type,
         gwl.add(disp)
         
         # flush
-        gwl.add(Fluent.Flush())
+        gwl.add(Fluent.Waste())
         
-    # waste
-    gwl.add(Fluent.Waste())
+    # finish section
     gwl.add(Fluent.Break())
 
 def pip_mastermix_multi_disp(df, gwl, MM_name, src_labware_type, multi_disp=6,
