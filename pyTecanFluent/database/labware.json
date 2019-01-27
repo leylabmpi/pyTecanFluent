@@ -71,6 +71,18 @@
         "wells" : 1,
         "max_volume" : 25000
     },
+    "Eppi_5ml_2X_tube_rack" : {
+        "target_location" : ["Trough_100ml_Wash_1"],
+        "category" : "trough",
+        "wells" : 2,
+        "max_volume" : 4800
+    },
+    "Falcon_10ml_3X_tube_rack" : {
+        "target_location" : ["Trough_100ml_Wash_1"],
+        "category" : "trough",
+        "wells" : 3,
+        "max_volume" : 9800
+    },    
     "96 Well Eppendorf TwinTec PCR" : {
         "target_location" : ["Nest61mm_Pos"],
         "category" : "plate",

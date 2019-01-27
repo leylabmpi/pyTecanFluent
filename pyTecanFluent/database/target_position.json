@@ -14,5 +14,9 @@
     "Trough_100ml_3" : {
         "position_count" : 10,
         "keep_empty" : []
+    },
+    "Trough_100ml_Wash_1" : {
+        "position_count" : 8,
+        "keep_empty" : []
     }
 }
