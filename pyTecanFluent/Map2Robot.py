@@ -85,7 +85,8 @@ def parse_args(test_args=None, subparsers=None):
     dest.add_argument('--dest-type', type=str, default='96 Well Eppendorf TwinTec PCR',
                       choices=['96 Well Eppendorf TwinTec PCR',
                                'PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR',
-                               '384 Well Biorad PCR'],
+                               '384 Well Biorad PCR',
+                               'PCR Adapter 384 Well and 384 Well Biorad PCR'],
                       help='Destination labware type (default: %(default)s)')
     dest.add_argument('--dest-start', type=int, default=1,
                       help='Start well number on destination plate (default: %(default)s)')
