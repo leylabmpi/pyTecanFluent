@@ -2,6 +2,7 @@ from __future__ import print_function
 # import
 ## batteries
 import os
+import re
 import sys
 import argparse
 import functools
@@ -114,7 +115,7 @@ def parse_args(test_args=None, subparsers=None):
     
     # Liquid classes
     liq = parser.add_argument_group('Liquid classes')
-    liq.add_argument('--mm-liq', type=str, default='MasterMix Free Multi Wall Disp',
+    liq.add_argument('--mm-liq', type=str, default='MasterMix Free Single Wall Disp',
                       help='Mastermix liquid class (default: %(default)s)')
     liq.add_argument('--primer-liq', type=str, default='Water Free Single Wall Disp',
                       help='Primer liquid class (default: %(default)s)')
@@ -122,9 +123,9 @@ def parse_args(test_args=None, subparsers=None):
                       help='Sample liquid class (default: %(default)s)')
     liq.add_argument('--water-liq', type=str, default='Water Free Single Wall Disp',
                       help='Water liquid class (default: %(default)s)')
-    liq.add_argument('--n-tip-reuse', type=int, default=4,
+    liq.add_argument('--n-tip-reuse', type=int, default=6,
                      help='Number of tip reuses for multi-dispense (default: %(default)s)')
-    liq.add_argument('--n-multi-disp', type=int, default=6,
+    liq.add_argument('--n-multi-disp', type=int, default=1,
                      help='Number of multi-dispenses per tip (default: %(default)s)')
     
     # running test args
@@ -439,6 +440,7 @@ def pip_mastermix(df_map, gwl, mm_labware_type='25ml_1 waste',
         # dispense single or with reagent distribution
         if n_multi_disp == 1:
             # creating asp-dispense
+            liq_cls = re.sub('Multi', 'Single', liq_cls)
             for ii in range(df_tmp.shape[0]):
                 # aspiration
                 asp = Fluent.Aspirate()
