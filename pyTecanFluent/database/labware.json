@@ -142,6 +142,12 @@
         "category" : "tube",
         "wells" : 1,
         "max_volume" : 1800
+    },
+    "5ml Eppendorf waste" : {
+        "target_location" : ["eppendorf_5ml"],
+        "category" : "tube",
+        "wells" : 1,
+        "max_volume" : 4800
     }
 }
 

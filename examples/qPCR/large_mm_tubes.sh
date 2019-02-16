@@ -8,5 +8,5 @@ INFILE=$DIR'/../../tests/data/Cmin_qPCR.tsv'
 echo "Using input file:" $INFILE
 pyTecanFluent qPCR \
   --prefix /tmp/TECAN_qPCR $INFILE \
-  --mm-type "Eppi_5ml_2X_tube_rack"
+  --mm-type "5ml Eppendorf waste"
 

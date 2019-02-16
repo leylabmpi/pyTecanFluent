@@ -74,7 +74,7 @@ def parse_args(test_args=None, subparsers=None):
 
     ## Source labware 
     src = parser.add_argument_group('Source labware')
-    src.add_argument('--mm-type', type=str, default='1.5ml Eppendorf waste',
+    src.add_argument('--mm-type', type=str, default='2.0ml Eppendorf waste',
                       help='Mastermix labware type (default: %(default)s)')
     src.add_argument('--water-type', type=str, default='100ml_1 waste',
                       help='Water labware type (default: %(default)s)')
