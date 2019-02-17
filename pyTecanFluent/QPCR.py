@@ -346,8 +346,6 @@ def pip_mastermix(df_map, gwl, MM_name, src_labware_type,
                        'CHANNEL_ORDER',
                        'dest_target_position'], inplace=True)
     df.reset_index(inplace=True)
-    cols = ['TIP_BATCH', 'CHANNEL_ORDER', 'TECAN_dest_target_position']
-    #df[cols].to_csv(sys.stdout, sep='\t')
     
     # iterating mastermix records in setup table (single mastermix)
     gwl.add(Fluent.Comment('Mastermix: {}'.format(MM_name)))
@@ -373,10 +371,7 @@ def pip_mastermix(df_map, gwl, MM_name, src_labware_type,
         # waste
         if (i + 1) % n_tip_reuse == 0 or i + 1 == df.shape[0]:
             gwl.add(Fluent.Waste())
-        
-        # flush
-        #gwl.add(Fluent.Waste())
-        
+                
     # finish section
     gwl.add(Fluent.Break())
 

@@ -5,7 +5,7 @@ import os
 import sys
 import argparse
 import functools
-from itertools import product
+from itertools import product,cycle
 ## 3rd party
 import numpy as np
 import pandas as pd
@@ -111,9 +111,9 @@ def parse_args(test_args=None, subparsers=None):
                       help='Sample liquid class (default: %(default)s)')
     liq.add_argument('--primer-liq', type=str, default='Water Free Single Wall Disp',
                      help='Primer liquid class (default: %(default)s)')
-    liq.add_argument('--tag-n-tip-reuse', type=int, default=1,
+    liq.add_argument('--tag-n-tip-reuse', type=int, default=4,
                      help='Tagmentation: number of tip reuses for multi-dispense (default: %(default)s)')
-    liq.add_argument('--pcr-n-tip-reuse', type=int, default=1,
+    liq.add_argument('--pcr-n-tip-reuse', type=int, default=4,
                      help='PCR: number of tip reuses for multi-dispense (default: %(default)s)')
 
     
@@ -484,11 +484,22 @@ def pip_mastermix(df_map, gwl,  mm_labware_type='25ml_1 waste',
       * calc total volume: n_disp * mm_volume
     """
     if mm_volume <= 0:
-        return None
-    
+        return None    
     gwl.add(Fluent.Comment('MasterMix'))
+
+    # copying df
+    df = df_map.copy()
+    x = cycle(range(8))
+    df['CHANNEL_ORDER'] = [next(x) for y in range(df.shape[0])]
+    x = cycle(range(n_tip_reuse))
+    df['TIP_BATCH'] = Utils.tip_batch(df['CHANNEL_ORDER'], n_tip_reuse)
+    df.sort_values(by=['TIP_BATCH',
+                       'CHANNEL_ORDER',
+                       'TECAN_dest_target_position'], inplace=True)
+    df.reset_index(inplace=True)
+    
     # for each Sample-PCR, write out asp/dispense commands
-    for i in range(df_map.shape[0]):
+    for i in range(df.shape[0]):
         # aspiration
         asp = Fluent.Aspirate()
         asp.RackLabel = 'Mastermix[{0:0>3}]'.format(1)
@@ -500,17 +511,22 @@ def pip_mastermix(df_map, gwl,  mm_labware_type='25ml_1 waste',
 
         # dispensing
         disp = Fluent.Dispense()
-        disp.RackLabel = df_map.loc[i,'TECAN_dest_labware_name']
-        disp.RackType = df_map.loc[i,'TECAN_dest_labware_type']
-        disp.Position = df_map.loc[i,'TECAN_dest_target_position']
+        disp.RackLabel = df.loc[i,'TECAN_dest_labware_name']
+        disp.RackType = df.loc[i,'TECAN_dest_labware_type']
+        disp.Position = df.loc[i,'TECAN_dest_target_position']
         disp.Volume = mm_volume
         disp.LiquidClass = liq_cls
         gwl.add(disp)
-        # tip flush or waste
-        if i > 7 and (i + 1) % (8 * n_tip_reuse) < 9:
-            gwl.add(Fluent.Flush())
-        else:
+
+        # tip waste
+        if (i + 1) % n_tip_reuse == 0 or i + 1 == df.shape[0]:
             gwl.add(Fluent.Waste())
+
+        # tip flush or waste
+        #if i > 7 and (i + 1) % (8 * n_tip_reuse) < 9:
+        #    gwl.add(Fluent.Flush())
+        #else:
+        #    gwl.add(Fluent.Waste())
             
     # adding break
     gwl.add(Fluent.Break())

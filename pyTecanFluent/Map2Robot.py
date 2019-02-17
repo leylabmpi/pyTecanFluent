@@ -442,12 +442,10 @@ def pip_mastermix(df_map, gwl, mm_labware_type='25ml_1 waste',
         df['CHANNEL_ORDER'] = [next(x) for y in range(df.shape[0])]
         x = cycle(range(n_tip_reuse))
         df['TIP_BATCH'] = Utils.tip_batch(df['CHANNEL_ORDER'], n_tip_reuse)
-        #[next(x) for y in range(df.shape[0])]
         df.sort_values(by=['TIP_BATCH',
                            'CHANNEL_ORDER',
                            'TECAN_dest_target_position'], inplace=True)
         df.reset_index(inplace=True)
-        cols = ['TIP_BATCH', 'CHANNEL_ORDER', 'TECAN_dest_target_position']
         
     # dispense
     for i in range(df_f.shape[0]):
