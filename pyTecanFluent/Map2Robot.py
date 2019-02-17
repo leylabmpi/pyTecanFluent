@@ -6,7 +6,7 @@ import re
 import sys
 import argparse
 import functools
-from itertools import product
+from itertools import product,cycle
 ## 3rd party
 import numpy as np
 import pandas as pd
@@ -123,7 +123,7 @@ def parse_args(test_args=None, subparsers=None):
                       help='Sample liquid class (default: %(default)s)')
     liq.add_argument('--water-liq', type=str, default='Water Free Single Wall Disp',
                       help='Water liquid class (default: %(default)s)')
-    liq.add_argument('--n-tip-reuse', type=int, default=6,
+    liq.add_argument('--n-tip-reuse', type=int, default=4,
                      help='Number of tip reuses for multi-dispense (default: %(default)s)')
     liq.add_argument('--n-multi-disp', type=int, default=1,
                      help='Number of multi-dispenses per tip (default: %(default)s)')
@@ -174,6 +174,7 @@ def main(args=None):
                   n_tip_reuse=args.n_tip_reuse,
                   n_multi_disp=args.n_multi_disp,
                   mm_one_source=args.mm_one_source)
+
     ## primers
     if args.prm_in_mm == True:
         args.prm_volume = 0
@@ -411,6 +412,23 @@ def reorder_384well(df, reorder_col):
     df.index = range(df.shape[0])
     return df
 
+def _tip_batch(x, n_tip_reuse=1):
+    """Grouping asp/disp into tip-reuse batches
+    """
+    x = list(x)
+    batchID = 0
+    channel_cycles = 1
+    last_value = 0
+    y = []
+    for xx in x:
+        if xx < last_value:
+            if channel_cycles % n_tip_reuse == 0:
+                batchID += 1
+            channel_cycles += 1
+        y.append(batchID)
+        last_value = xx
+    return y
+
 def pip_mastermix(df_map, gwl, mm_labware_type='25ml_1 waste',
                   mm_volume=13.1, n_tip_reuse=6, n_multi_disp=4,
                   liq_cls='MasterMix Free Multi', mm_one_source=False):
@@ -425,18 +443,35 @@ def pip_mastermix(df_map, gwl, mm_labware_type='25ml_1 waste',
     """
     gwl.add(Fluent.Comment('MasterMix'))
 
+    # copying df
+    df = df_map.copy()
+    
     # separate regent dispense per designation plate
     cols = ['TECAN_dest_labware_name', 'TECAN_dest_labware_type']
-    df_map_f = df_map.loc[:,cols].drop_duplicates()
-    df_map_f.reset_index(inplace=True)
+    df_f = df.loc[:,cols].drop_duplicates()
+    df_f.reset_index(inplace=True)
     func = lambda row: gwl.db.get_labware_wells(row['TECAN_dest_labware_type'])
-    df_map_f['wells'] = df_map_f.apply(func, axis=1)
+    df_f['wells'] = df_f.apply(func, axis=1)
 
+    ## ordering df for proper multi-disp
+    if n_multi_disp == 1:
+        x = cycle(range(8))
+        df['CHANNEL_ORDER'] = [next(x) for y in range(df.shape[0])]
+        x = cycle(range(n_tip_reuse))
+        df['TIP_BATCH'] = _tip_batch(df['CHANNEL_ORDER'], n_tip_reuse)
+        #[next(x) for y in range(df.shape[0])]
+        df.sort_values(by=['TIP_BATCH',
+                           'CHANNEL_ORDER',
+                           'TECAN_dest_target_position'], inplace=True)
+        df.reset_index(inplace=True)
+        cols = ['TIP_BATCH', 'CHANNEL_ORDER', 'TECAN_dest_target_position']
+        df[cols].to_csv(sys.stdout, sep='\t')
+        
     # dispense
-    for i in range(df_map_f.shape[0]):
+    for i in range(df_f.shape[0]):
         # all records for 1 plate
-        RackLabel = df_map_f.loc[i,'TECAN_dest_labware_name']
-        df_tmp = df_map.loc[df_map['TECAN_dest_labware_name'] == RackLabel,]
+        RackLabel = df_f.loc[i,'TECAN_dest_labware_name']
+        df_tmp = df.loc[df['TECAN_dest_labware_name'] == RackLabel,]
         # dispense single or with reagent distribution
         if n_multi_disp == 1:
             # creating asp-dispense
@@ -462,14 +497,15 @@ def pip_mastermix(df_map, gwl, mm_labware_type='25ml_1 waste',
                 disp.Volume = mm_volume
                 disp.LiquidClass = liq_cls
                 gwl.add(disp)
-
+                
                 # waste
                 if (ii + 1) % n_tip_reuse == 0 or ii + 1 == df_tmp.shape[0]:
                     gwl.add(Fluent.Waste())
+                
         # using reagent distribution
         else:
             # finding positions to exclude
-            all_wells = [x+1 for x in range(df_map_f.loc[i,'wells'])]
+            all_wells = [x+1 for x in range(df_f.loc[i,'wells'])]
             target_pos = df_tmp['TECAN_dest_target_position'].tolist()
             to_exclude = set(all_wells) - set(target_pos)            
             # creating reagnet distribution command
@@ -482,10 +518,10 @@ def pip_mastermix(df_map, gwl, mm_labware_type='25ml_1 waste',
             rd.SrcPosStart = 1
             rd.SrcPosEnd = 1
             # dispense parameters
-            rd.DestRackLabel = df_map_f.loc[i,'TECAN_dest_labware_name']
-            rd.DestRackType = df_map_f.loc[i,'TECAN_dest_labware_type']
+            rd.DestRackLabel = df_f.loc[i,'TECAN_dest_labware_name']
+            rd.DestRackType = df_f.loc[i,'TECAN_dest_labware_type']
             rd.DestPosStart = 1
-            rd.DestPosEnd = df_map_f.loc[i,'wells']
+            rd.DestPosEnd = df_f.loc[i,'wells']
             # other
             rd.Volume = mm_volume
             rd.LiquidClass = liq_cls

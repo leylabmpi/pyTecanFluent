@@ -139,7 +139,7 @@ def reorder_384well(df, gwl, labware_name_col, labware_type_col, position_col):
                 position_col=position_col)
     df = df.groupby([labware_name_col, labware_type_col]).apply(f).reset_index(drop=True)
     return df
-        
+
     
 # main
 if __name__ == '__main__':
