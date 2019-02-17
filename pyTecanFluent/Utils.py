@@ -140,6 +140,23 @@ def reorder_384well(df, gwl, labware_name_col, labware_type_col, position_col):
     df = df.groupby([labware_name_col, labware_type_col]).apply(f).reset_index(drop=True)
     return df
 
+def tip_batch(x, n_tip_reuse=1):
+    """Grouping asp/disp into tip-reuse batches
+    """
+    x = list(x)
+    batchID = 0
+    channel_cycles = 1
+    last_value = 0
+    y = []
+    for xx in x:
+        if xx < last_value:
+            if channel_cycles % n_tip_reuse == 0:
+                batchID += 1
+            channel_cycles += 1
+        y.append(batchID)
+        last_value = xx
+    return y
+
     
 # main
 if __name__ == '__main__':

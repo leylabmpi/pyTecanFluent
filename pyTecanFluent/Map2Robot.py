@@ -124,9 +124,9 @@ def parse_args(test_args=None, subparsers=None):
     liq.add_argument('--water-liq', type=str, default='Water Free Single Wall Disp',
                       help='Water liquid class (default: %(default)s)')
     liq.add_argument('--n-tip-reuse', type=int, default=4,
-                     help='Number of tip reuses for multi-dispense (default: %(default)s)')
+                     help='Number of tip reuses for applicable reagents (default: %(default)s)')
     liq.add_argument('--n-multi-disp', type=int, default=1,
-                     help='Number of multi-dispenses per tip (default: %(default)s)')
+                     help='Number of tip reuses for applicable reagents (default: %(default)s)')
     
     # running test args
     if test_args:
@@ -412,23 +412,6 @@ def reorder_384well(df, reorder_col):
     df.index = range(df.shape[0])
     return df
 
-def _tip_batch(x, n_tip_reuse=1):
-    """Grouping asp/disp into tip-reuse batches
-    """
-    x = list(x)
-    batchID = 0
-    channel_cycles = 1
-    last_value = 0
-    y = []
-    for xx in x:
-        if xx < last_value:
-            if channel_cycles % n_tip_reuse == 0:
-                batchID += 1
-            channel_cycles += 1
-        y.append(batchID)
-        last_value = xx
-    return y
-
 def pip_mastermix(df_map, gwl, mm_labware_type='25ml_1 waste',
                   mm_volume=13.1, n_tip_reuse=6, n_multi_disp=4,
                   liq_cls='MasterMix Free Multi', mm_one_source=False):
@@ -453,19 +436,18 @@ def pip_mastermix(df_map, gwl, mm_labware_type='25ml_1 waste',
     func = lambda row: gwl.db.get_labware_wells(row['TECAN_dest_labware_type'])
     df_f['wells'] = df_f.apply(func, axis=1)
 
-    ## ordering df for proper multi-disp
+    ## ordering df for proper tip reuse
     if n_multi_disp == 1:
         x = cycle(range(8))
         df['CHANNEL_ORDER'] = [next(x) for y in range(df.shape[0])]
         x = cycle(range(n_tip_reuse))
-        df['TIP_BATCH'] = _tip_batch(df['CHANNEL_ORDER'], n_tip_reuse)
+        df['TIP_BATCH'] = Utils.tip_batch(df['CHANNEL_ORDER'], n_tip_reuse)
         #[next(x) for y in range(df.shape[0])]
         df.sort_values(by=['TIP_BATCH',
                            'CHANNEL_ORDER',
                            'TECAN_dest_target_position'], inplace=True)
         df.reset_index(inplace=True)
         cols = ['TIP_BATCH', 'CHANNEL_ORDER', 'TECAN_dest_target_position']
-        df[cols].to_csv(sys.stdout, sep='\t')
         
     # dispense
     for i in range(df_f.shape[0]):

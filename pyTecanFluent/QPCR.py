@@ -5,7 +5,7 @@ from __future__ import print_function
 import os
 import sys
 import argparse
-from itertools import product
+from itertools import product,cycle
 import string
 ## 3rd party
 import numpy as np
@@ -74,7 +74,7 @@ def parse_args(test_args=None, subparsers=None):
 
     ## Source labware 
     src = parser.add_argument_group('Source labware')
-    src.add_argument('--mm-type', type=str, default='2.0ml Eppendorf waste',
+    src.add_argument('--mm-type', type=str, default='2ml Eppendorf waste',
                       help='Mastermix labware type (default: %(default)s)')
     src.add_argument('--water-type', type=str, default='100ml_1 waste',
                       help='Water labware type (default: %(default)s)')
@@ -94,6 +94,8 @@ def parse_args(test_args=None, subparsers=None):
                       help='Sample liquid class (default: %(default)s)')
     liq.add_argument('--water-liq', type=str, default='Water Free Single Wall Disp',
                       help='Water liquid class (default: %(default)s)')
+    liq.add_argument('--n-tip-reuse', type=int, default=4,
+                     help='Number of tip reuses for applicable reagents (default: %(default)s)')
 
     # Parse & return
     if test_args:
@@ -137,7 +139,8 @@ def main(args=None):
     # Adding commands to gwl object
     pip_mastermixes(df_setup, gwl=gwl, 
                     src_labware_type=args.mm_type,
-                    liq_cls=args.mm_liq)
+                    liq_cls=args.mm_liq,
+                    n_tip_reuse=args.n_tip_reuse)
     
     ## Samples
     pip_samples(df_setup, gwl=gwl,
@@ -305,7 +308,8 @@ def reorder_384well(df, reorder_col):
     return df
 
 def pip_mastermixes(df_setup, gwl, src_labware_type,
-                  liq_cls='Mastermix Free Single'):
+                    liq_cls='Mastermix Free Single',
+                    n_tip_reuse=1):
     """Writing worklist commands for aliquoting mastermix.
     Re-using tips
     """
@@ -322,13 +326,29 @@ def pip_mastermixes(df_setup, gwl, src_labware_type,
         pip_mastermix(df, gwl=gwl,
                       MM_name=MM_name,                                     
                       src_labware_type=src_labware_type,
-                      liq_cls=liq_cls)
+                      liq_cls=liq_cls,
+                      n_tip_reuse=n_tip_reuse)
 
 
-def pip_mastermix(df, gwl, MM_name, src_labware_type,
-                  liq_cls='Mastermix Free Single'):  
-    """Single tip-use dispense of mastermix
-    """                
+def pip_mastermix(df_map, gwl, MM_name, src_labware_type,
+                  liq_cls='Mastermix Free Single',
+                  n_tip_reuse=1):  
+    """Dispense of particular mastermix
+    """
+    # df copy
+    df = df_map.copy()
+    ## ordering df for proper tip reuse
+    x = cycle(range(8))
+    df['CHANNEL_ORDER'] = [next(x) for y in range(df.shape[0])]
+    x = cycle(range(n_tip_reuse))
+    df['TIP_BATCH'] = Utils.tip_batch(df['CHANNEL_ORDER'], n_tip_reuse)
+    df.sort_values(by=['TIP_BATCH',
+                       'CHANNEL_ORDER',
+                       'dest_target_position'], inplace=True)
+    df.reset_index(inplace=True)
+    cols = ['TIP_BATCH', 'CHANNEL_ORDER', 'TECAN_dest_target_position']
+    #df[cols].to_csv(sys.stdout, sep='\t')
+    
     # iterating mastermix records in setup table (single mastermix)
     gwl.add(Fluent.Comment('Mastermix: {}'.format(MM_name)))
     for i in range(df.shape[0]):
@@ -349,9 +369,13 @@ def pip_mastermix(df, gwl, MM_name, src_labware_type,
         disp.Volume = df.loc[i,'mm volume']
         asp.LiquidClass = liq_cls
         gwl.add(disp)
+
+        # waste
+        if (i + 1) % n_tip_reuse == 0 or i + 1 == df.shape[0]:
+            gwl.add(Fluent.Waste())
         
         # flush
-        gwl.add(Fluent.Waste())
+        #gwl.add(Fluent.Waste())
         
     # finish section
     gwl.add(Fluent.Break())
