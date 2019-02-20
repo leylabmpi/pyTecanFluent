@@ -115,7 +115,6 @@ def parse_args(test_args=None, subparsers=None):
                      help='Tagmentation: number of tip reuses for multi-dispense (default: %(default)s)')
     liq.add_argument('--pcr-n-tip-reuse', type=int, default=4,
                      help='PCR: number of tip reuses for multi-dispense (default: %(default)s)')
-
     
     # running test args
     if test_args:
@@ -164,7 +163,9 @@ def main_tagmentation(df_map, args):
                                    position_col='TECAN_dest_target_position')
 
     # dispensing reagents (greater volume first)
-    if args.tag_mm_volume >= args.sample_volume:
+    if args.tag_mm_volume <= 0 and args.sample_volume <= 0:
+        return df_map
+    elif args.tag_mm_volume >= args.sample_volume:
         ## mastermix
         pip_mastermix(df_map, gwl,
                       mm_labware_type=args.tag_mm_labware_type,

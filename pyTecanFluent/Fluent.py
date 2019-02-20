@@ -225,6 +225,11 @@ class gwl(object):
                 msg = 'Liquid class does not exist: "{}"'
                 print(msg.format(liquid_class), file=sys.stderr)
             return False
+
+    def list_commands(self):
+        """List the commands added to the instance
+        """
+        return(self.commands)
         
     # get/set the available tip types (& their attributes) 
     @property
