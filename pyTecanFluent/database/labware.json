@@ -148,6 +148,13 @@
         "category" : "tube",
         "wells" : 1,
         "max_volume" : 4800
+    },
+    "10ml_Falcon" : {
+        "target_location" : ["Falcon10_Pos_1"],
+        "category" : "tube",
+        "wells" : 1,
+        "max_volume" : 10000,
+	"allowed_tips" : [1000,200,50]
     }
 }
 

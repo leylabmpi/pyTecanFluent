@@ -522,12 +522,6 @@ def pip_mastermix(df_map, gwl,  mm_labware_type='25ml_1 waste',
         # tip waste
         if (i + 1) % n_tip_reuse == 0 or i + 1 == df.shape[0]:
             gwl.add(Fluent.Waste())
-
-        # tip flush or waste
-        #if i > 7 and (i + 1) % (8 * n_tip_reuse) < 9:
-        #    gwl.add(Fluent.Flush())
-        #else:
-        #    gwl.add(Fluent.Waste())
             
     # adding break
     gwl.add(Fluent.Break())

@@ -69,6 +69,12 @@ class db(object):
         except KeyError:
             msg = 'Cannot find max_volume for labware: "{}"'
             raise KeyError(msg.format(value))        
+
+    def get_labware_allowed_tips(self, value):
+        try:
+            return self.labware[value]['allowed_tips']
+        except KeyError:
+            return None
         
     def get_tip_type(self, value):
         if value is None:
@@ -111,7 +117,7 @@ class db(object):
             msg = 'Liquid class not in database: "{}"'
             raise KeyError(msg.format(value))            
         
-            
+        
 class gwl(object):
     """Class for storing gwl commands
     """
@@ -141,7 +147,7 @@ class gwl(object):
                 
         # adding tip type for command based on volume; used for counting
         if isinstance(obj, Aspirate):
-            obj.TipType = self.set_TipType(obj.Volume)
+            obj.TipType = self.set_TipType(obj.Volume, obj.RackType)
             self.last_asp = obj
         elif isinstance(obj, Reagent_distribution):
             obj.TipType = self.set_TipType(obj.volume_per_aspirate())
@@ -166,11 +172,20 @@ class gwl(object):
             outF.write(x.cmd() + '\n')
         outF.close()
         
-    def set_TipType(self, volume):
+    def set_TipType(self, volume, racktype=None):
         """Setting which tip will be used.
         Tip selection based on dynamic tip handling (DTH) volume specified in the database
         """
         volume = float(volume)
+
+        # check if racktype has min-volume tip
+        ## if yes, set volume to that, which sets tip type
+        if racktype is not None:
+            tip_sizes = self.db.get_labware_allowed_tips(racktype)
+            if tip_sizes is not None and min(tip_sizes) > volume:
+                volume = min(tip_sizes) * 0.75    # WARNING: 0.75 is a hack!
+
+        # setting tip type
         assert self.TipTypes is not None
         func = lambda x: (x[1]['DTH'],x[0])
         for k,v in sorted(self.TipTypes.items(), key=func):
