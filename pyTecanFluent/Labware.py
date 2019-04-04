@@ -119,7 +119,8 @@ class labware(object):
     def __init__(self):
         self.tip_count = {}
         self.tip_boxes = {}
-        self.labware = collections.OrderedDict()
+        self.labware = {} 
+        self.labware_order = {}
         # target position
         d = os.path.join(os.path.split(__file__)[0],  'database')
         f = os.path.join(d, 'target_position.json')
@@ -172,10 +173,11 @@ class labware(object):
                             'target_position' : pos,
                             'target_location_prompt' : loc,
                             'target_position_prompt' : pos})  # prompt = what is prompted for user
-        # adding other labware
+        # adding other labware; sorting by labware order in the gwl
         df_labware = []
         adapter_cnt = {'96 well' : 0, '384 well' : 0}
-        for RackLabel,v in self.labware.items():
+        for RackLabel in sorted(self.labware_order, key=self.labware_order.get):
+            v = self.labware[RackLabel]
             # RackType
             try:
                 RackType = v['RackType']
@@ -193,7 +195,7 @@ class labware(object):
             if RackType.startswith('PCR Adapter 96 Well and '):
                 adapter_cnt['96 well'] += 1
                 # adding adapter to labware table
-                df_labware.append({'labware_name' : 'PCR Adapter 96 Well[{0:0>3}]'.format(adapter_cnt['96 well']),
+                df_labware.append({'labware_name' : 'PCR Adapter for {}'.format(RackLabel),
                                    'labware_type' : 'PCR Adapter 96 Well',
                                    'target_location' : loc,
                                    'target_position' : pos,
@@ -206,7 +208,7 @@ class labware(object):
             elif RackType.startswith('PCR Adapter 384 Well and '):
                 adapter_cnt['384 well'] += 1
                 # adding adapter to labware table
-                df_labware.append({'labware_name' : 'PCR Adapter 384 Well[{0:0>3}]'.format(adapter_cnt['384 well']),
+                df_labware.append({'labware_name' : 'PCR Adapter for {}'.format(RackLabel),
                                    'labware_type' : 'PCR Adapter 384 Well',
                                    'target_location' : loc,
                                    'target_position' : pos,
@@ -228,7 +230,8 @@ class labware(object):
         df_tips = pd.DataFrame.from_dict(df_tips)
         df_labware = pd.DataFrame.from_dict(df_labware)
         ## ordering labware dataframe
-        df_labware.sort_values(by=['labware_type', 'target_position'], inplace=True, ascending=[False, True])
+        df_labware.sort_values(by=['target_location_prompt', 'target_position_prompt' ,'labware_type'],
+                               inplace=True, ascending=[True, True, False])
         # return
         return pd.concat([df_tips, df_labware])
     
@@ -284,8 +287,18 @@ class labware(object):
             assert cmd.DestRackLabel is not None
             assert cmd.SrcRackType is not None
             assert cmd.DestRackType is not None
+            # labware info
             self.labware[cmd.SrcRackLabel] = gwl.db.get_labware(cmd.SrcRackType)
             self.labware[cmd.DestRackLabel] = gwl.db.get_labware(cmd.DestRackType)
+            # labware order in the gwl object
+            try:
+                _ = self.labware_order[cmd.SrcRackLabel]
+            except KeyError:
+                self.labware_order[cmd.SrcRackLabel] = len(self.labware_order.keys())
+            try:
+                _ = self.labware_order[cmd.DestRackLabel]
+            except KeyError:
+                self.labware_order[cmd.DestRackLabel] = len(self.labware_order.keys())            
         else:
             try:
                 RackLabel = cmd.RackLabel
@@ -295,7 +308,13 @@ class labware(object):
                 RackType = cmd.RackType
             except AttributeError:
                 return None
+            # labware info
             self.labware[RackLabel] = gwl.db.get_labware(RackType)
+            # labware order in the gwl
+            try:
+                _ = self.labware_order[RackLabel]
+            except KeyError:
+                self.labware_order[RackLabel] = len(self.labware_order.keys()) 
     
     def _add_tip_boxes(self, gwl):
         """Adding tip boxes to self
