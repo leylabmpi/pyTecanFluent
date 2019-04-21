@@ -26,10 +26,10 @@ def parse_args(test_args=None, subparsers=None):
     epi = """DESCRIPTION:
     Convert an input table of samples into a GWL file, which is used by the TECAN
     robot to conduct the NGS Tn5 (self-produced enzyme) library prep.
-    The extra columns in the mapping file designate the SOURCE of samples and primers;
-    the DESTINATION (plate & well) is set by this script. 
+    The extra columns in the mapping file designate the SOURCE of samples and primers.
+    The DESTINATION (plate & well) is set by this script. 
 
-    The amount of Tn5 and buffer is determined based on the input. 
+    The amount of Tn5 and buffer is determined based on the input DNA concentration (ng/ul)
 
     Required columns in the input samples table:
 
@@ -90,23 +90,23 @@ def parse_args(test_args=None, subparsers=None):
                       help='Start well number on destination plate (default: %(default)s)')
     
     ## Reagents
+    ### tagmentation
     tag_rgnt = parser.add_argument_group('Tagmentation Reagents')
     tag_rgnt.add_argument('--tag-rxn-volume', type=float, default=20.0,
                       help='Total tagmentation rxn volume per well (default: %(default)s)')
     tag_rgnt.add_argument('--min-sample-volume', type=float, default=1.0,
-                      help='Min sample volume per tag. rxn (default: %(default)s)')
+                      help='Min possible sample volume per tag. rxn (default: %(default)s)')
     tag_rgnt.add_argument('--max-sample-volume', type=float, default=10.0,
-                      help='Max sample volume per tag. rxn (default: %(default)s)')
+                      help='Max possible sample volume per tag. rxn (default: %(default)s)')
     tag_rgnt.add_argument('--target-ng-sample', type=float, default=5.0,
-                      help='Target amount of DNA (ng) to use per sample (default: %(default)s)')
+                      help='Target (optimal) amount of DNA (ng) used per rxn (default: %(default)s)')
     tag_rgnt.add_argument('--tag-Tn5-labware-type', type=str, default='2ml Eppendorf waste',
                       help='Labware type for Tn5 enzyme (default: %(default)s)')
     tag_rgnt.add_argument('--tag-buffer-labware-type', type=str, default='2ml Eppendorf waste',
                       help='Labware type for Tn5 buffer (default: %(default)s)')
     tag_rgnt.add_argument('--tag-n-tip-reuse', type=int, default=4,
                       help='Number of tip reuses for multi-dispense (default: %(default)s)')
-
-
+    ### PCR
     pcr_rgnt = parser.add_argument_group('PCR Reagents')    
     pcr_rgnt.add_argument('--pcr-mm-volume', type=float, default=24.0,
                           help='PCR MasterMix volume per well (default: %(default)s)')
@@ -146,6 +146,8 @@ def parse_args(test_args=None, subparsers=None):
     return parser
 
 def main(args=None):
+    """Main iterface
+    """
     # Input
     if args is None:
         args = parse_args()
@@ -201,13 +203,15 @@ def calc_Tn5_buffer_volume(x, min_vol = 1.0):
     return y
 
 def calc_Tn5_H2O_volume(DNA_vol, Tn5_vol, buf_vol, total_vol):
+    """Calculating water volume for each Tn5 rxn
+    """
     y = total_vol - (DNA_vol + Tn5_vol + buf_vol)
     if y < 0:
         raise ValueError('H2O volume is < 0')
     return y
 
 def set_Tn5_volume(Tn5_vol):
-    """calculating the volume for the necessary 10-fold dilution 
+    """calculating the volume for the necessary X-fold dilution 
     """
     if Tn5_vol >= 1.0:
         return Tn5_vol
@@ -222,7 +226,7 @@ def set_Tn5_volume(Tn5_vol):
         raise ValueError(msg.format(Tn5_vol))
 
 def set_Tn5_dilution_volume(DNA_ng, dilution=1):
-    """calculating the volume for the necessary 10-fold dilution 
+    """calculating the volume for the necessary X-fold dilution 
     """
     # undiluted Tn5 volume
     Tn5_vol = calc_Tn5_volume(DNA_ng)
@@ -250,7 +254,8 @@ def set_Tn5_dilution_volume(DNA_ng, dilution=1):
 def calc_DNA_volume(DNA_conc, target_DNA_ng=5.0,
                     min_DNA_vol=1.0, max_DNA_vol=10.0,
                     total_rxn_vol=20.0):
-    """DNA conc. in ng/ul
+    """Finding the 'best' DNA volume to use, given the reagent volume
+    constratints and the input DNA conc. 
     """
     # setting rxn_volume-limited max_DNA_vol
     ul_step = -0.5
@@ -382,8 +387,6 @@ def main_tagmentation(df_map, args):
                                    labware_name_col='TECAN_dest_labware_name',
                                    labware_type_col='TECAN_dest_labware_type',
                                    position_col='TECAN_dest_target_position')
-
-
     
     # dispensing reagents (greater volume first)
     ## Tn5 buffer
@@ -622,7 +625,6 @@ def check_df_map(df_map, args):
 
     # return
     return df_map
-
         
 def check_rack_labels(df_map):
     """Removing '.' for rack labels (causes execution failures)
