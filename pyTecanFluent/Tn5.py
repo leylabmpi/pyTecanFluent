@@ -112,8 +112,6 @@ def parse_args(test_args=None, subparsers=None):
                           help='PCR MasterMix volume per well (default: %(default)s)')
     pcr_rgnt.add_argument('--primer-volume', type=float, default=6.0,
                           help='Primer volume per PCR, assuming foward+reverse are already combined (default: %(default)s)')
-    pcr_rgnt.add_argument('--error-perc', type=float, default=10.0,
-                          help='Percent of extra total reagent volume to include (default: %(default)s)')
     pcr_rgnt.add_argument('--pcr-mm-labware-type', type=str, default='25ml_1 waste',
                           help='Labware type for mastermix (default: %(default)s)')
     pcr_rgnt.add_argument('--pcr-n-tip-reuse', type=int, default=4,
@@ -122,7 +120,7 @@ def parse_args(test_args=None, subparsers=None):
     # Liquid classes
     liq = parser.add_argument_group('Liquid classes')
     liq.add_argument('--tag-Tn5-liq', type=str, default='MasterMix Free Single Wall Disp',
-                      help='Tagmentation: Mastermix liquid class (default: %(default)s)')
+                      help='Tagmentation: Tn5 liquid class (default: %(default)s)')
     liq.add_argument('--tag-buffer-liq', type=str, default='MasterMix Free Single Wall Disp',
                       help='Tagmentation: buffer liquid class (default: %(default)s)')
     liq.add_argument('--sample-liq', type=str, default='Water Free Single Wall Disp',
@@ -137,6 +135,8 @@ def parse_args(test_args=None, subparsers=None):
     misc = parser.add_argument_group('Misc')     
     misc.add_argument('--water-labware-type', type=str, default='25ml_1 waste',
                       help='Labware type for water (default: %(default)s)')
+    misc.add_argument('--error-perc', type=float, default=10.0,
+                      help='Percent of extra total reagent volume to include (default: %(default)s)')
     
     # running test args
     if test_args:
