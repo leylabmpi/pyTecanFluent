@@ -11,6 +11,7 @@ from pyTecanFluent import Dilute
 from pyTecanFluent import QPCR
 from pyTecanFluent import Pool
 from pyTecanFluent import LITE
+from pyTecanFluent import Tn5
 
 # main
 def main(args=None):
@@ -43,6 +44,9 @@ def main(args=None):
   ## LITE-tagmentation
   lite = LITE.parse_args(subparsers=subparsers)
   lite.set_defaults(func=LITE.main)
+  ## Tn5-tagmentation
+  tn5 = Tn5.parse_args(subparsers=subparsers)
+  tn5.set_defaults(func=Tn5.main)
 
   # parsing args
   if args:

@@ -23,7 +23,7 @@ Python interface to TECAN Fluent liquid handling robot.
 
 setup(
     name='pyTecanFluent',
-    version='0.3.3',
+    version='0.4.0',
     description='Python interface to TECAN Fluent liquid handling robot',
     long_description=long_desc,
     author="Nick Youngblut",

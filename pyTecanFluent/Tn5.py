@@ -13,23 +13,27 @@ import pandas as pd
 from pyTecanFluent import Utils
 from pyTecanFluent import Fluent
 from pyTecanFluent import Labware
+from pyTecanFluent import Tn5_pip
 
 
 # functions
 def get_desc():
-    desc = 'Create TECAN Fluent worklist instructions for LITE NGS library prep'
+    desc = 'Create TECAN Fluent worklist instructions for Tn5 library prep'
     return desc
 
 def parse_args(test_args=None, subparsers=None):
     desc = get_desc()
     epi = """DESCRIPTION:
     Convert an input table of samples into a GWL file, which is used by the TECAN
-    robot to conduct the NGS LITE (hacked Nextera) library prep.
+    robot to conduct the NGS Tn5 (self-produced enzyme) library prep.
     The extra columns in the mapping file designate the SOURCE of samples and primers;
     the DESTINATION (plate & well) is set by this script. 
 
-    EXTRA COLUMNS in MAPPING FILE:
+    The amount of Tn5 and buffer is determined based on the input. 
 
+    Required columns in the input samples table:
+
+    * "TECAN_sample_conc" = The sample concentrations (numeric value; units=ng/ul) 
     * "TECAN_sample_labware_name" = The sample labware name on the robot worktable. Whatever name you want to use! 
     * "TECAN_sample_labware_type" = The type of labware containing samples (eg., '96 Well Eppendorf TwinTec PCR')
     * "TECAN_sample_target_position" = The well or tube location (a number)
@@ -56,7 +60,7 @@ def parse_args(test_args=None, subparsers=None):
     * PicoGreen should be added to the MasterMix *prior* to loading on robot
     """
     if subparsers:
-        parser = subparsers.add_parser('LITE', description=desc, epilog=epi,
+        parser = subparsers.add_parser('Tn5', description=desc, epilog=epi,
                                        formatter_class=argparse.RawTextHelpFormatter)
     else:
         parser = argparse.ArgumentParser(description=desc, epilog=epi,
@@ -66,10 +70,10 @@ def parse_args(test_args=None, subparsers=None):
     ## I/O
     groupIO = parser.add_argument_group('I/O')
     groupIO.add_argument('mapfile', metavar='MapFile', type=str,
-                         help='A QIIME-formatted mapping file with extra columns (see below)')
+                         help='A samples file with the required columns (see the help docs)')
     groupIO.add_argument('--rows', type=str, default='all',
-                         help='Which rows of the mapping file to use (eg., "all"=all rows; "1-48"=rows1-48; "1,3,5-6"=rows1+3+5+6), (default: %(default)s)')
-    groupIO.add_argument('--prefix', type=str, default='TECAN_LITE',
+                         help='Which rows of the sample file to use (eg., "all"=all rows; "1-48"=rows1-48; "1,3,5-6"=rows1+3+5+6), (default: %(default)s)')
+    groupIO.add_argument('--prefix', type=str, default='TECAN_Tn5',
                          help='Output file name prefix (default: %(default)s)')
 
     ## Destination plate
@@ -86,36 +90,53 @@ def parse_args(test_args=None, subparsers=None):
                       help='Start well number on destination plate (default: %(default)s)')
     
     ## Reagents
-    rgnt = parser.add_argument_group('Reagents')
-    rgnt.add_argument('--tag-mm-volume', type=float, default=3.0,
-                      help='Tagmentation MasterMix volume per well (default: %(default)s)')
-    rgnt.add_argument('--pcr-mm-volume', type=float, default=18.0,
-                      help='PCR MasterMix volume per well (default: %(default)s)')
-    rgnt.add_argument('--sample-volume', type=float, default=2.0,
-                      help='Sample volume per PCR (default: %(default)s)')
-    rgnt.add_argument('--primer-volume', type=float, default=2.0,
-                         help='Primer volume per PCR, assuming foward+reverse are already combined (default: %(default)s)')
-    rgnt.add_argument('--error-perc', type=float, default=10.0,
-                        help='Percent of extra total reagent volume to include (default: %(default)s)')
-    rgnt.add_argument('--tag-mm-labware-type', type=str, default='1.5ml Eppendorf waste',
-                      help='Tagmentation: labware type for mastermix (default: %(default)s)')
-    rgnt.add_argument('--pcr-mm-labware-type', type=str, default='25ml_1 waste',
-                      help='PCR: labware type for mastermix (default: %(default)s)')
+    tag_rgnt = parser.add_argument_group('Tagmentation Reagents')
+    tag_rgnt.add_argument('--tag-rxn-volume', type=float, default=20.0,
+                      help='Total tagmentation rxn volume per well (default: %(default)s)')
+    tag_rgnt.add_argument('--min-sample-volume', type=float, default=1.0,
+                      help='Min sample volume per tag. rxn (default: %(default)s)')
+    tag_rgnt.add_argument('--max-sample-volume', type=float, default=10.0,
+                      help='Max sample volume per tag. rxn (default: %(default)s)')
+    tag_rgnt.add_argument('--target-ng-sample', type=float, default=5.0,
+                      help='Target amount of DNA (ng) to use per sample (default: %(default)s)')
+    tag_rgnt.add_argument('--tag-Tn5-labware-type', type=str, default='2ml Eppendorf waste',
+                      help='Labware type for Tn5 enzyme (default: %(default)s)')
+    tag_rgnt.add_argument('--tag-buffer-labware-type', type=str, default='2ml Eppendorf waste',
+                      help='Labware type for Tn5 buffer (default: %(default)s)')
+    tag_rgnt.add_argument('--tag-n-tip-reuse', type=int, default=4,
+                      help='Number of tip reuses for multi-dispense (default: %(default)s)')
+
+
+    pcr_rgnt = parser.add_argument_group('PCR Reagents')    
+    pcr_rgnt.add_argument('--pcr-mm-volume', type=float, default=24.0,
+                          help='PCR MasterMix volume per well (default: %(default)s)')
+    pcr_rgnt.add_argument('--primer-volume', type=float, default=6.0,
+                          help='Primer volume per PCR, assuming foward+reverse are already combined (default: %(default)s)')
+    pcr_rgnt.add_argument('--error-perc', type=float, default=10.0,
+                          help='Percent of extra total reagent volume to include (default: %(default)s)')
+    pcr_rgnt.add_argument('--pcr-mm-labware-type', type=str, default='25ml_1 waste',
+                          help='Labware type for mastermix (default: %(default)s)')
+    pcr_rgnt.add_argument('--pcr-n-tip-reuse', type=int, default=4,
+                          help='PCR: number of tip reuses for multi-dispense (default: %(default)s)')
     
     # Liquid classes
     liq = parser.add_argument_group('Liquid classes')
-    liq.add_argument('--tag-mm-liq', type=str, default='MasterMix Free Single Wall Disp',
+    liq.add_argument('--tag-Tn5-liq', type=str, default='MasterMix Free Single Wall Disp',
                       help='Tagmentation: Mastermix liquid class (default: %(default)s)')
+    liq.add_argument('--tag-buffer-liq', type=str, default='MasterMix Free Single Wall Disp',
+                      help='Tagmentation: buffer liquid class (default: %(default)s)')
+    liq.add_argument('--sample-liq', type=str, default='Water Free Single Wall Disp',
+                      help='Sample liquid class (default: %(default)s)')    
     liq.add_argument('--pcr-mm-liq', type=str, default='MasterMix Free Single',
                       help='PCR: Mastermix liquid class (default: %(default)s)')
-    liq.add_argument('--sample-liq', type=str, default='Water Free Single Wall Disp',
-                      help='Sample liquid class (default: %(default)s)')
     liq.add_argument('--primer-liq', type=str, default='Water Free Single Wall Disp',
                      help='Primer liquid class (default: %(default)s)')
-    liq.add_argument('--tag-n-tip-reuse', type=int, default=4,
-                     help='Tagmentation: number of tip reuses for multi-dispense (default: %(default)s)')
-    liq.add_argument('--pcr-n-tip-reuse', type=int, default=4,
-                     help='PCR: number of tip reuses for multi-dispense (default: %(default)s)')
+    liq.add_argument('--water-liq', type=str, default='Water Free Single Wall Disp',
+                      help='Water liquid class (default: %(default)s)')    
+
+    misc = parser.add_argument_group('Misc')     
+    misc.add_argument('--water-labware-type', type=str, default='25ml_1 waste',
+                      help='Labware type for water (default: %(default)s)')
     
     # running test args
     if test_args:
@@ -147,44 +168,243 @@ def main(args=None):
     main_PCR(df_map, args)
     
     # Return
-    return None   #return (gwl_file, report_file, df_file, lw_file)
+    return None
 
-def main_tagmentation(df_map, args):
-    """Tagmentation step of the LITE method
+def calc_Tn5_volume(x, min_vol = 0.01):
+    """Calculating the volume in ul of Tn5 (y)
+    base on DNA conc. (ng) input (x)
     """
+    y = None
+    if x >= 0 and x < 3:
+        y = x * 0.1678 + 0.05
+    elif x >= 3 and x < 15:
+        y = x * 0.02 + 0.49
+    elif x >= 15 and x < 25:
+        y = x * 0.227 - 2.61
+    elif x >= 25:
+        y = x * 0.12
+    else:
+        raise ValueError('Logic error')
+    
+    if y < min_vol:
+        y = min_vol
+        
+    return y 
+
+def calc_Tn5_buffer_volume(x, min_vol = 1.0):
+    """Calculating the amount of buffer to use depending on
+    the Tn5 volume
+    """
+    y = x * 4.0 / 3.0
+    if y < min_vol:
+        y = min_vol
+    return y
+
+def calc_Tn5_H2O_volume(DNA_vol, Tn5_vol, buf_vol, total_vol):
+    y = total_vol - (DNA_vol + Tn5_vol + buf_vol)
+    if y < 0:
+        raise ValueError('H2O volume is < 0')
+    return y
+
+def set_Tn5_volume(Tn5_vol):
+    """calculating the volume for the necessary 10-fold dilution 
+    """
+    if Tn5_vol >= 1.0:
+        return Tn5_vol
+    elif Tn5_vol < 1.0 and Tn5_vol >= 0.1:
+        # 1:10 dilution
+        return Tn5_vol * 10
+    elif Tn5_vol < 0.1 and Tn5_vol >= 0.01:
+        # 1:100 dilution
+        return Tn5_vol * 100
+    else:
+        msg = 'Calculated undiluted Tn5 volume too low: {}'
+        raise ValueError(msg.format(Tn5_vol))
+
+def set_Tn5_dilution_volume(DNA_ng, dilution=1):
+    """calculating the volume for the necessary 10-fold dilution 
+    """
+    # undiluted Tn5 volume
+    Tn5_vol = calc_Tn5_volume(DNA_ng)
+
+    # volume needed if diluting
+    if dilution == 1:
+        if Tn5_vol >= 1.0:
+            return Tn5_vol
+        else:
+            return np.nan
+    elif dilution == 10:
+        if Tn5_vol < 1.0 and Tn5_vol >= 0.1:
+            return Tn5_vol * 10
+        else:
+            return np.nan
+    elif dilution == 100:
+        if Tn5_vol < 0.1 and Tn5_vol >= 0.01:
+            return Tn5_vol * 100
+        else:
+            return np.nan
+    else:
+        msg = 'Calculated undiluted Tn5 volume too low: {}'
+        raise ValueError(msg.format(Tn5_vol))
+    
+def calc_DNA_volume(DNA_conc, target_DNA_ng=5.0,
+                    min_DNA_vol=1.0, max_DNA_vol=10.0,
+                    total_rxn_vol=20.0):
+    """DNA conc. in ng/ul
+    """
+    # setting rxn_volume-limited max_DNA_vol
+    ul_step = -0.5
+    attempt_ul_DNA = max_DNA_vol
+    while 1:
+        if attempt_ul_DNA <= min_DNA_vol:
+            # lowest possible volume reached
+            max_DNA_vol = min_DNA_vol
+            break
+        
+        # calculating reagent volumes
+        attempt_ng_DNA = DNA_conc * attempt_ul_DNA
+        attempt_ul_Tn5 = calc_Tn5_volume(attempt_ng_DNA)
+        attempt_ul_buf = calc_Tn5_buffer_volume(attempt_ul_Tn5)
+        attempt_ul_Tn5 = set_Tn5_volume(attempt_ul_Tn5)
+        attempt_ul_H2O = total_rxn_vol - (attempt_ul_DNA + attempt_ul_Tn5 + attempt_ul_buf)
+        
+        # checking values
+        if attempt_ul_H2O < 0:
+            if attempt_ul_DNA == min_DNA_vol:
+                msg = 'Min sample volume set too high for total rxn volume!'
+                raise ValueError(msg)
+            # too much (DNA + reagents) for total rxn volume
+            attempt_ul_DNA += ul_step
+        else:
+            # found 'true' max volume
+            max_DNA_vol = attempt_ul_DNA
+            break
+
+    #print('Max DNA volume: {}'.format(max_DNA_vol))
+
+    # determining amount of DNA volume to use
+    ul_step = 0.5
+    max_vol_exceeded = False
+    attempt_ul_DNA = min_DNA_vol
+    # iterating; trying to get to target sample conc
+    while 1:
+        attempt_ng_DNA = DNA_conc * attempt_ul_DNA
+        attempt_ul_Tn5 = calc_Tn5_volume(attempt_ng_DNA)
+        attempt_ul_buf = calc_Tn5_buffer_volume(attempt_ul_Tn5)
+        attempt_ul_Tn5 = set_Tn5_volume(attempt_ul_Tn5)
+        attempt_ul_H2O = total_rxn_vol - (attempt_ul_DNA + attempt_ul_Tn5 + attempt_ul_buf)
+
+        # hitting constraints
+        if attempt_ul_DNA > max_DNA_vol or attempt_ul_H2O < 0:
+            # too much reagents volume
+            ## iterate backwards and select first that fits constraint
+            if attempt_ul_DNA == min_DNA_vol:
+                raise ValueError('logic error')
+            attempt_ul_DNA -= ul_step
+            if attempt_ul_DNA < min_DNA_vol:
+                return min_DNA_vol
+            max_vol_exceeded = True
+            continue
+        elif max_vol_exceeded is True:
+            return attempt_ul_DNA    
+        
+        # checking 
+        if attempt_ng_DNA < target_DNA_ng:
+            # try to increase volume
+            attempt_ul_DNA += ul_step
+        elif attempt_ng_DNA >= target_DNA_ng:
+            # value reached
+            return attempt_ul_DNA
+        else:
+            raise ValueError('logic error')    
+
+def calc_tag_volumes(df_map, args):
+    """Determining the volume to Tn5, buffer, and water based
+    on DNA input and total MasterMix volume
+    """
+    # calculating volume of DNA to use
+    func = functools.partial(calc_DNA_volume,
+                             target_DNA_ng = args.target_ng_sample,
+                             min_DNA_vol = args.min_sample_volume,
+                             max_DNA_vol = args.max_sample_volume,
+                             total_rxn_vol = args.tag_rxn_volume)
+    df_map['TECAN_sample_ul'] = df_map['TECAN_sample_conc'].apply(func)
+
+    cols = ['TECAN_sample_ul', 'TECAN_sample_conc']
+    df_map['TECAN_sample_ng'] = df_map[cols].apply(lambda x: x[0] * x[1], axis=1)
+    
+    # calculating Tn5
+    df_map['TECAN_Tn5_ul'] = df_map['TECAN_sample_ng'].apply(calc_Tn5_volume)
+    # calculating Tn5 buffer
+    df_map['TECAN_Tn5_buffer_ul'] = df_map['TECAN_Tn5_ul'].apply(calc_Tn5_buffer_volume)
+    # calculating true Tn5
+    df_map['TECAN_Tn5_ul'] = df_map['TECAN_Tn5_ul'].apply(set_Tn5_volume)
+
+    # calculating Water
+    func = functools.partial(calc_Tn5_H2O_volume, total_vol = args.tag_rxn_volume)
+    cols = ['TECAN_sample_ul', 'TECAN_Tn5_ul', 'TECAN_Tn5_buffer_ul']
+    df_map['TECAN_Tn5_H2O_ul'] = df_map[cols].apply(lambda x: func(x[0], x[1], x[2]), axis=1)
+
+    # Tn5 dilutions
+    ## no dilution
+    func = functools.partial(set_Tn5_dilution_volume, dilution=1)
+    df_map['TECAN_Tn5_1fd_ul'] = df_map['TECAN_sample_ng'].apply(func)
+    ## 1:10 dilution
+    func = functools.partial(set_Tn5_dilution_volume, dilution=10)
+    df_map['TECAN_Tn5_10fd_ul'] = df_map['TECAN_sample_ng'].apply(func)
+    ## 1:100 dilution
+    func = functools.partial(set_Tn5_dilution_volume, dilution=100)
+    df_map['TECAN_Tn5_100fd_ul'] = df_map['TECAN_sample_ng'].apply(func)
+
+    # rounding values
+    idx = {'TECAN_Tn5_ul' : 2, 'TECAN_Tn5_ul' : 2,
+           'TECAN_Tn5_buffer' : 2, 'TECAN_Tn5_H2O_ul' : 2,
+           'TECAN_Tn5_1fd_ul' : 2, 'TECAN_Tn5_10fd_ul' : 2,
+           'TECAN_Tn5_100fd_ul' : 2}
+    df_map = df_map.round(idx)
+    
+    # ret
+    return df_map
+    
+def main_tagmentation(df_map, args):
+    """Tagmentation step of the Tn5 method
+    """
+    # calculating volumes
+    df_map = calc_tag_volumes(df_map, args)
+    
     # gwl construction
     TipTypes = ['FCA, 1000ul SBS', 'FCA, 200ul SBS',
                 'FCA, 50ul SBS', 'FCA, 10ul SBS']     
     gwl = Fluent.gwl(TipTypes)
-    
+
     # Reordering dest if plate type is 384-well
     df_map = Utils.reorder_384well(df_map, gwl,
                                    labware_name_col='TECAN_dest_labware_name',
                                    labware_type_col='TECAN_dest_labware_type',
                                    position_col='TECAN_dest_target_position')
 
-    # dispensing reagents (greater volume first)
-    if args.tag_mm_volume <= 0 and args.sample_volume <= 0:
-        return df_map
-    elif args.tag_mm_volume >= args.sample_volume:
-        ## mastermix
-        pip_mastermix(df_map, gwl,
-                      mm_labware_type=args.tag_mm_labware_type,
-                      mm_volume=args.tag_mm_volume, 
-                      liq_cls=args.tag_mm_liq,
-                      n_tip_reuse=args.tag_n_tip_reuse)
-        ## samples
-        pip_samples(df_map, gwl, sample_volume=args.sample_volume, liq_cls=args.sample_liq)
-    else:
-        ## samples
-        pip_samples(df_map, gwl, sample_volume=args.sample_volume, liq_cls=args.sample_liq)
-        ## mastermix
-        pip_mastermix(df_map, gwl,
-                      mm_labware_type=args.tag_mm_labware_type,
-                      mm_volume=args.tag_mm_volume, 
-                      liq_cls=args.tag_mm_liq,
-                      n_tip_reuse=args.tag_n_tip_reuse)
 
+    
+    # dispensing reagents (greater volume first)
+    ## Tn5 buffer
+    Tn5_pip.pip_Tn5_buffer(df_map, gwl,
+                           src_labware_type=args.tag_buffer_labware_type,
+                           liq_cls=args.tag_buffer_liq,
+                           n_tip_reuse=args.tag_n_tip_reuse)
+    ## Tn5
+    Tn5_pip.pip_Tn5(df_map, gwl,
+                    src_labware_type=args.tag_Tn5_labware_type,
+                    liq_cls=args.tag_Tn5_liq,
+                    n_tip_reuse=args.tag_n_tip_reuse)
+    ## water
+    Tn5_pip.pip_tag_water(df_map, gwl,
+                          src_labware_type=args.water_labware_type,
+                          liq_cls=args.water_liq,
+                          n_tip_reuse=args.tag_n_tip_reuse)
+    ## samples
+    Tn5_pip.pip_samples(df_map, gwl,
+                        liq_cls=args.sample_liq)
+    
     ## writing out worklist (gwl) file
     gwl_file = args.prefix + '_tag.gwl'
     gwl.write(gwl_file)
@@ -193,7 +413,7 @@ def main_tagmentation(df_map, args):
     report_file = args.prefix + '_tag_report.txt'
     with open(report_file, 'w') as repFH:
         write_report(df_map, outFH=repFH,
-                     mm_volume=args.tag_mm_volume,
+                     mm_volume=args.tag_rxn_volume,
                      error_perc=args.error_perc)
         
     # making labware table
@@ -218,7 +438,7 @@ def main_tagmentation(df_map, args):
     return df_map
 
 def main_PCR(df_map, args):
-    """PCR step of the LITE method
+    """PCR step of the Tn5 method
     """
     # gwl construction
     TipTypes = ['FCA, 1000ul SBS', 'FCA, 200ul SBS',
@@ -232,17 +452,17 @@ def main_PCR(df_map, args):
                                    position_col='TECAN_dest_target_position')
 
     ## mastermix into tagmentation dest plate
-    pip_mastermix(df_map, gwl,
-                  mm_labware_type=args.pcr_mm_labware_type,
-                  mm_volume=args.pcr_mm_volume, 
-                  liq_cls=args.pcr_mm_liq,
-                  n_tip_reuse=args.pcr_n_tip_reuse)
+    Tn5_pip.pip_mastermix(df_map, gwl,
+                          mm_labware_type=args.pcr_mm_labware_type,
+                          mm_volume=args.pcr_mm_volume, 
+                          liq_cls=args.pcr_mm_liq,
+                          n_tip_reuse=args.pcr_n_tip_reuse)
 
     ## primers into tagmentation dest plate
     if args.primer_volume > 0:
-        pip_primers(df_map, gwl,
-                    prm_volume=args.primer_volume,
-                    liq_cls=args.primer_liq)
+        Tn5_pip.pip_primers(df_map, gwl,
+                            prm_volume=args.primer_volume,
+                            liq_cls=args.primer_liq)
     
     ## writing out worklist (gwl) file
     gwl_file = args.prefix + '_pcr.gwl'
@@ -294,12 +514,18 @@ def check_args(args):
     args.rows = Utils.make_range(args.rows, set_zero_index=True)
     
     # volumes
-    ## mastermix
-    if args.tag_mm_volume < 0:
-        args.tag_mm_volume = 0
+    ## Tn5
+    if args.min_sample_volume < 0:
+        args.min_sample_volume = 0
+    if args.target_ng_sample < 0:
+        args.target_ng_sample = 0
+    ## PCR
+    ### mastermix
+    if args.tag_rxn_volume < 0:
+        args.tag_rxn_volume = 0
     if args.pcr_mm_volume < 0:
         args.pcr_mm_volume = 0        
-    ## primers
+    ### primers
     if args.primer_volume < 0:
         args.primer_volume = 0
     
@@ -360,7 +586,8 @@ def check_df_map(df_map, args):
     if 'TECAN_target_position' in df_map.columns.values and 'TECAN_sample_target_position' not in df_map.columns.values:
         to_rename['TECAN_target_position'] = 'TECAN_sample_target_position'
     df_map.rename(columns=to_rename, inplace=True)    
-    req_cols = ['TECAN_sample_labware_name', 'TECAN_sample_labware_type',
+    req_cols = ['TECAN_sample_conc',
+                'TECAN_sample_labware_name', 'TECAN_sample_labware_type',
                 'TECAN_sample_target_position', 'TECAN_primer_labware_name',
                 'TECAN_primer_labware_type', 'TECAN_primer_target_position']
     missing_cols(df_map, req_cols)
@@ -472,135 +699,6 @@ def reorder_384well(df, reorder_col):
     df = df.drop('TECAN_sort_IS_EVEN', 1)
     df.index = range(df.shape[0])
     return df
-
-def pip_mastermix(df_map, gwl,  mm_labware_type='25ml_1 waste',
-                  mm_volume=13.1, n_tip_reuse=6,
-                  liq_cls='MasterMix Free Single'):
-    """Writing worklist commands for aliquoting mastermix.
-    Using 1-asp-multi-disp with 200 ul tips.
-    Method:
-    * calc max multi-dispense for 200 ul tips & mm_volume
-    * for 1:n_dispense
-      * determine how many disp left for channel (every 8th)
-      * if n_disp_left < n_disp: n_disp = n_disp_left
-      * calc total volume: n_disp * mm_volume
-    """
-    if mm_volume <= 0:
-        return None    
-    gwl.add(Fluent.Comment('MasterMix'))
-
-    # copying df
-    df = df_map.copy()
-    x = cycle(range(8))
-    df['CHANNEL_ORDER'] = [next(x) for y in range(df.shape[0])]
-    x = cycle(range(n_tip_reuse))
-    df['TIP_BATCH'] = Utils.tip_batch(df['CHANNEL_ORDER'], n_tip_reuse)
-    df.sort_values(by=['TIP_BATCH',
-                       'CHANNEL_ORDER',
-                       'TECAN_dest_target_position'], inplace=True)
-    df.reset_index(inplace=True)
-    
-    # for each Sample-PCR, write out asp/dispense commands
-    for i in range(df.shape[0]):
-        # aspiration
-        asp = Fluent.Aspirate()
-        asp.RackLabel = 'Mastermix[{0:0>3}]'.format(1)
-        asp.RackType = mm_labware_type
-        asp.Position = 1
-        asp.Volume = mm_volume
-        asp.LiquidClass = liq_cls
-        gwl.add(asp)
-
-        # dispensing
-        disp = Fluent.Dispense()
-        disp.RackLabel = df.loc[i,'TECAN_dest_labware_name']
-        disp.RackType = df.loc[i,'TECAN_dest_labware_type']
-        disp.Position = df.loc[i,'TECAN_dest_target_position']
-        disp.Volume = mm_volume
-        disp.LiquidClass = liq_cls
-        gwl.add(disp)
-
-        # tip waste
-        if (i + 1) % n_tip_reuse == 0 or i + 1 == df.shape[0]:
-            gwl.add(Fluent.Waste())
-            
-    # adding break
-    gwl.add(Fluent.Break())
-
-def pip_primer(i, gwl, df_map, primer_labware_name, 
-               primer_labware_type, primer_target_position,
-               primer_volume, liq_cls):
-    """Pipetting a single primer
-    """
-    # aspiration
-    asp = Fluent.Aspirate()
-    asp.RackLabel = df_map.loc[i, primer_labware_name]
-    asp.RackType = df_map.loc[i, primer_labware_type]
-    asp.Position = df_map.loc[i, primer_target_position]
-    asp.Volume = primer_volume
-    asp.LiquidClass = liq_cls
-    gwl.add(asp)
-
-    # dispensing
-    disp = Fluent.Dispense()
-    disp.RackLabel = df_map.loc[i,'TECAN_dest_labware_name']
-    disp.RackType = df_map.loc[i,'TECAN_dest_labware_type']
-    disp.Position = df_map.loc[i,'TECAN_dest_target_position']
-    disp.Volume = primer_volume
-    asp.LiquidClass = liq_cls
-    gwl.add(disp)
-
-    # waste
-    gwl.add(Fluent.Waste())
-    
-def pip_primers(df_map, gwl, prm_volume=0, liq_cls='Water Free Single'):
-    """Commands for aliquoting primers
-    """
-    gwl.add(Fluent.Comment('Primers'))    
-    for i in range(df_map.shape[0]):
-        if prm_volume <= 0:
-            continue
-        pip_primer(i, gwl, df_map,
-                   'TECAN_primer_labware_name', 
-                   'TECAN_primer_labware_type',
-                   'TECAN_primer_target_position',
-                   prm_volume, liq_cls)
-        
-    # adding break
-    gwl.add(Fluent.Break())
-                
-def pip_samples(df_map, gwl, sample_volume, liq_cls='Water Free Single'):
-    """Commands for aliquoting samples to each PCR rxn
-    """
-    gwl.add(Fluent.Comment('Samples'))
-    # for each Sample-PCR, write out asp/dispense commands
-    for i in range(df_map.shape[0]):
-        if sample_volume <= 0:
-            continue
-        
-        # aspiration
-        asp = Fluent.Aspirate()
-        asp.RackLabel = df_map.loc[i,'TECAN_sample_labware_name']
-        asp.RackType = df_map.loc[i,'TECAN_sample_labware_type']
-        asp.Position = df_map.loc[i,'TECAN_sample_target_position']
-        asp.Volume = sample_volume
-        asp.LiquidClass = liq_cls
-        gwl.add(asp)
-
-        # dispensing
-        disp = Fluent.Dispense()
-        disp.RackLabel = df_map.loc[i,'TECAN_dest_labware_name']
-        disp.RackType = df_map.loc[i,'TECAN_dest_labware_type']
-        disp.Position = df_map.loc[i,'TECAN_dest_target_position']
-        disp.Volume = sample_volume
-        disp.LiquidClass = liq_cls
-        gwl.add(disp)
-
-        # waste
-        gwl.add(Fluent.Waste())
-        
-    # adding break
-    gwl.add(Fluent.Break())
 
 def PrimerPCR_plate_map(df_map, prefix='PrimerPCR', sep=','):
     """Create a PrimerPCR plate map table.
