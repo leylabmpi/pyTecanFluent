@@ -123,7 +123,7 @@ def parse_args(test_args=None, subparsers=None):
                       help='Tagmentation: Tn5 liquid class (default: %(default)s)')
     liq.add_argument('--tag-buffer-liq', type=str, default='MasterMix Free Single Wall Disp',
                       help='Tagmentation: buffer liquid class (default: %(default)s)')
-    liq.add_argument('--sample-liq', type=str, default='Water Free Single Wall Disp',
+    liq.add_argument('--sample-liq', type=str, default='Water Contact Wet Single',
                       help='Sample liquid class (default: %(default)s)')    
     liq.add_argument('--pcr-mm-liq', type=str, default='MasterMix Free Single',
                       help='PCR: Mastermix liquid class (default: %(default)s)')
@@ -389,16 +389,32 @@ def main_tagmentation(df_map, args):
                                    position_col='TECAN_dest_target_position')
     
     # dispensing reagents (greater volume first)
-    ## Tn5 buffer
-    Tn5_pip.pip_Tn5_buffer(df_map, gwl,
-                           src_labware_type=args.tag_buffer_labware_type,
-                           liq_cls=args.tag_buffer_liq,
-                           n_tip_reuse=args.tag_n_tip_reuse)
-    ## Tn5
-    Tn5_pip.pip_Tn5(df_map, gwl,
-                    src_labware_type=args.tag_Tn5_labware_type,
-                    liq_cls=args.tag_Tn5_liq,
-                    n_tip_reuse=args.tag_n_tip_reuse)
+    total_Tn5_ul = df_map['TECAN_Tn5_1fd_ul'].sum() + df_map['TECAN_Tn5_10fd_ul'].sum() + df_map['TECAN_Tn5_100fd_ul'].sum()
+    total_Tn5_buffer_ul = df_map['TECAN_Tn5_buffer_ul'].sum()
+    total_Tn5_H2O_ul = df_map['TECAN_Tn5_H2O_ul'].sum()
+
+    if total_Tn5_buffer_ul >= total_Tn5_ul:
+        ## Tn5 buffer
+        Tn5_pip.pip_Tn5_buffer(df_map, gwl,
+                               src_labware_type=args.tag_buffer_labware_type,
+                               liq_cls=args.tag_buffer_liq,
+                               n_tip_reuse=args.tag_n_tip_reuse)
+        ## Tn5
+        Tn5_pip.pip_Tn5(df_map, gwl,
+                        src_labware_type=args.tag_Tn5_labware_type,
+                        liq_cls=args.tag_Tn5_liq,
+                        n_tip_reuse=args.tag_n_tip_reuse)
+    else:
+        ## Tn5
+        Tn5_pip.pip_Tn5(df_map, gwl,
+                        src_labware_type=args.tag_Tn5_labware_type,
+                        liq_cls=args.tag_Tn5_liq,
+                        n_tip_reuse=args.tag_n_tip_reuse)
+        ## Tn5 buffer
+        Tn5_pip.pip_Tn5_buffer(df_map, gwl,
+                               src_labware_type=args.tag_buffer_labware_type,
+                               liq_cls=args.tag_buffer_liq,
+                               n_tip_reuse=args.tag_n_tip_reuse)        
     ## water
     Tn5_pip.pip_tag_water(df_map, gwl,
                           src_labware_type=args.water_labware_type,
