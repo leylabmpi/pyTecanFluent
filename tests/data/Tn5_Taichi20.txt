@@ -1,0 +1,21 @@
+SampleID	TECAN_sample_labware_name	TECAN_sample_labware_type	TECAN_sample_target_position	TECAN_primer_labware_name	TECAN_primer_labware_type	TECAN_primer_target_position	TECAN_sample_conc	Original_DNA_con
+2	Diluted sample plate 1	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	2	S5_N7	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	20	1	68.28
+5	Diluted sample plate 1	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	5	S5_N7	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	19	1	52.115
+6	Diluted sample plate 1	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	6	S5_N7	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	1	0	0
+9	Diluted sample plate 1	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	9	S5_N7	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	16	1	34.07
+10	Diluted sample plate 1	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	10	S5_N7	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	12	1	1.639
+13	Diluted sample plate 1	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	13	S5_N7	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	17	1	34.24
+18	Diluted sample plate 1	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	18	S5_N7	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	14	1	1.867
+23	Diluted sample plate 1	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	23	S5_N7	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	13	1	1.648
+30	Diluted sample plate 1	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	30	S5_N7	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	10	0.946	0.946
+46	Diluted sample plate 1	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	46	S5_N7	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	18	1	46.229
+47	Diluted sample plate 1	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	47	S5_N7	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	15	1	1.917
+48	Diluted sample plate 1	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	48	S5_N7	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	11	1	1.074
+52	Diluted sample plate 1	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	52	S5_N7	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	9	0.897	0.897
+53	Diluted sample plate 1	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	53	S5_N7	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	5	0.208	0.208
+55	Diluted sample plate 1	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	55	S5_N7	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	6	0.446	0.446
+58	Diluted sample plate 1	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	58	S5_N7	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	7	0.793	0.793
+59	Diluted sample plate 1	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	59	S5_N7	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	4	0.206	0.206
+61	Diluted sample plate 1	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	61	S5_N7	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	3	0.19	0.19
+83	Diluted sample plate 1	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	83	S5_N7	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	2	0.154	0.154
+88	Diluted sample plate 1	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	88	S5_N7	PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR	8	0.805	0.805

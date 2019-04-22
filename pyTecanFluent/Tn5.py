@@ -80,7 +80,7 @@ def parse_args(test_args=None, subparsers=None):
     dest = parser.add_argument_group('Destination plate')
     dest.add_argument('--dest-name', type=str, default='Destination plate',
                       help='Distination labware name (default: %(default)s)')
-    dest.add_argument('--dest-type', type=str, default='384 Well Biorad PCR',
+    dest.add_argument('--dest-type', type=str, default='PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR',
                       choices=['96 Well Eppendorf TwinTec PCR',
                                'PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR',
                                '384 Well Biorad PCR',
@@ -258,7 +258,7 @@ def calc_DNA_volume(DNA_conc, target_DNA_ng=5.0,
     constratints and the input DNA conc. 
     """
     # setting rxn_volume-limited max_DNA_vol
-    ul_step = -0.5
+    ul_step = -0.1
     attempt_ul_DNA = max_DNA_vol
     while 1:
         if attempt_ul_DNA <= min_DNA_vol:
@@ -288,7 +288,7 @@ def calc_DNA_volume(DNA_conc, target_DNA_ng=5.0,
     #print('Max DNA volume: {}'.format(max_DNA_vol))
 
     # determining amount of DNA volume to use
-    ul_step = 0.5
+    ul_step = 0.1
     max_vol_exceeded = False
     attempt_ul_DNA = min_DNA_vol
     # iterating; trying to get to target sample conc
@@ -360,12 +360,12 @@ def calc_tag_volumes(df_map, args):
     ## 1:100 dilution
     func = functools.partial(set_Tn5_dilution_volume, dilution=100)
     df_map['TECAN_Tn5_100fd_ul'] = df_map['TECAN_sample_ng'].apply(func)
-
+    
     # rounding values
-    idx = {'TECAN_Tn5_ul' : 2, 'TECAN_Tn5_ul' : 2,
-           'TECAN_Tn5_buffer' : 2, 'TECAN_Tn5_H2O_ul' : 2,
-           'TECAN_Tn5_1fd_ul' : 2, 'TECAN_Tn5_10fd_ul' : 2,
-           'TECAN_Tn5_100fd_ul' : 2}
+    idx = {'TECAN_sample_ul' : 3, 'TECAN_sample_ng' : 3,
+           'TECAN_Tn5_buffer_ul' : 3, 'TECAN_Tn5_H2O_ul' : 3,
+           'TECAN_Tn5_1fd_ul' : 3, 'TECAN_Tn5_10fd_ul' : 3,
+           'TECAN_Tn5_100fd_ul' : 3}
     df_map = df_map.round(idx)
     
     # ret
@@ -413,11 +413,14 @@ def main_tagmentation(df_map, args):
     gwl.write(gwl_file)
     
     # Report (total volumes; sample truncation; samples)
+    ## removing original Tn5 (ul)
+    df_map.drop('TECAN_Tn5_ul', axis=1, inplace=True)
+
     report_file = args.prefix + '_tag_report.txt'
     with open(report_file, 'w') as repFH:
-        write_report(df_map, outFH=repFH,
-                     mm_volume=args.tag_rxn_volume,
-                     error_perc=args.error_perc)
+        write_tag_report(df_map, outFH=repFH,
+                         rxn_volume=args.tag_rxn_volume,
+                         error_perc=args.error_perc)
         
     # making labware table
     lw = Labware.labware()
@@ -474,10 +477,10 @@ def main_PCR(df_map, args):
     # Report (total volumes; sample truncation; samples)
     report_file = args.prefix + '_pcr_report.txt'
     with open(report_file, 'w') as repFH:
-        write_report(df_map, outFH=repFH,
-                     mm_volume=args.pcr_mm_volume,
-                     prm_volume=args.primer_volume,
-                     error_perc=args.error_perc)
+        write_pcr_report(df_map, outFH=repFH,
+                         mm_volume=args.pcr_mm_volume,
+                         prm_volume=args.primer_volume,
+                         error_perc=args.error_perc)
         
     # making labware table
     lw = Labware.labware()
@@ -766,9 +769,38 @@ def write_report_line(outFH, subject, volume, round_digits=1, error_perc=None):
         v = round(volume, round_digits)
     outFH.write('{}:\t{}\n'.format(subject, v))
 
-def write_report(df_map, outFH, mm_volume=0.0,
-                 prm_volume=0.0, error_perc=10.0):
-    """Writing a report on
+def write_tag_report(df_map, outFH, rxn_volume=0.0, error_perc=10.0):
+    """Writing a report on Tn5 reagents
+    """
+    # calculating total volumes
+    n_rxn = df_map.shape[0]
+    ## total Tn5
+    Tn5_1fd_ul = df_map['TECAN_Tn5_1fd_ul'].sum()
+    Tn5_10fd_ul = df_map['TECAN_Tn5_10fd_ul'].sum()
+    Tn5_100fd_ul = df_map['TECAN_Tn5_100fd_ul'].sum()
+    ## total buffer
+    Tn5_buffer_ul = df_map['TECAN_Tn5_buffer_ul'].sum()
+    ## total water
+    Tn5_H2O_ul = df_map['TECAN_Tn5_H2O_ul'].sum()
+
+    # report
+    outFH.write('# RXN REPORT\n')
+    outFH.write('Number of total RXNs:\t{}\n'.format(n_rxn))
+    ## rxn volumes
+    outFH.write('\n# Total volumes with {}% error\n'.format(error_perc))
+    ### Tn5
+    write_report_line(outFH, 'Tn5 (no dilution)', Tn5_1fd_ul, error_perc=error_perc)
+    write_report_line(outFH, 'Tn5 (1:10 dil.)', Tn5_10fd_ul, error_perc=error_perc)
+    write_report_line(outFH, 'Tn5 (1:100 dil.)', Tn5_100fd_ul, error_perc=error_perc)
+    ### Buffer    
+    write_report_line(outFH, 'Tn5 buffer', Tn5_buffer_ul, error_perc=error_perc)
+    ### Water
+    write_report_line(outFH, 'PCR-grade water', Tn5_H2O_ul, error_perc=error_perc)
+    
+    
+def write_pcr_report(df_map, outFH, mm_volume=0.0,
+                     prm_volume=0.0, error_perc=10.0):
+    """Writing a report on pcr reagnets
     """
     # calculating total volumes
     n_rxn = df_map.shape[0]
@@ -780,14 +812,14 @@ def write_report(df_map, outFH, mm_volume=0.0,
     outFH.write('# RXN REPORT\n')
     outFH.write('Number of total RXNs:\t{}\n'.format(n_rxn))
     ## rxn volumes
-    outFH.write('# Volumes per RXN (ul)\n')
+    outFH.write('\n# Volumes per RXN (ul)\n')
     write_report_line(outFH, 'Master Mix', mm_volume)
     write_report_line(outFH, 'Primers', prm_volume)
     ## raw total volumes
-    outFH.write('# Total volumes (ul)\n')
+    outFH.write('\n# Total volumes (ul)\n')
     write_report_line(outFH, 'Master Mix', total_mm_volume)
     ## total volumes with error
-    outFH.write('# Total volumes with (ul; {}% error)\n'.format(error_perc))
+    outFH.write('\n# Total volumes with (ul; {}% error)\n'.format(error_perc))
     write_report_line(outFH, 'Master Mix', total_mm_volume, error_perc=error_perc)
     # samples
     outFH.write('')
