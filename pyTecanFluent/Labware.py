@@ -218,6 +218,17 @@ class labware(object):
                 RackType = RackType.replace('PCR Adapter 384 Well and ', '')
                 loc = 'PCR96WellAdapter_CoverSite_1'     # yes, it's correct
                 pos = adapter_cnt['384 well']
+            # if labware type is trough, ordering: 6-10,1-5
+            try:
+                lw_cat = v['category']
+            except KeyError:
+                raise KeyError('Cannot find "category" for labware: {}'.format(RackLabel))
+            if lw_cat == 'trough':
+                if pos <= 5:
+                    pos += 5
+                elif pos >= 6:
+                    pos -= 5
+                pos_prompt = pos            
             # creating table entry            
             df_labware.append({'labware_name' : RackLabel,
                                'labware_type' : RackType,
