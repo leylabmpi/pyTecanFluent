@@ -176,18 +176,27 @@ def calc_Tn5_volume(x, min_vol = 0.01):
     """Calculating the volume in ul of Tn5 (y)
     base on DNA conc. (ng) input (x)
     """
+    # y = None
+    # if x >= 0 and x < 3:
+    #     y = x * 0.1678 + 0.05
+    # elif x >= 3 and x < 15:
+    #     y = x * 0.02 + 0.49
+    # elif x >= 15 and x < 25:
+    #     y = x * 0.227 - 2.61
+    # elif x >= 25:
+    #     y = x * 0.12
+    # else:
+    #     raise ValueError('Logic error')
     y = None
-    if x >= 0 and x < 3:
-        y = x * 0.1678 + 0.05
-    elif x >= 3 and x < 15:
-        y = x * 0.02 + 0.49
-    elif x >= 15 and x < 25:
-        y = x * 0.227 - 2.61
-    elif x >= 25:
-        y = x * 0.12
+    if x >= 0 and x < 0.625:
+        y = x * 0.0515 + 0.009
+    elif x >= 0.625 and x < 12.5:
+        y = x * 0.014 + 0.032
+    elif x >= 12.5:
+        y = x * 0.1 - 1.042
     else:
         raise ValueError('Logic error')
-    
+
     if y < min_vol:
         y = min_vol
         
@@ -197,9 +206,15 @@ def calc_Tn5_buffer_volume(x, min_vol = 1.0):
     """Calculating the amount of buffer to use depending on
     the Tn5 volume
     """
-    y = x * 4.0 / 3.0
-    if y < min_vol:
-        y = min_vol
+    if x >= 3.0:
+        y = x * 4.0 / 3.0
+    elif x >= 0.3:
+        y = 3.0
+    elif x >= 0.1:
+        y = 2.0
+    elif x >= 0:
+        y = 1.0
+    
     return y
 
 def calc_Tn5_H2O_volume(DNA_vol, Tn5_vol, buf_vol, total_vol):
