@@ -93,19 +93,21 @@ def parse_args(test_args=None, subparsers=None):
     ### tagmentation
     tag_rgnt = parser.add_argument_group('Tagmentation Reagents')
     tag_rgnt.add_argument('--tag-rxn-volume', type=float, default=20.0,
-                      help='Total tagmentation rxn volume per well (default: %(default)s)')
+                          help='Total tagmentation rxn volume per well (default: %(default)s)')
     tag_rgnt.add_argument('--min-sample-volume', type=float, default=1.0,
-                      help='Min possible sample volume per tag. rxn (default: %(default)s)')
+                          help='Min possible sample volume per tag. rxn (default: %(default)s)')
     tag_rgnt.add_argument('--max-sample-volume', type=float, default=10.0,
-                      help='Max possible sample volume per tag. rxn (default: %(default)s)')
+                          help='Max possible sample volume per tag. rxn (default: %(default)s)')
     tag_rgnt.add_argument('--target-ng-sample', type=float, default=5.0,
-                      help='Target (optimal) amount of DNA (ng) used per rxn (default: %(default)s)')
+                          help='Target (optimal) amount of DNA (ng) used per rxn (default: %(default)s)')
+    tag_rgnt.add_argument('--buffer-dilution', type=int, default=1,
+                          help='Fold-dilution of buffer 1=undiluted, 10=1:10 dilution, 100=1:100 dilution (default: %(default)s)')
     tag_rgnt.add_argument('--tag-Tn5-labware-type', type=str, default='2ml Eppendorf waste',
-                      help='Labware type for Tn5 enzyme (default: %(default)s)')
+                          help='Labware type for Tn5 enzyme (default: %(default)s)')
     tag_rgnt.add_argument('--tag-buffer-labware-type', type=str, default='2ml Eppendorf waste',
-                      help='Labware type for Tn5 buffer (default: %(default)s)')
+                          help='Labware type for Tn5 buffer (default: %(default)s)')
     tag_rgnt.add_argument('--tag-n-tip-reuse', type=int, default=4,
-                      help='Number of tip reuses for multi-dispense (default: %(default)s)')
+                          help='Number of tip reuses for multi-dispense (default: %(default)s)')
     ### PCR
     pcr_rgnt = parser.add_argument_group('PCR Reagents')    
     pcr_rgnt.add_argument('--pcr-mm-volume', type=float, default=24.0,
@@ -187,22 +189,32 @@ def calc_Tn5_volume(x, min_vol = 0.01):
     #     y = x * 0.12
     # else:
     #     raise ValueError('Logic error')
+    # y = None
+    # if x >= 0 and x < 0.625:
+    #     y = x * 0.0515 + 0.009
+    # elif x >= 0.625 and x < 12.5:
+    #     y = x * 0.014 + 0.032
+    # elif x >= 12.5:
+    #     y = x * 0.1 - 1.042
+    # else:
+    #     raise ValueError('Logic error')
+
     y = None
     if x >= 0 and x < 0.625:
-        y = x * 0.0515 + 0.009
+        y = x * 0.15 + 0.021
     elif x >= 0.625 and x < 12.5:
-        y = x * 0.014 + 0.032
+        y = x * 0.0168 + 0.0895
     elif x >= 12.5:
-        y = x * 0.1 - 1.042
+        y = x * 0.1 - 0.95
     else:
         raise ValueError('Logic error')
-
+    
     if y < min_vol:
         y = min_vol
         
     return y 
 
-def calc_Tn5_buffer_volume(x, min_vol = 1.0):
+def calc_Tn5_buffer_volume(x, min_vol = 1.0, dilution_fold=1):
     """Calculating the amount of buffer to use depending on
     the Tn5 volume
     """
@@ -214,6 +226,7 @@ def calc_Tn5_buffer_volume(x, min_vol = 1.0):
         y = 2.0
     elif x >= 0:
         y = 1.0
+    y = y * int(dilution_fold)
     
     return y
 
@@ -268,11 +281,12 @@ def set_Tn5_dilution_volume(DNA_ng, dilution=1):
     
 def calc_DNA_volume(DNA_conc, target_DNA_ng=5.0,
                     min_DNA_vol=1.0, max_DNA_vol=10.0,
-                    total_rxn_vol=20.0):
+                    total_rxn_vol=20.0, buffer_dilution=1):
     """Finding the 'best' DNA volume to use, given the reagent volume
     constratints and the input DNA conc. 
     """
     # setting rxn_volume-limited max_DNA_vol
+    buffer_dilution = int(buffer_dilution)
     ul_step = -0.1
     attempt_ul_DNA = max_DNA_vol
     while 1:
@@ -284,7 +298,7 @@ def calc_DNA_volume(DNA_conc, target_DNA_ng=5.0,
         # calculating reagent volumes
         attempt_ng_DNA = DNA_conc * attempt_ul_DNA
         attempt_ul_Tn5 = calc_Tn5_volume(attempt_ng_DNA)
-        attempt_ul_buf = calc_Tn5_buffer_volume(attempt_ul_Tn5)
+        attempt_ul_buf = calc_Tn5_buffer_volume(attempt_ul_Tn5, dilution_fold=buffer_dilution)
         attempt_ul_Tn5 = set_Tn5_volume(attempt_ul_Tn5)
         attempt_ul_H2O = total_rxn_vol - (attempt_ul_DNA + attempt_ul_Tn5 + attempt_ul_buf)
         
@@ -300,8 +314,6 @@ def calc_DNA_volume(DNA_conc, target_DNA_ng=5.0,
             max_DNA_vol = attempt_ul_DNA
             break
 
-    #print('Max DNA volume: {}'.format(max_DNA_vol))
-
     # determining amount of DNA volume to use
     ul_step = 0.1
     max_vol_exceeded = False
@@ -310,7 +322,7 @@ def calc_DNA_volume(DNA_conc, target_DNA_ng=5.0,
     while 1:
         attempt_ng_DNA = DNA_conc * attempt_ul_DNA
         attempt_ul_Tn5 = calc_Tn5_volume(attempt_ng_DNA)
-        attempt_ul_buf = calc_Tn5_buffer_volume(attempt_ul_Tn5)
+        attempt_ul_buf = calc_Tn5_buffer_volume(attempt_ul_Tn5, dilution_fold=buffer_dilution)
         attempt_ul_Tn5 = set_Tn5_volume(attempt_ul_Tn5)
         attempt_ul_H2O = total_rxn_vol - (attempt_ul_DNA + attempt_ul_Tn5 + attempt_ul_buf)
 
@@ -319,7 +331,8 @@ def calc_DNA_volume(DNA_conc, target_DNA_ng=5.0,
             # too much reagents volume
             ## iterate backwards and select first that fits constraint
             if attempt_ul_DNA == min_DNA_vol:
-                raise ValueError('logic error')
+                return min_DNA_vol
+                #raise ValueError('logic error')
             attempt_ul_DNA -= ul_step
             if attempt_ul_DNA < min_DNA_vol:
                 return min_DNA_vol
@@ -347,7 +360,8 @@ def calc_tag_volumes(df_map, args):
                              target_DNA_ng = args.target_ng_sample,
                              min_DNA_vol = args.min_sample_volume,
                              max_DNA_vol = args.max_sample_volume,
-                             total_rxn_vol = args.tag_rxn_volume)
+                             total_rxn_vol = args.tag_rxn_volume,
+                             buffer_dilution = args.buffer_dilution)
     df_map['TECAN_sample_ul'] = df_map['TECAN_sample_conc'].apply(func)
 
     cols = ['TECAN_sample_ul', 'TECAN_sample_conc']
@@ -356,13 +370,15 @@ def calc_tag_volumes(df_map, args):
     # calculating Tn5
     df_map['TECAN_Tn5_ul'] = df_map['TECAN_sample_ng'].apply(calc_Tn5_volume)
     # calculating Tn5 buffer
-    df_map['TECAN_Tn5_buffer_ul'] = df_map['TECAN_Tn5_ul'].apply(calc_Tn5_buffer_volume)
+    func = functools.partial(calc_Tn5_buffer_volume, dilution_fold=args.buffer_dilution)
+    buf_col = 'TECAN_Tn5_buffer_{}fd_ul'.format(args.buffer_dilution)
+    df_map[buf_col] = df_map['TECAN_Tn5_ul'].apply(func)
     # calculating true Tn5
     df_map['TECAN_Tn5_ul'] = df_map['TECAN_Tn5_ul'].apply(set_Tn5_volume)
 
     # calculating Water
     func = functools.partial(calc_Tn5_H2O_volume, total_vol = args.tag_rxn_volume)
-    cols = ['TECAN_sample_ul', 'TECAN_Tn5_ul', 'TECAN_Tn5_buffer_ul']
+    cols = ['TECAN_sample_ul', 'TECAN_Tn5_ul', buf_col]
     df_map['TECAN_Tn5_H2O_ul'] = df_map[cols].apply(lambda x: func(x[0], x[1], x[2]), axis=1)
 
     # Tn5 dilutions
@@ -375,15 +391,23 @@ def calc_tag_volumes(df_map, args):
     ## 1:100 dilution
     func = functools.partial(set_Tn5_dilution_volume, dilution=100)
     df_map['TECAN_Tn5_100fd_ul'] = df_map['TECAN_sample_ng'].apply(func)
+
+    # checking volumes
+    cols = ['TECAN_sample_ul', buf_col, 'TECAN_Tn5_H2O_ul',
+            'TECAN_Tn5_1fd_ul', 'TECAN_Tn5_10fd_ul', 'TECAN_Tn5_100fd_ul']
+    df_map['TECAN_total_rxn_volume'] = df_map[cols].apply(np.sum, axis=1)
+    if not all([x > 19.9 and x < 20.1 for x in df_map['TECAN_total_rxn_volume']]):
+        msg = 'Total tagmentation volumes do not equal: {}'
+        raise ValueError(msg.format(args.tag_rxn_volume))
     
     # rounding values
     idx = {'TECAN_sample_ul' : 3, 'TECAN_sample_ng' : 3,
-           'TECAN_Tn5_buffer_ul' : 3, 'TECAN_Tn5_H2O_ul' : 3,
+           buf_col : 3, 'TECAN_Tn5_H2O_ul' : 3,
            'TECAN_Tn5_1fd_ul' : 3, 'TECAN_Tn5_10fd_ul' : 3,
-           'TECAN_Tn5_100fd_ul' : 3}
+           'TECAN_Tn5_100fd_ul' : 3, 'TECAN_total_rxn_volume' : 1}
     df_map = df_map.round(idx)
-    
-    # ret
+       
+    # return 
     return df_map
     
 def main_tagmentation(df_map, args):
@@ -405,13 +429,15 @@ def main_tagmentation(df_map, args):
     
     # dispensing reagents (greater volume first)
     total_Tn5_ul = df_map['TECAN_Tn5_1fd_ul'].sum() + df_map['TECAN_Tn5_10fd_ul'].sum() + df_map['TECAN_Tn5_100fd_ul'].sum()
-    total_Tn5_buffer_ul = df_map['TECAN_Tn5_buffer_ul'].sum()
+    buf_col = df_map.columns[[x.startswith('TECAN_Tn5_buffer_') for x in df_map.columns]][0]
+    total_Tn5_buffer_ul = df_map[buf_col].sum()
     total_Tn5_H2O_ul = df_map['TECAN_Tn5_H2O_ul'].sum()
 
     if total_Tn5_buffer_ul >= total_Tn5_ul:
         ## Tn5 buffer
         Tn5_pip.pip_Tn5_buffer(df_map, gwl,
                                src_labware_type=args.tag_buffer_labware_type,
+                               buffer_dilution=args.buffer_dilution,
                                liq_cls=args.tag_buffer_liq,
                                n_tip_reuse=args.tag_n_tip_reuse)
         ## Tn5
@@ -810,7 +836,8 @@ def write_tag_report(df_map, outFH, rxn_volume=0.0, error_perc=10.0):
     Tn5_10fd_ul = df_map['TECAN_Tn5_10fd_ul'].sum()
     Tn5_100fd_ul = df_map['TECAN_Tn5_100fd_ul'].sum()
     ## total buffer
-    Tn5_buffer_ul = df_map['TECAN_Tn5_buffer_ul'].sum()
+    buf_col = df_map.columns[[x.startswith('TECAN_Tn5_buffer_') for x in df_map.columns]][0]
+    Tn5_buffer_ul = df_map[buf_col].sum()
     ## total water
     Tn5_H2O_ul = df_map['TECAN_Tn5_H2O_ul'].sum()
 

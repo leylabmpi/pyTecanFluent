@@ -12,20 +12,23 @@ from pyTecanFluent import Labware
 
 # functions
 def pip_Tn5_buffer(df_map, gwl, src_labware_type='2ml Eppendorf waste',
+                   buffer_dilution = 1,
                    liq_cls='Water Free Single', n_tip_reuse=1):
     """Commands for aliquoting Tn5 buffer
     """
+    buf_col = 'TECAN_Tn5_buffer_{}fd_ul'.format(buffer_dilution)
+    
     gwl.add(Fluent.Comment('Tn5 buffer'))
     # for each Sample, write out asp/dispense commands
     for i in range(df_map.shape[0]):
-        Tn5_buffer_vol = df_map.loc[i, 'TECAN_Tn5_buffer_ul']
+        Tn5_buffer_vol = df_map.loc[i, buf_col]
         Tn5_buffer_vol = round(Tn5_buffer_vol, 2)
         if Tn5_buffer_vol <= 0:
             continue
         
         # aspiration
         asp = Fluent.Aspirate()
-        asp.RackLabel = 'Tn5_buffer[{0:0>3}]'.format(1)
+        asp.RackLabel = 'Tn5_buffer_{0}fd_[{0:0>3}]'.format(buffer_dilution, 1)
         asp.RackType = src_labware_type
         asp.Position = 1
         asp.Volume = Tn5_buffer_vol
