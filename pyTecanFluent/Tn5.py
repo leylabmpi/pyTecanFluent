@@ -437,6 +437,7 @@ def main_tagmentation(df_map, args):
         ## Tn5 buffer
         Tn5_pip.pip_Tn5_buffer(df_map, gwl,
                                src_labware_type=args.tag_buffer_labware_type,
+                               buffer_column = buf_col,
                                buffer_dilution=args.buffer_dilution,
                                liq_cls=args.tag_buffer_liq,
                                n_tip_reuse=args.tag_n_tip_reuse)
@@ -454,6 +455,8 @@ def main_tagmentation(df_map, args):
         ## Tn5 buffer
         Tn5_pip.pip_Tn5_buffer(df_map, gwl,
                                src_labware_type=args.tag_buffer_labware_type,
+                               buffer_column = buf_col,
+                               buffer_dilution=args.buffer_dilution,
                                liq_cls=args.tag_buffer_liq,
                                n_tip_reuse=args.tag_n_tip_reuse)        
     ## water
