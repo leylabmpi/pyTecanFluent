@@ -135,7 +135,7 @@ def pip_tag_water(df_map, gwl, src_labware_type='2ml Eppendorf waste',
     # adding break
     gwl.add(Fluent.Break())
 
-def pip_samples(df_map, gwl, liq_cls='Water Free Single'):
+def pip_samples(df_map, gwl, liq_cls='Water Free Single', n_tip_reuse=1):
     """Commands for aliquoting samples to each PCR rxn
     """
     gwl.add(Fluent.Comment('Samples'))

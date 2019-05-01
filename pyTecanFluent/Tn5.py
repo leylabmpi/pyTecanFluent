@@ -106,8 +106,8 @@ def parse_args(test_args=None, subparsers=None):
                           help='Labware type for Tn5 enzyme (default: %(default)s)')
     tag_rgnt.add_argument('--tag-buffer-labware-type', type=str, default='2ml Eppendorf waste',
                           help='Labware type for Tn5 buffer (default: %(default)s)')
-    tag_rgnt.add_argument('--tag-n-tip-reuse', type=int, default=1,
-                          help='Number of tip reuses for multi-dispense (default: %(default)s)')
+    tag_rgnt.add_argument('--tag-n-tip-reuse', type=int, default=4,
+                          help='Number of tip reuses for multi-dispense (only for H2O, and only if H2O is 1st) (default: %(default)s)')
     ### PCR
     pcr_rgnt = parser.add_argument_group('PCR Reagents')    
     pcr_rgnt.add_argument('--pcr-mm-volume', type=float, default=24.0,
@@ -408,28 +408,27 @@ def tagmentation_pip(df_map, gwl, args):
     funcs['Tn5'] = functools.partial(Tn5_pip.pip_Tn5,
                                      gwl = gwl,
                                      src_labware_type = args.tag_Tn5_labware_type,
-                                     liq_cls = args.tag_Tn5_liq,
-                                     n_tip_reuse = args.tag_n_tip_reuse)
+                                     liq_cls = args.tag_Tn5_liq)
     funcs['buffer'] = functools.partial(Tn5_pip.pip_Tn5_buffer,
                                         gwl=gwl,
                                         src_labware_type=args.tag_buffer_labware_type,
                                         buffer_column = buf_col,
                                         buffer_dilution = args.buffer_dilution,
-                                        liq_cls = args.tag_buffer_liq,
-                                        n_tip_reuse = args.tag_n_tip_reuse)
+                                        liq_cls = args.tag_buffer_liq)
     funcs['H2O'] = functools.partial(Tn5_pip.pip_tag_water,
                                      gwl = gwl,
                                      src_labware_type = args.water_labware_type,
-                                     liq_cls = args.tag_water_liq,
-                                     n_tip_reuse = args.tag_n_tip_reuse)
-
+                                     liq_cls = args.tag_water_liq)
     funcs['DNA'] = functools.partial(Tn5_pip.pip_samples,
-                                     gwl = gwl,
-                                     liq_cls = args.sample_liq)
+                                     gwl = gwl)
 
     # pipetting by largest to smallest volume
-    for k,v in sorted(total_vols.items(), key=lambda x: -x[1]):
-        funcs[k](df_map)
+    for i,(k,v) in enumerate(sorted(total_vols.items(), key=lambda x: -x[1])):
+        if i == 0 and k == 'H2O':
+            n_tip_reuse = args.tag_n_tip_reuse
+        else:
+            n_tip_reuse = 1
+        funcs[k](df_map, n_tip_reuse=n_tip_reuse)
         
 def main_tagmentation(df_map, args):
     """Tagmentation step of the Tn5 method
