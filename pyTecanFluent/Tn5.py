@@ -121,9 +121,9 @@ def parse_args(test_args=None, subparsers=None):
     
     # Liquid classes
     liq = parser.add_argument_group('Liquid classes')
-    liq.add_argument('--tag-Tn5-liq', type=str, default='Tn5 Contact Wet Single',
+    liq.add_argument('--tag-Tn5-liq', type=str, default='Tn5 Contact Wet Single Ignore',
                       help='Tagmentation: Tn5 liquid class (default: %(default)s)')
-    liq.add_argument('--tag-buffer-liq', type=str, default='Tn5 Contact Wet Single',
+    liq.add_argument('--tag-buffer-liq', type=str, default='Tn5 Contact Wet Single Ignore',
                       help='Tagmentation: buffer liquid class (default: %(default)s)')
     liq.add_argument('--sample-liq', type=str, default='Water Contact Wet Single Ignore',
                       help='Sample liquid class (default: %(default)s)')
@@ -131,7 +131,7 @@ def parse_args(test_args=None, subparsers=None):
                       help='Water liquid class (default: %(default)s)')    
     liq.add_argument('--pcr-mm-liq', type=str, default='MasterMix Free Single',
                       help='PCR: Mastermix liquid class (default: %(default)s)')
-    liq.add_argument('--primer-liq', type=str, default='Water Free Single Wall Disp',
+    liq.add_argument('--primer-liq', type=str, default='Water Contact Wet Single Ignore',
                      help='Primer liquid class (default: %(default)s)')
 
     misc = parser.add_argument_group('Misc')     
