@@ -409,7 +409,48 @@ def calc_tag_volumes(df_map, args):
        
     # return 
     return df_map
-    
+
+def tagmentation_pip(df_map, gwl, args):
+    """dispensing reagents (greater volume first)
+    """
+    buf_col = df_map.columns[[x.startswith('TECAN_Tn5_buffer_') for x in df_map.columns]][0]
+
+    # total volumes
+    total_vols = {}
+    total_vols['Tn5'] = df_map['TECAN_Tn5_1fd_ul'].mean() + df_map['TECAN_Tn5_10fd_ul'].mean() + df_map['TECAN_Tn5_100fd_ul'].mean()
+    total_vols['buffer'] = df_map[buf_col].mean()
+    total_vols['H2O'] = df_map['TECAN_Tn5_H2O_ul'].mean()
+    total_vols['DNA'] = df_map['TECAN_sample_ul'].mean()
+
+    # pipetting functions
+    funcs = {}
+    funcs['Tn5'] = functools.partial(Tn5_pip.pip_Tn5,
+                                     gwl = gwl,
+                                     src_labware_type = args.tag_Tn5_labware_type,
+                                     liq_cls = args.tag_Tn5_liq,
+                                     n_tip_reuse = args.tag_n_tip_reuse)
+    funcs['buffer'] = functools.partial(Tn5_pip.pip_Tn5_buffer,
+                                        gwl=gwl,
+                                        src_labware_type=args.tag_buffer_labware_type,
+                                        buffer_column = buf_col,
+                                        buffer_dilution = args.buffer_dilution,
+                                        liq_cls = args.tag_buffer_liq,
+                                        n_tip_reuse = args.tag_n_tip_reuse)
+    funcs['H2O'] = functools.partial(Tn5_pip.pip_tag_water,
+                                     gwl = gwl,
+                                     src_labware_type = args.water_labware_type,
+                                     liq_cls = args.water_liq,
+                                     n_tip_reuse = args.tag_n_tip_reuse)
+
+    funcs['DNA'] = functools.partial(Tn5_pip.pip_samples,
+                                     gwl = gwl,
+                                     liq_cls = args.sample_liq)
+
+    # pipetting by largest to smallest volume
+    for k,v in sorted(total_vols.items(), key=lambda x: -x[1]):
+        funcs[k](df_map)
+        
+
 def main_tagmentation(df_map, args):
     """Tagmentation step of the Tn5 method
     """
@@ -426,47 +467,9 @@ def main_tagmentation(df_map, args):
                                    labware_name_col='TECAN_dest_labware_name',
                                    labware_type_col='TECAN_dest_labware_type',
                                    position_col='TECAN_dest_target_position')
-    
-    # dispensing reagents (greater volume first)
-    total_Tn5_ul = df_map['TECAN_Tn5_1fd_ul'].sum() + df_map['TECAN_Tn5_10fd_ul'].sum() + df_map['TECAN_Tn5_100fd_ul'].sum()
-    buf_col = df_map.columns[[x.startswith('TECAN_Tn5_buffer_') for x in df_map.columns]][0]
-    total_Tn5_buffer_ul = df_map[buf_col].sum()
-    total_Tn5_H2O_ul = df_map['TECAN_Tn5_H2O_ul'].sum()
 
-    if total_Tn5_buffer_ul >= total_Tn5_ul:
-        ## Tn5 buffer
-        Tn5_pip.pip_Tn5_buffer(df_map, gwl,
-                               src_labware_type=args.tag_buffer_labware_type,
-                               buffer_column = buf_col,
-                               buffer_dilution=args.buffer_dilution,
-                               liq_cls=args.tag_buffer_liq,
-                               n_tip_reuse=args.tag_n_tip_reuse)
-        ## Tn5
-        Tn5_pip.pip_Tn5(df_map, gwl,
-                        src_labware_type=args.tag_Tn5_labware_type,
-                        liq_cls=args.tag_Tn5_liq,
-                        n_tip_reuse=args.tag_n_tip_reuse)
-    else:
-        ## Tn5
-        Tn5_pip.pip_Tn5(df_map, gwl,
-                        src_labware_type=args.tag_Tn5_labware_type,
-                        liq_cls=args.tag_Tn5_liq,
-                        n_tip_reuse=args.tag_n_tip_reuse)
-        ## Tn5 buffer
-        Tn5_pip.pip_Tn5_buffer(df_map, gwl,
-                               src_labware_type=args.tag_buffer_labware_type,
-                               buffer_column = buf_col,
-                               buffer_dilution=args.buffer_dilution,
-                               liq_cls=args.tag_buffer_liq,
-                               n_tip_reuse=args.tag_n_tip_reuse)        
-    ## water
-    Tn5_pip.pip_tag_water(df_map, gwl,
-                          src_labware_type=args.water_labware_type,
-                          liq_cls=args.water_liq,
-                          n_tip_reuse=args.tag_n_tip_reuse)
-    ## samples
-    Tn5_pip.pip_samples(df_map, gwl,
-                        liq_cls=args.sample_liq)
+    # dispensing reagents
+    tagmentation_pip(df_map, gwl, args)    
     
     ## writing out worklist (gwl) file
     gwl_file = args.prefix + '_tag.gwl'
