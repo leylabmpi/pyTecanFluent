@@ -106,7 +106,7 @@ def parse_args(test_args=None, subparsers=None):
                           help='Labware type for Tn5 enzyme (default: %(default)s)')
     tag_rgnt.add_argument('--tag-buffer-labware-type', type=str, default='2ml Eppendorf waste',
                           help='Labware type for Tn5 buffer (default: %(default)s)')
-    tag_rgnt.add_argument('--tag-n-tip-reuse', type=int, default=4,
+    tag_rgnt.add_argument('--tag-n-tip-reuse', type=int, default=1,
                           help='Number of tip reuses for multi-dispense (default: %(default)s)')
     ### PCR
     pcr_rgnt = parser.add_argument_group('PCR Reagents')    
@@ -121,18 +121,18 @@ def parse_args(test_args=None, subparsers=None):
     
     # Liquid classes
     liq = parser.add_argument_group('Liquid classes')
-    liq.add_argument('--tag-Tn5-liq', type=str, default='MasterMix Free Single Wall Disp',
+    liq.add_argument('--tag-Tn5-liq', type=str, default='Tn5 Contact Wet Single',
                       help='Tagmentation: Tn5 liquid class (default: %(default)s)')
-    liq.add_argument('--tag-buffer-liq', type=str, default='MasterMix Free Single Wall Disp',
+    liq.add_argument('--tag-buffer-liq', type=str, default='Tn5 Contact Wet Single',
                       help='Tagmentation: buffer liquid class (default: %(default)s)')
-    liq.add_argument('--sample-liq', type=str, default='Water Contact Wet Single',
-                      help='Sample liquid class (default: %(default)s)')    
+    liq.add_argument('--sample-liq', type=str, default='Water Contact Wet Single Ignore',
+                      help='Sample liquid class (default: %(default)s)')
+    liq.add_argument('--tag-water-liq', type=str, default='Water Contact Wet Single Ignore',
+                      help='Water liquid class (default: %(default)s)')    
     liq.add_argument('--pcr-mm-liq', type=str, default='MasterMix Free Single',
                       help='PCR: Mastermix liquid class (default: %(default)s)')
     liq.add_argument('--primer-liq', type=str, default='Water Free Single Wall Disp',
                      help='Primer liquid class (default: %(default)s)')
-    liq.add_argument('--water-liq', type=str, default='Water Free Single Wall Disp',
-                      help='Water liquid class (default: %(default)s)')    
 
     misc = parser.add_argument_group('Misc')     
     misc.add_argument('--water-labware-type', type=str, default='25ml_1 waste',
@@ -178,27 +178,6 @@ def calc_Tn5_volume(x, min_vol = 0.01):
     """Calculating the volume in ul of Tn5 (y)
     base on DNA conc. (ng) input (x)
     """
-    # y = None
-    # if x >= 0 and x < 3:
-    #     y = x * 0.1678 + 0.05
-    # elif x >= 3 and x < 15:
-    #     y = x * 0.02 + 0.49
-    # elif x >= 15 and x < 25:
-    #     y = x * 0.227 - 2.61
-    # elif x >= 25:
-    #     y = x * 0.12
-    # else:
-    #     raise ValueError('Logic error')
-    # y = None
-    # if x >= 0 and x < 0.625:
-    #     y = x * 0.0515 + 0.009
-    # elif x >= 0.625 and x < 12.5:
-    #     y = x * 0.014 + 0.032
-    # elif x >= 12.5:
-    #     y = x * 0.1 - 1.042
-    # else:
-    #     raise ValueError('Logic error')
-
     y = None
     if x >= 0 and x < 0.625:
         y = x * 0.15 + 0.021
@@ -414,10 +393,12 @@ def tagmentation_pip(df_map, gwl, args):
     """dispensing reagents (greater volume first)
     """
     buf_col = df_map.columns[[x.startswith('TECAN_Tn5_buffer_') for x in df_map.columns]][0]
-
+    
     # total volumes
     total_vols = {}
-    total_vols['Tn5'] = df_map['TECAN_Tn5_1fd_ul'].mean() + df_map['TECAN_Tn5_10fd_ul'].mean() + df_map['TECAN_Tn5_100fd_ul'].mean()
+    total_vols['Tn5'] = np.nansum([df_map['TECAN_Tn5_1fd_ul'].mean(skipna=True),
+                                   df_map['TECAN_Tn5_10fd_ul'].mean(skipna=True),
+                                   df_map['TECAN_Tn5_100fd_ul'].mean(skipna=True)])
     total_vols['buffer'] = df_map[buf_col].mean()
     total_vols['H2O'] = df_map['TECAN_Tn5_H2O_ul'].mean()
     total_vols['DNA'] = df_map['TECAN_sample_ul'].mean()
@@ -439,7 +420,7 @@ def tagmentation_pip(df_map, gwl, args):
     funcs['H2O'] = functools.partial(Tn5_pip.pip_tag_water,
                                      gwl = gwl,
                                      src_labware_type = args.water_labware_type,
-                                     liq_cls = args.water_liq,
+                                     liq_cls = args.tag_water_liq,
                                      n_tip_reuse = args.tag_n_tip_reuse)
 
     funcs['DNA'] = functools.partial(Tn5_pip.pip_samples,
@@ -450,7 +431,6 @@ def tagmentation_pip(df_map, gwl, args):
     for k,v in sorted(total_vols.items(), key=lambda x: -x[1]):
         funcs[k](df_map)
         
-
 def main_tagmentation(df_map, args):
     """Tagmentation step of the Tn5 method
     """
