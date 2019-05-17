@@ -11,74 +11,23 @@ from pyTecanFluent import Labware
 
 
 # functions
-def pip_Tn5_buffer(df_map, gwl, src_labware_type='2ml Eppendorf waste',
-                   buffer_column='buffer', buffer_dilution = 1,
-                   liq_cls='Water Free Single', n_tip_reuse=1):
-    """Commands for aliquoting Tn5 buffer
-    """    
-    gwl.add(Fluent.Comment('Tn5 buffer'))
-    # for each Sample, write out asp/dispense commands
-    for i in range(df_map.shape[0]):
-        Tn5_buffer_vol = df_map.loc[i, buffer_column]
-        Tn5_buffer_vol = round(Tn5_buffer_vol, 2)
-        if Tn5_buffer_vol <= 0:
-            continue
-        
-        # aspiration
-        asp = Fluent.Aspirate()
-        asp.RackLabel = 'Tn5_buffer_{0}fd_[{0:0>3}]'.format(buffer_dilution, 1)
-        asp.RackType = src_labware_type
-        asp.Position = 1
-        asp.Volume = Tn5_buffer_vol
-        asp.LiquidClass = liq_cls
-        gwl.add(asp)
-
-        # dispensing
-        disp = Fluent.Dispense()
-        disp.RackLabel = df_map.loc[i,'TECAN_dest_labware_name']
-        disp.RackType = df_map.loc[i,'TECAN_dest_labware_type']
-        disp.Position = df_map.loc[i,'TECAN_dest_target_position']
-        disp.Volume = Tn5_buffer_vol
-        disp.LiquidClass = liq_cls
-        gwl.add(disp)
-
-        # waste
-        if (i + 1) % n_tip_reuse == 0 or i + 1 == df_map.shape[0]:
-            gwl.add(Fluent.Waste())
-        
-    # adding break
-    gwl.add(Fluent.Break())
-
-def pip_Tn5(df_map, gwl, src_labware_type='2ml Eppendorf waste',
-            liq_cls='Water Free Single', n_tip_reuse=1):
-    """Commands for aliquoting Tn5 
+def pip_Tn5_mastermix(df_map, gwl, mm_volume,
+                      src_labware_type='2ml Eppendorf waste',
+                      liq_cls='Water Free Single', n_tip_reuse=1):
+    """Commands for aliquoting Tn5 mastermix (Tn5 + buffer + water)
     """
-    idx = {'TECAN_Tn5_1fd_ul' : 'Tn5[{0:0>3}]',
-           'TECAN_Tn5_10fd_ul' : 'Tn5_10foldDil[{0:0>3}]',
-           'TECAN_Tn5_100fd_ul' : 'Tn5_100foldDil[{0:0>3}]'}
-    
-    gwl.add(Fluent.Comment('Tn5 enzyme'))
-    # for each Sample, write out asp/dispense commands
-    for i in range(df_map.shape[0]):
-        Tn5_vol = df_map.loc[i, 'TECAN_Tn5_ul']
-        if Tn5_vol <= 0.0:
-            continue
-
-        # which has the volume
-        src_labware_label = None
-        for x in idx.keys():
-            if not np.isnan(df_map.loc[i,x]):
-                Tn5_vol = round(df_map.loc[i,x], 2)
-                src_labware_label = idx[x]
-        if src_labware_label is None:
-            raise ValueError('logic error')
+    if mm_volume <= 0:
+        return None
         
+    gwl.add(Fluent.Comment('Tn5 mastermix (Tn5 + buffer + water)'))
+    # for each Sample, write out asp/dispense commands
+    for i in range(df_map.shape[0]):        
         # aspiration
         asp = Fluent.Aspirate()
-        asp.RackLabel = src_labware_label.format(1)
+        asp.RackLabel = 'Tn5_mastermix'
         asp.RackType = src_labware_type
         asp.Position = 1
-        asp.Volume = Tn5_vol
+        asp.Volume = mm_volume
         asp.LiquidClass = liq_cls
         gwl.add(asp)
 
@@ -87,7 +36,7 @@ def pip_Tn5(df_map, gwl, src_labware_type='2ml Eppendorf waste',
         disp.RackLabel = df_map.loc[i,'TECAN_dest_labware_name']
         disp.RackType = df_map.loc[i,'TECAN_dest_labware_type']
         disp.Position = df_map.loc[i,'TECAN_dest_target_position']
-        disp.Volume = Tn5_vol
+        disp.Volume = mm_volume
         disp.LiquidClass = liq_cls
         gwl.add(disp)
 
@@ -98,60 +47,19 @@ def pip_Tn5(df_map, gwl, src_labware_type='2ml Eppendorf waste',
     # adding break
     gwl.add(Fluent.Break())
 
-def pip_tag_water(df_map, gwl, src_labware_type='2ml Eppendorf waste',
-                  liq_cls='Water Free Single', n_tip_reuse=1):
-    """Commands for aliquoting differing amounts of water
-    """
-    gwl.add(Fluent.Comment('Water'))
-    # for each Sample, write out asp/dispense commands
-    for i in range(df_map.shape[0]):
-        water_vol = df_map.loc[i, 'TECAN_Tn5_H2O_ul']
-        water_vol = round(water_vol, 2)
-        if water_vol <= 0:
-            continue
-        
-        # aspiration
-        asp = Fluent.Aspirate()
-        asp.RackLabel = 'Water[{0:0>3}]'.format(1)
-        asp.RackType = src_labware_type
-        asp.Position = 1
-        asp.Volume = water_vol
-        asp.LiquidClass = liq_cls
-        gwl.add(asp)
-
-        # dispensing
-        disp = Fluent.Dispense()
-        disp.RackLabel = df_map.loc[i,'TECAN_dest_labware_name']
-        disp.RackType = df_map.loc[i,'TECAN_dest_labware_type']
-        disp.Position = df_map.loc[i,'TECAN_dest_target_position']
-        disp.Volume = water_vol
-        disp.LiquidClass = liq_cls
-        gwl.add(disp)
-
-        # waste
-        if (i + 1) % n_tip_reuse == 0 or i + 1 == df_map.shape[0]:
-            gwl.add(Fluent.Waste())
-        
-    # adding break
-    gwl.add(Fluent.Break())
-
-def pip_samples(df_map, gwl, liq_cls='Water Free Single', n_tip_reuse=1):
+def pip_samples(df_map,  gwl, DNA_volume=1, liq_cls='Water Free Single', n_tip_reuse=1):
     """Commands for aliquoting samples to each PCR rxn
     """
     gwl.add(Fluent.Comment('Samples'))
     # for each Sample-PCR, write out asp/dispense commands
     for i in range(df_map.shape[0]):
-        sample_vol = df_map.loc[i, 'TECAN_sample_ul']
-        sample_vol = round(sample_vol, 2)
-        if sample_vol <= 0:
-            continue
         
         # aspiration
         asp = Fluent.Aspirate()
         asp.RackLabel = df_map.loc[i,'TECAN_sample_labware_name']
         asp.RackType = df_map.loc[i,'TECAN_sample_labware_type']
         asp.Position = df_map.loc[i,'TECAN_sample_target_position']
-        asp.Volume = sample_vol
+        asp.Volume = DNA_volume
         asp.LiquidClass = liq_cls
         gwl.add(asp)
 
@@ -160,7 +68,7 @@ def pip_samples(df_map, gwl, liq_cls='Water Free Single', n_tip_reuse=1):
         disp.RackLabel = df_map.loc[i,'TECAN_dest_labware_name']
         disp.RackType = df_map.loc[i,'TECAN_dest_labware_type']
         disp.Position = df_map.loc[i,'TECAN_dest_target_position']
-        disp.Volume = sample_vol
+        disp.Volume = DNA_volume
         disp.LiquidClass = liq_cls
         gwl.add(disp)
 
