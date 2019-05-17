@@ -454,8 +454,7 @@ def check_df_map(df_map, args):
     if 'TECAN_target_position' in df_map.columns.values and 'TECAN_sample_target_position' not in df_map.columns.values:
         to_rename['TECAN_target_position'] = 'TECAN_sample_target_position'
     df_map.rename(columns=to_rename, inplace=True)    
-    req_cols = ['TECAN_sample_conc',
-                'TECAN_sample_labware_name', 'TECAN_sample_labware_type',
+    req_cols = ['TECAN_sample_labware_name', 'TECAN_sample_labware_type',
                 'TECAN_sample_target_position', 'TECAN_primer_labware_name',
                 'TECAN_primer_labware_type', 'TECAN_primer_target_position']
     missing_cols(df_map, req_cols)
