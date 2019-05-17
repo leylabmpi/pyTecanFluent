@@ -149,7 +149,7 @@
         "wells" : 1,
         "max_volume" : 4800
     },
-    "10ml_Falcon" : {
+    "10ml Falcon" : {
         "target_location" : ["Falcon10_Pos_1"],
         "category" : "tube",
         "wells" : 1,
