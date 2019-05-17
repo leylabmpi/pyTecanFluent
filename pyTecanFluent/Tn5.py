@@ -35,9 +35,7 @@ def parse_args(test_args=None, subparsers=None):
     * Tn5 (with Tn5 buffer & water added)
        * The 'optimal' amount of each component is calculated based on the input DNA conc.
 
-
     Required columns in the input samples table:
-
     * "TECAN_sample_labware_name" = The sample labware name on the robot worktable. Whatever name you want to use! 
     * "TECAN_sample_labware_type" = The type of labware containing samples (eg., '96 Well Eppendorf TwinTec PCR')
     * "TECAN_sample_target_position" = The well or tube location (a number)
@@ -129,8 +127,6 @@ def parse_args(test_args=None, subparsers=None):
                      help='Primer liquid class (default: %(default)s)')
 
     misc = parser.add_argument_group('Misc')     
-    misc.add_argument('--water-labware-type', type=str, default='25ml_1 waste',
-                      help='Labware type for water (default: %(default)s)')
     misc.add_argument('--error-perc', type=float, default=10.0,
                       help='Percent of extra total reagent volume to include (default: %(default)s)')
     
