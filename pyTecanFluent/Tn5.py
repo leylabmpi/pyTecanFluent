@@ -117,7 +117,7 @@ def parse_args(test_args=None, subparsers=None):
     
     # Liquid classes
     liq = parser.add_argument_group('Liquid classes')
-    liq.add_argument('--tag-Tn5-liq', type=str, default='Tn5 Contact Wet Single Ignore',
+    liq.add_argument('--tag-Tn5-liq', type=str, default='Tn5 Free Single Wall Disp',
                       help='Tagmentation: Tn5 liquid class (default: %(default)s)')
     liq.add_argument('--sample-liq', type=str, default='Water Contact Wet Single Ignore',
                       help='Sample liquid class (default: %(default)s)')
