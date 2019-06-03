@@ -179,6 +179,8 @@ def check_args(args):
     assert args.dilution >= 0.0, '--dilution must be >= 0'
     assert args.min_volume >= 0.0, '--min-volume must be >= 0'
     assert args.max_volume > 0.0, '--max-volume must be > 0'
+    # removing "tube" from end of labware type (if present)
+    args.dil_labware_type = Utils.rm_tube(args.dil_labware_type)
         
 def conc2df(concfile, row_select=None, file_format=None, header=True):
     """Loading a concentration file as a pandas dataframe

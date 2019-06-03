@@ -18,13 +18,18 @@ def df_rm_special_chars(df, colname):
     except TypeError:
         raise TypeError('Cannot remove special characters in column: {}'.format(colname))
 
-def df_rm_tube(df, colname):
-    """Remove "tube" from end of reagent container string
+def rm_tube(X, colname=None):
+    """Remove "tube" from end of reagent container string.
+    If colname == None, then assuming "X" is a string (not a column in a data.frame).
     """
-    try:
-        df[colname] = df[colname].astype(str).apply(lambda x: re.sub(r'[_ ][Tt]ube *', '', x))
-    except TypeError:
-        raise TypeError('Cannot remove "tube" in column: {}'.format(colname))
+    regex = re.compile(r'[_ ][Tt]ube *')
+    if colname is None:
+        return regex.sub('', x)
+    else:
+        try:
+            X[colname] = X[colname].astype(str).apply(lambda x: regex.sub('', x))
+        except TypeError:
+            raise TypeError('Cannot remove "tube" in column: {}'.format(colname))
     
 def file_written(file_name):
     """Status on writing file

@@ -243,7 +243,10 @@ def check_df_setup(df_setup):
         assert np.isnan(vol) or vol >= 0.0, msg.format(i)
     for i,vol in enumerate(df_setup['water volume']):
         assert np.isnan(vol) or vol >= 0.0, msg.format(i)
-    
+
+    # removing "tube" from end of labware type (if present)
+    Utils.rm_tube(df_setup, 'sample labware type')
+
 
 def check_rack_labels(df_setup):
     """Removing '.' for rack labels (causes execution failures)

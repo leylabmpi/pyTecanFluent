@@ -5,7 +5,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # 96-well source plate
 pyTecanFluent LITE --prefix /tmp/LITE_1plate \
 	      --pcr-mm-volume 7 \
-	      --pcr-mm-labware-type 10ml_Falcon \
+	      --pcr-mm-labware-type "10ml Falcon" \
 	      $DIR/../../tests/data/LITE_1plate.xlsx
 
 

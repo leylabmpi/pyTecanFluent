@@ -330,8 +330,9 @@ def check_df_map(df_map, args):
 
     # making sure labware names are "TECAN worklist friendly"
     Utils.df_rm_special_chars(df_map, 'TECAN_sample_labware_name')
-    Utils.df_rm_tube(df_map, 'TECAN_sample_labware_type')
-    Utils.df_rm_tube(df_map, 'TECAN_primer_labware_type')
+    # removing "tube" from end of labware type (if present)
+    Utils.rm_tube(df_map, 'TECAN_sample_labware_type')
+    Utils.rm_tube(df_map, 'TECAN_primer_labware_type')
         
 def check_rack_labels(df_map):
     """Removing '.' for rack labels (causes execution failures)
