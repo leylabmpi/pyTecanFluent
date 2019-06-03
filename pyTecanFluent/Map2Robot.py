@@ -330,7 +330,8 @@ def check_df_map(df_map, args):
 
     # making sure labware names are "TECAN worklist friendly"
     Utils.df_rm_special_chars(df_map, 'TECAN_sample_labware_name')
-
+    Utils.df_rm_tube(df_map, 'TECAN_sample_labware_type')
+    Utils.df_rm_tube(df_map, 'TECAN_primer_labware_type')
         
 def check_rack_labels(df_map):
     """Removing '.' for rack labels (causes execution failures)
@@ -452,6 +453,7 @@ def pip_mastermix(df_map, gwl, mm_labware_type='25ml_1 waste',
         # all records for 1 plate
         RackLabel = df_f.loc[i,'TECAN_dest_labware_name']
         df_tmp = df.loc[df['TECAN_dest_labware_name'] == RackLabel,]
+        df_tmp.reset_index(inplace=True)
         # dispense single or with reagent distribution
         if n_multi_disp == 1:
             # creating asp-dispense
