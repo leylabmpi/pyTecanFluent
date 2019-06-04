@@ -440,7 +440,7 @@ def pip_samples(df_setup, gwl, liq_cls='Water Contact Wet Single'):
         
         asp.RackLabel = df.loc[i,'sample labware name']
         asp.RackType = df.loc[i,'sample labware type']
-        asp.Position = 1
+        asp.Position = df.loc[i, 'sample location']
         asp.Volume = df.loc[i,'sample volume']
         asp.LiquidClass = liq_cls
         gwl.add(asp)
