@@ -127,18 +127,17 @@ def backup_file(f):
 
         
 def _reorder_384well(df, gwl, labware_type_col, position_col):
+    df[position_col] = pd.to_numeric(df[position_col])
+    
     odd_even = lambda x: (x % 2, x)
 
     # n-wells for labware type
     labware_type = df[labware_type_col].unique()[0]
     n_wells = gwl.db.get_labware_wells(labware_type)
-    # sorting if 384 well
-    if n_wells == 384:
-        df = pd.concat([df.loc[df[position_col] % 2 != 0],
-                        df.loc[df[position_col] % 2 == 0]])
+    df = pd.concat([df.loc[df[position_col] % 2 != 0].sort_values(by=position_col),
+                    df.loc[df[position_col] % 2 == 0].sort_values(by=position_col)])
     return df
 
-    
 def reorder_384well(df, gwl, labware_name_col, labware_type_col, position_col):
     """Reordering target positions of any 384-well labware types in df.
     Reordering to all odd-even in order to account for channel offset (reordering speeds up asp/disp)
