@@ -24,10 +24,10 @@ def rm_tube(X, colname=None):
     """
     regex = re.compile(r'[_ ][Tt]ube *')
     if colname is None:
-        return regex.sub('', x)
+        return regex.sub('', X)
     else:
         try:
-            X[colname] = X[colname].astype(str).apply(lambda x: regex.sub('', x))
+            X[colname] = X[colname].astype(str).apply(lambda x: regex.sub('', X))
         except TypeError:
             raise TypeError('Cannot remove "tube" in column: {}'.format(colname))
     
@@ -134,8 +134,9 @@ def _reorder_384well(df, gwl, labware_type_col, position_col):
     # n-wells for labware type
     labware_type = df[labware_type_col].unique()[0]
     n_wells = gwl.db.get_labware_wells(labware_type)
-    df = pd.concat([df.loc[df[position_col] % 2 != 0].sort_values(by=position_col),
-                    df.loc[df[position_col] % 2 == 0].sort_values(by=position_col)])
+    if n_wells == 384:
+        df = pd.concat([df.loc[df[position_col] % 2 != 0].sort_values(by=position_col),
+                        df.loc[df[position_col] % 2 == 0].sort_values(by=position_col)])
     return df
 
 def reorder_384well(df, gwl, labware_name_col, labware_type_col, position_col):

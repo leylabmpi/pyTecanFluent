@@ -195,6 +195,8 @@ def conc2df(concfile, row_select=None, file_format=None, header=True):
             file_format = 'csv'
         elif concfile.endswith('.txt'):
             file_format = 'tab'
+        elif concfile.endswith('.tsv'):
+            file_format = 'tab'
         elif concfile.endswith('.xls') or concfile.endswith('.xlsx'):
             file_format = 'excel'
     else:
