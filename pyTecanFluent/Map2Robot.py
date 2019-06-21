@@ -328,6 +328,10 @@ def check_df_map(df_map, args):
         if sv < 0:
             raise ValueError('Sample volume < 0')
 
+    # sampleID rename
+    if '#SampleID' in df_map.columns.values:
+        df_map.rename(columns={'#SampleID':'SampleID'}, inplace=True)
+        
     # making sure labware names are "TECAN worklist friendly"
     Utils.df_rm_special_chars(df_map, 'TECAN_sample_labware_name')
     # removing "tube" from end of labware type (if present)
@@ -677,7 +681,7 @@ def map2biorad(df_map, positions):
       Column = numeric
     """
     df_biorad = df_map.copy()
-    df_biorad = df_biorad[['#SampleID', 'TECAN_dest_target_position']]
+    df_biorad = df_biorad[['SampleID', 'TECAN_dest_target_position']]
     df_biorad.columns = ['*Sample Name', 'TECAN_dest_target_position']
     lw_utils = Labware.utils()
     f = functools.partial(lw_utils.position2well, wells = positions)

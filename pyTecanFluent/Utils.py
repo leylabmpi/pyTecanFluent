@@ -22,15 +22,8 @@ def rm_tube(X, colname=None):
     """Remove "tube" from end of reagent container string.
     If colname == None, then assuming "X" is a string (not a column in a data.frame).
     """
-    regex = re.compile(r'[_ ][Tt]ube *')
-    if colname is None:
-        return regex.sub('', X)
-    else:
-        try:
-            X[colname] = X[colname].astype(str).apply(lambda x: regex.sub('', X))
-        except TypeError:
-            raise TypeError('Cannot remove "tube" in column: {}'.format(colname))
-    
+    X[colname].replace(r'[_ ][Tt]ube *', '', regex=True, inplace=True)
+
 def file_written(file_name):
     """Status on writing file
     file_name: string
