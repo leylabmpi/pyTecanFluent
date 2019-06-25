@@ -22,14 +22,17 @@ def rm_tube(X, colname=None):
     """Remove "tube" from end of reagent container string.
     If colname == None, then assuming "X" is a string (not a column in a data.frame).
     """
-    X[colname].replace(r'[_ ][Tt]ube *', '', regex=True, inplace=True)
+    regex = r'[_ ][Tt]ube *'
+    if colname is None:
+        return re.sub(regex, '', X)
+    else:
+        X[colname].replace(regex, '', regex=True, inplace=True)
 
 def file_written(file_name):
     """Status on writing file
     file_name: string
     """
     print('File written: {}'.format(file_name), file=sys.stderr)
-
 
 def make_range(x, set_zero_index=False):
     """Making a range from a string of comma-delimited and hyphenated number strings.
