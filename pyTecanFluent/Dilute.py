@@ -183,6 +183,7 @@ def check_args(args):
     args.dil_labware_type = Utils.rm_tube(args.dil_labware_type)
     # special characters for namings
     args.dil_labware_name = Utils.rm_special_chars(args.dil_labware_name)
+    args.dest_name = Utils.rm_special_chars(args.dest_name)
         
 def conc2df(concfile, row_select=None, file_format=None, header=True):
     """Loading a concentration file as a pandas dataframe
