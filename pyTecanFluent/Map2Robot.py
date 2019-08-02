@@ -333,7 +333,7 @@ def check_df_map(df_map, args):
         df_map.rename(columns={'#SampleID':'SampleID'}, inplace=True)
         
     # making sure labware names are "TECAN worklist friendly"
-    Utils.df_rm_special_chars(df_map, 'TECAN_sample_labware_name')
+    df_map = Utils.rm_special_chars(df_map, 'TECAN_sample_labware_name')
     # removing "tube" from end of labware type (if present)
     Utils.rm_tube(df_map, 'TECAN_sample_labware_type')
     Utils.rm_tube(df_map, 'TECAN_primer_labware_type')

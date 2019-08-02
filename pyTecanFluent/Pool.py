@@ -223,6 +223,9 @@ def check_args(args):
     """
     # input table column IDs
     args.rows = Utils.make_range(args.sample_rows, set_zero_index=True)
+    # destination labware name
+    args.dest_name = Utils.rm_special_chars(args.dest_name)
+    
     # dilution
     assert args.volume >= 0.0, '--volume must be >= 0'
                          
@@ -282,7 +285,7 @@ def sample2df(samplefile, sample_col, include_col,
     df = df.loc[:,req_cols]
 
     # making sure labware names are "TECAN worklist friendly"
-    Utils.df_rm_special_chars(df, labware_name_col)
+    df = Utils.rm_special_chars(df, labware_name_col)
     
     # return
     return df

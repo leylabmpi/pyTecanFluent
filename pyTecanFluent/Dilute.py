@@ -181,6 +181,8 @@ def check_args(args):
     assert args.max_volume > 0.0, '--max-volume must be > 0'
     # removing "tube" from end of labware type (if present)
     args.dil_labware_type = Utils.rm_tube(args.dil_labware_type)
+    # special characters for namings
+    args.dil_labware_name = Utils.rm_special_chars(args.dil_labware_name)
         
 def conc2df(concfile, row_select=None, file_format=None, header=True):
     """Loading a concentration file as a pandas dataframe
@@ -221,7 +223,7 @@ def conc2df(concfile, row_select=None, file_format=None, header=True):
     check_df_conc(df)
 
     # making sure labware names are "TECAN worklist friendly"
-    Utils.df_rm_special_chars(df, 'TECAN_labware_name')
+    df = Utils.rm_special_chars(df, 'TECAN_labware_name')
 
     # return
     return df

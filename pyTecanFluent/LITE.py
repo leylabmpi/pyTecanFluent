@@ -292,6 +292,9 @@ def check_args(args):
 
     # rows in mapping file
     args.rows = Utils.make_range(args.rows, set_zero_index=True)
+
+    # distination name
+    args.dest_name = Utils.rm_special_chars(args.dest_name)
     
     # volumes
     ## mastermix
@@ -302,8 +305,7 @@ def check_args(args):
     ## primers
     if args.primer_volume < 0:
         args.primer_volume = 0
-    
-        
+            
 def map2df(mapfile, args, row_select=None):
     """Loading a mapping file as a pandas dataframe
     mapfile: string; mapping file path
@@ -391,7 +393,7 @@ def check_df_map(df_map, args):
         print(msg, file=sys.stderr)        
 
     # making sure labware names are "TECAN worklist friendly"
-    Utils.df_rm_special_chars(df_map, 'TECAN_sample_labware_name')
+    df_map = Utils.rm_special_chars(df_map, 'TECAN_sample_labware_name')
     # removing "tube" from end of labware type (if present)
     Utils.rm_tube(df_map, 'TECAN_primer_labware_type')
 

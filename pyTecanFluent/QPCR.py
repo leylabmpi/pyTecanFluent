@@ -109,6 +109,7 @@ def main(args=None):
     # Input
     if args is None:
         args = parse_args()
+    check_args(args)
 
     # Load input assay setup table
     df_setup = load_setup(args.setup, 
@@ -176,7 +177,12 @@ def main(args=None):
     Utils.file_written(lw_file)
     Utils.file_written(report_file)
     
-
+def check_args(args):
+    """Checking user input
+    """
+    # special characters for namings
+    args.dest = Utils.rm_special_chars(args.dest)
+    
 def load_setup(input_file, file_format=None, header=0):
     """Loading setup file (Excel, csv, or tab-delim)
     """
@@ -209,7 +215,7 @@ def load_setup(input_file, file_format=None, header=0):
     check_df_setup(df)
     
     # making sure labware names are "TECAN worklist friendly"
-    Utils.df_rm_special_chars(df, 'sample labware name')
+    df = Utils.rm_special_chars(df, 'sample labware name')
     
     # assert & return
     assert df.shape[1] > 1, 'Input file is only 1 column; wrong delimiter used?'    

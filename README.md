@@ -58,7 +58,7 @@ To edit the database, just alter the JSON files in `./pyTecanFluent/database/` p
 
 Optional testing:
 
-`python setpy.py test`
+`python setup.py test`
 
 Install:
 

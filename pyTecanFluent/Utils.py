@@ -10,13 +10,19 @@ import numpy as np
 import pandas as pd
 
 # functions
-def df_rm_special_chars(df, colname):
+def rm_special_chars(x, colname=None):
     """Remove all special characters from column in pandas data.frame (in-place edit)
     """
-    try:
-        df[colname] = df[colname].astype(str).apply(lambda x: re.sub(r'[^A-Za-z0-9_ ]', '_', x))
-    except TypeError:
-        raise TypeError('Cannot remove special characters in column: {}'.format(colname))
+    regex = re.compile(r'[^A-Za-z0-9_ ]')
+
+    if colname is None:
+       x = regex.sub('_', x)
+    else:
+        try:
+            x[colname] = x[colname].astype(str).apply(lambda y: regex.sub('_', y))
+        except TypeError:
+            raise TypeError('Cannot remove special characters in column: {}'.format(colname))
+    return x
 
 def rm_tube(X, colname=None):
     """Remove "tube" from end of reagent container string.
