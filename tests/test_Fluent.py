@@ -41,7 +41,7 @@ class Test_aspirate(unittest.TestCase):
         pass
 
     def test_cmd(self):
-        self.assertRaises(AssertionError, self.asp.cmd)
+        self.assertTrue(isinstance(self.asp.cmd, str))
 
 class Test_dispense(unittest.TestCase):
     def setUp(self):
