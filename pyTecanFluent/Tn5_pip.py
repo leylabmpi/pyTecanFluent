@@ -15,12 +15,15 @@ def pip_Tn5_mastermix(df_map, gwl, mm_volume,
                       src_labware_type='2ml Eppendorf waste',
                       liq_cls='Water Free Single', n_tip_reuse=1):
     """Commands for aliquoting Tn5 mastermix (Tn5 + buffer + water)
-    """
+    """    
     if mm_volume <= 0:
         return None
-        
-    gwl.add(Fluent.Comment('Tn5 mastermix (Tn5 + buffer + water)'))
+
+    # reordering to account for n_tip_reuse
+    df_map = Utils.reorder_plate_n_tip_reuse(df_map, n_tip_reuse)
+
     # for each Sample, write out asp/dispense commands
+    gwl.add(Fluent.Comment('Tn5 mastermix (Tn5 + buffer + water)'))
     for i in range(df_map.shape[0]):        
         # aspiration
         asp = Fluent.Aspirate()

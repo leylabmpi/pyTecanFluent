@@ -253,9 +253,9 @@ def main_tagmentation(df_map, args):
 
     # Reordering dest if plate type is 384-well
     df_map = Utils.reorder_384well(df_map, gwl,
-                                   labware_name_col = 'TECAN_dest_labware_name',
-                                   labware_type_col = 'TECAN_dest_labware_type',
-                                   position_col = 'TECAN_dest_target_position')
+                                   labware_name_col='TECAN_dest_labware_name',
+                                   labware_type_col='TECAN_dest_labware_type',
+                                   position_col='TECAN_dest_target_position')
     
     # dispensing reagents
     ## Tn5 mastermix
