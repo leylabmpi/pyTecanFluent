@@ -1,5 +1,5 @@
 #SampleID	BarcodeSequence	LinkerPrimerSequence	TECAN_sample_labware_name	TECAN_sample_labware_type	TECAN_sample_target_position	TECAN_primer_labware_name	TECAN_primer_labware_type	TECAN_primer_target_position	TECAN_sample_rxn_volume	TECAN_sample_conc	Notes
-A1	CACCGAAATCTG	GTGCCAGCMGCCGCGGTAA	Diluted sample plate 1	96 Well Eppendorf TwinTec PCR	1	S5_N7	96 Well Eppendorf TwinTec PCR	1	1	5	DNA sample in a 96-well plate
+A1	CACCGAAATCTG	GTGCCAGCMGCCGCGGTAA	Diluted sample plate 1	96 Well Eppendorf TwinTec PCR	1	S5_N7	96 Well Eppendorf TwinTec PCR	1	1	10	DNA sample in a 96-well plate
 A2	TATGGTACCCAG	GTGCCAGCMGCCGCGGTAA	Diluted sample plate 1	96 Well Eppendorf TwinTec PCR	2	S5_N7	96 Well Eppendorf TwinTec PCR	2	1	5	DNA sample in a 96-well plate
 A3	ACACCAACACCA	GTGCCAGCMGCCGCGGTAA	Diluted sample plate 1	96 Well Eppendorf TwinTec PCR	3	S5_N7	96 Well Eppendorf TwinTec PCR	3	1	1	DNA sample in a 96-well plate
 A4	ACATACTGAGCA	GTGCCAGCMGCCGCGGTAA	Diluted sample plate 1	96 Well Eppendorf TwinTec PCR	4	S5_N7	96 Well Eppendorf TwinTec PCR	4	1	0.9	DNA sample in a 96-well plate

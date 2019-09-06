@@ -102,6 +102,8 @@ def parse_args(test_args=None, subparsers=None):
                           help='Amount of sample to use per rxn [ul] (default: %(default)s)')
     tag_rgnt.add_argument('--tag-Tn5-labware-type', type=str, default='2ml Eppendorf waste',
                           help='Labware type for Tn5 MasterMix [Tn5 + buffer + water] (default: %(default)s)')
+    tag_rgnt.add_argument('--Tn5-calc-method', type=str, default='Silke', choices=['Marek', 'Silke'],
+                          help='Calc. method for Tn5 amount. Marek = DNA:Tn5 ratio used by Marek. Silke = based on her DNA:Tn5 testing  (default: %(default)s)')
     tag_rgnt.add_argument('--tag-n-tip-reuse', type=int, default=4,
                           help='Number of tip reuses for multi-dispense (only for H2O, and only if H2O is 1st) (default: %(default)s)')
     ### PCR
@@ -163,22 +165,30 @@ def main(args=None):
     
     # Return
     return None
-
     
-def calc_Tn5_volume(dna_ng):
+def calc_Tn5_volume(dna_ng, Tn5_calc_method):
     """Calculating the per-rnx volume (ul) of Tn5 needed
-    based on DNA conc. (ng) input (x)
+    based on DNA conc. (ng) input (x).
+    "Silke" method = based on Silke's testing in April 2019.
+    "Marek" method = using ratio of DNA:Tn5 as in Marek's original protocol (25 ng DNA : 3 ul Tn5)
     """
     # per rxn
-    Tn5_ul = None
-    if dna_ng >= 0 and dna_ng < 0.625:
-        Tn5_ul = dna_ng * 0.15 + 0.021
-    elif dna_ng >= 0.625 and dna_ng < 12.5:
-        Tn5_ul = dna_ng * 0.0168 + 0.0895
-    elif dna_ng >= 12.5:
-        Tn5_ul = dna_ng * 0.1 - 0.95
+    if Tn5_calc_method == 'Silke':
+        Tn5_ul = None
+        if dna_ng >= 0 and dna_ng < 0.625:
+            Tn5_ul = dna_ng * 0.15 + 0.021
+        elif dna_ng >= 0.625 and dna_ng < 12.5:
+            Tn5_ul = dna_ng * 0.06 + 0.1
+        elif dna_ng >= 12.5 and dna_ng < 20:
+            Tn5_ul = dna_ng * 0.1 - 0.1
+        elif dna_ng >= 20:
+            Tn5_ul = dna_ng * 0.12
+        else:
+            raise ValueError('Logic error')
+    elif Tn5_calc_method == 'Marek':
+        Tn5_ul = dna_ng * 0.12
     else:
-        raise ValueError('Logic error')
+        raise ValueError('Tn5_calc_method not recognized')
 
     return Tn5_ul
 
@@ -206,12 +216,12 @@ def calc_Tn5_water_volume(DNA_vol, Tn5_vol, buf_vol, total_vol):
     return y
 
 
-def calc_Tn5_mastermix_volumes(df_map, DNA_conc, DNA_volume, rxn_volume, error_perc):
+def calc_Tn5_mastermix_volumes(df_map, DNA_conc, DNA_volume, rxn_volume, error_perc, args):
     """Determining the volume to Tn5, buffer, and water based
     on DNA input and total MasterMix volume
     """
     # per-rxn volumes
-    Tn5_rxn_volume = calc_Tn5_volume(DNA_conc * DNA_volume)
+    Tn5_rxn_volume = calc_Tn5_volume(DNA_conc * DNA_volume, args.Tn5_calc_method)
     buffer_rxn_volume = calc_Tn5_buffer_volume(Tn5_rxn_volume)
     water_rxn_volume = calc_Tn5_water_volume(DNA_volume, Tn5_rxn_volume,
                                              buffer_rxn_volume, rxn_volume)
@@ -287,7 +297,8 @@ def main_tagmentation(df_map, args):
                                             DNA_conc = args.sample_conc,
                                             DNA_volume = args.sample_volume,
                                             rxn_volume = args.tag_rxn_volume,
-                                            error_perc = args.error_perc)
+                                            error_perc = args.error_perc,
+                                            args=args)
     
     report_file = args.prefix + '_tag_report.txt'
     with open(report_file, 'w') as repFH:
