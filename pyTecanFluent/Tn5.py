@@ -96,7 +96,7 @@ def parse_args(test_args=None, subparsers=None):
     tag_rgnt = parser.add_argument_group('Tagmentation Reagents')
     tag_rgnt.add_argument('--tag-rxn-volume', type=float, default=20.0,
                           help='Total tagmentation rxn volume per well (default: %(default)s)')
-    tag_rgnt.add_argument('--sample-conc', type=float, default=1.0,
+    tag_rgnt.add_argument('--sample-conc', type=float, default=5.0,
                           help='Conc. of each sample [ng/ul] (default: %(default)s)')
     tag_rgnt.add_argument('--sample-volume', type=float, default=1.0,
                           help='Amount of sample to use per rxn [ul] (default: %(default)s)')
@@ -198,7 +198,7 @@ def calc_Tn5_buffer_volume(x):
     """
     if x >= 3.0:
         y = x * 4.0 / 3.0
-    elif x >= 0.3:
+    elif x > 0.7:
         y = 3.0
     elif x >= 0.1:
         y = 2.0
