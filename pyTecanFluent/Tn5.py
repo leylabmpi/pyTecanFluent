@@ -178,7 +178,7 @@ def calc_Tn5_volume(dna_ng, Tn5_calc_method):
         if dna_ng >= 0 and dna_ng < 0.625:
             Tn5_ul = dna_ng * 0.15 + 0.021
         elif dna_ng >= 0.625 and dna_ng < 5:
-            Tn5_ul = dna_ng * 0.06 + 0.04
+            Tn5_ul = dna_ng * 0.06 + 0.03
         elif dna_ng >= 5 and dna_ng < 12.5:
             Tn5_ul = dna_ng * 0.06 + 0.1
         elif dna_ng >= 12.5 and dna_ng < 20:
