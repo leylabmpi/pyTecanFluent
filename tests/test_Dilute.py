@@ -5,6 +5,8 @@
 ## batteries
 import os
 import sys
+import shutil
+import tempfile
 import unittest
 ## 3rd party
 import pandas as pd
@@ -22,13 +24,14 @@ data_dir = os.path.join(test_dir, 'data')
 class Test_Dilute_main1(unittest.TestCase):
 
     def setUp(self):
+        self.tmp_dir = tempfile.mkdtemp()
+        self.prefix = os.path.join(self.tmp_dir, 'output_')
         concfile = os.path.join(data_dir, 'conc_file1.txt')
-        self.args = Dilute.parse_args(['--prefix', '/tmp/DIL1', concfile])
+        self.args = Dilute.parse_args(['--prefix', self.prefix, concfile])
         self.files = Dilute.main(self.args)
 
     def tearDown(self):
-        for F in self.files:
-            os.remove(F)
+        shutil.rmtree(self.tmp_dir)        
 
     def test_main_gwl(self):
         ret = Utils.check_gwl(self.files[0])
@@ -37,13 +40,14 @@ class Test_Dilute_main1(unittest.TestCase):
 class Test_Dilute_main2(unittest.TestCase):
 
     def setUp(self):
+        self.tmp_dir = tempfile.mkdtemp()
+        self.prefix = os.path.join(self.tmp_dir, 'output_')
         concfile = os.path.join(data_dir, 'conc_file2.txt')
         self.args = Dilute.parse_args(['--prefix', '/tmp/DIL2', concfile])
         self.files = Dilute.main(self.args)
 
     def tearDown(self):
-        for F in self.files:
-            os.remove(F)
+        shutil.rmtree(self.tmp_dir)        
 
     def test_main_gwl(self):
         ret = Utils.check_gwl(self.files[0])

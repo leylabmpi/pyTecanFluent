@@ -144,10 +144,10 @@ def main(args=None):
     df_map = main_tagmentation(df_map, args)
     
     # PCR assay setup
-    main_PCR(df_map, args)
+    gwl_file, lw_file, report_file, df_file = main_PCR(df_map, args)
     
     # Return
-    return None   #return (gwl_file, report_file, df_file, lw_file)
+    return gwl_file, lw_file, report_file, df_file
 
 def main_tagmentation(df_map, args):
     """Tagmentation step of the LITE method
@@ -277,7 +277,9 @@ def main_PCR(df_map, args):
     Utils.file_written(report_file)
     Utils.file_written(df_file)
     for F in biorad_files:
-        Utils.file_written(F)        
+        Utils.file_written(F)
+
+    return gwl_file, lw_file, report_file, df_file
        
 def check_args(args):
     """Checking user input

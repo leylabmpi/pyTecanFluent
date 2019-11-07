@@ -35,17 +35,19 @@ class Test_db(unittest.TestCase):
 
 class Test_aspirate(unittest.TestCase):
     def setUp(self):
-        self.asp = Fluent.aspirate()        
+        self.asp = Fluent.Aspirate()
+        self.asp.RackLabel = 'test'
+        self.asp.RackType = 'test'
 
     def tearDown(self):
         pass
 
     def test_cmd(self):
-        self.assertTrue(isinstance(self.asp.cmd, str))
+        self.assertTrue(isinstance(self.asp.cmd(), str))
 
 class Test_dispense(unittest.TestCase):
     def setUp(self):
-        self.disp = Fluent.dispense()
+        self.disp = Fluent.Dispense()
 
     def tearDown(self):
         pass
@@ -55,7 +57,7 @@ class Test_dispense(unittest.TestCase):
 
 class Test_comment(unittest.TestCase):
     def setUp(self):
-        self.comment = Fluent.comment('test')
+        self.comment = Fluent.Comment('test')
 
     def tearDown(self):
         pass
@@ -66,7 +68,7 @@ class Test_comment(unittest.TestCase):
     
 class Test_waste(unittest.TestCase):
     def setUp(self):
-        self.waste = Fluent.waste()
+        self.waste = Fluent.Waste()
 
     def tearDown(self):
         pass
@@ -83,7 +85,7 @@ class Test_gwl(unittest.TestCase):
         pass
     
     def test_add(self):
-        asp = Fluent.aspirate()
+        asp = Fluent.Aspirate()
         self.assertRaises(AssertionError, self.gwl.add, asp)
         
 class Test_labware(unittest.TestCase):
