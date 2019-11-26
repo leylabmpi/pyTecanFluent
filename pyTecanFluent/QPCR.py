@@ -114,7 +114,7 @@ def main(args=None):
     # Load input assay setup table
     df_setup = load_setup(args.setup, 
                           file_format=args.format)
-
+    
     # gwl object init 
     TipTypes = ['FCA, 1000ul SBS', 'FCA, 200ul SBS',
                 'FCA, 50ul SBS', 'FCA, 10ul SBS']    
@@ -207,12 +207,16 @@ def load_setup(input_file, file_format=None, header=0):
         df = pd.read_excel(xls, header=header)
     else:
         raise ValueError('Setup file not in usable format')
-
+    
     # caps-invariant column IDs
     df.columns = [x.lower() for x in df.columns]
-
+    
     # checking format of table
     check_df_setup(df)
+
+    # filtering NaN for required columns
+    df.dropna(subset=['sample type', 'sample labware name', 'sample location'],
+              inplace=True)
     
     # making sure labware names are "TECAN worklist friendly"
     df = Utils.rm_special_chars(df, 'sample labware name')
@@ -259,7 +263,7 @@ def check_rack_labels(df_setup):
     """
     cols = ['sample labware name', 'mm name', 'dest_labware_name']
     for x in cols:
-        df_setup[x] = [y.replace('.', '_') for y in df_setup[x].tolist()]
+        df_setup[x] = [str(y).replace('.', '_') for y in df_setup[x].tolist()]
     return df_setup
         
 def plate2robot_loc(row_val, col_val, n_wells):
