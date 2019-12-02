@@ -102,8 +102,9 @@ def parse_args(test_args=None, subparsers=None):
                           help='Amount of sample to use per rxn [ul] (default: %(default)s)')
     tag_rgnt.add_argument('--tag-Tn5-labware-type', type=str, default='2ml Eppendorf waste',
                           help='Labware type for Tn5 MasterMix [Tn5 + buffer + water] (default: %(default)s)')
-    tag_rgnt.add_argument('--Tn5-calc-method', type=str, default='Silke', choices=['Marek', 'Silke'],
-                          help='Calc. method for Tn5 amount. Marek = DNA:Tn5 ratio used by Marek. Silke = based on her DNA:Tn5 testing  (default: %(default)s)')
+    tag_rgnt.add_argument('--Tn5-calc-method', type=str, default='Silke_Fall2019',
+                          choices=['Marek', 'Silke_Spring2019', 'Silke_Fall2019'],
+                          help='Calc. method for Tn5 amount based on input DNA amount (default: %(default)s)')
     tag_rgnt.add_argument('--tag-n-tip-reuse', type=int, default=4,
                           help='Number of tip reuses for multi-dispense (only for H2O, and only if H2O is 1st) (default: %(default)s)')
     ### PCR
@@ -158,13 +159,13 @@ def main(args=None):
     df_map = check_rack_labels(df_map)
     
     # tagmentation assay setup
-    df_map = main_tagmentation(df_map, args)
+    df_map, tag_files = main_tagmentation(df_map, args)
     
     # PCR assay setup
-    main_PCR(df_map, args)
+    df_map, pcr_files = main_PCR(df_map, args)
     
     # Return
-    return None
+    return tag_files + pcr_files
     
 def calc_Tn5_volume(dna_ng, Tn5_calc_method):
     """Calculating the per-rnx volume (ul) of Tn5 needed
@@ -173,7 +174,21 @@ def calc_Tn5_volume(dna_ng, Tn5_calc_method):
     "Marek" method = using ratio of DNA:Tn5 as in Marek's original protocol (25 ng DNA : 3 ul Tn5)
     """
     # per rxn
-    if Tn5_calc_method == 'Silke':
+    if Tn5_calc_method == 'Silke_Fall2019':
+        Tn5_ul = None
+        if dna_ng >= 0 and dna_ng < 2.5:
+            Tn5_ul = 0.0437
+        elif dna_ng >= 2.5 and dna_ng < 5:
+            Tn5_ul = 0.0875
+        elif dna_ng >= 5 and dna_ng < 12.5:
+            Tn5_ul = dna_ng * 0.06 + 0.1
+        elif dna_ng >= 12.5 and dna_ng < 20:
+            Tn5_ul = dna_ng * 0.1 - 0.1
+        elif dna_ng >= 20:
+            Tn5_ul = dna_ng * 0.12
+        else:
+            raise ValueError('Logic error')        
+    elif Tn5_calc_method == 'Silke_Spring2019':
         Tn5_ul = None
         if dna_ng >= 0 and dna_ng < 0.625:
             Tn5_ul = dna_ng * 0.15 + 0.021
@@ -319,7 +334,7 @@ def main_tagmentation(df_map, args):
     Utils.file_written(df_file)
 
     # returning modified df_map
-    return df_map
+    return df_map, [gwl_file, lw_file, report_file, df_file]
 
 def main_PCR(df_map, args):
     """PCR step of the Tn5 method
@@ -381,7 +396,9 @@ def main_PCR(df_map, args):
     Utils.file_written(report_file)
     Utils.file_written(df_file)
     for F in biorad_files:
-        Utils.file_written(F)        
+        Utils.file_written(F)
+
+    return df_map, [gwl_file, lw_file, report_file, df_file]
        
 def check_args(args):
     """Checking user input
