@@ -160,24 +160,28 @@ def reorder_plate_n_tip_reuse(df, n_tip_reuse):
     """Reordering mapping dataframe to account for n_tip_reuse  
     """
     # determine the number of channels that will be used
+    new_cols = ['CHANNEL_IDX', 'TIP_REUSE_IDX']
     if n_tip_reuse > 1:
         n_channels = df.shape[0] / float(n_tip_reuse)
         n_channels = int(round(n_channels+ 0.4999, 0))
         n_channels = 8 if n_channels >= 8 else n_channels
         # Add channel cycle
         x = itertools.islice(itertools.cycle(range(n_channels)), df.shape[0])
-        x = [y + 1 for y in x]
-        df['CHANNEL_IDX'] = x
+        df[new_cols[0]] =  [y + 1 for y in x]        
         # Add channel repeat
         x = [[y] * n_channels * n_tip_reuse for y in range(int(df.shape[0] / n_channels))]
         x = [item for sublist in x for item in sublist]
-        df['TIP_REUSE_IDX'] = x[:df.shape[0]]
+        df[new_cols[1]] = x[:df.shape[0]]        
         # sorting
-        df = df.sort_values(by=['CHANNEL_IDX', 'TIP_REUSE_IDX'])
-        df.drop(['CHANNEL_IDX', 'TIP_REUSE_IDX'], axis=1, inplace=True)
-        # resetting index
+        df = df.sort_values(by=new_cols[::-1])
+        #cols = ['SampleID', 'TECAN_sample_labware_name', 'TECAN_sample_target_position',
+        #        'TECAN_dest_target_position'] + new_cols
+        #df[cols].to_csv(sys.stdout, sep='\t'); exit()
+        
+        # clean up df
+        df.drop(new_cols, axis=1, inplace=True)
         df.reset_index(drop=True, inplace=True)
-
+        
     return df
 
 
