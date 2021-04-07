@@ -102,8 +102,8 @@ def parse_args(test_args=None, subparsers=None):
                           help='Amount of sample to use per rxn [ul] (default: %(default)s)')
     tag_rgnt.add_argument('--tag-Tn5-labware-type', type=str, default='2ml Eppendorf waste',
                           help='Labware type for Tn5 MasterMix [Tn5 + buffer + water] (default: %(default)s)')
-    tag_rgnt.add_argument('--Tn5-calc-method', type=str, default='Silke_Fall2019',
-                          choices=['Marek', 'Silke_Spring2019', 'Silke_Fall2019'],
+    tag_rgnt.add_argument('--Tn5-calc-method', type=str, default='Silke_Spring2021',
+                          choices=['Marek', 'Silke_Spring2019', 'Silke_Fall2019', 'Silke_Spring2021'],
                           help='Calc. method for Tn5 amount based on input DNA amount (default: %(default)s)')
     tag_rgnt.add_argument('--tag-n-tip-reuse', type=int, default=4,
                           help='Number of tip reuses for multi-dispense (only for H2O, and only if H2O is 1st) (default: %(default)s)')
@@ -174,7 +174,19 @@ def calc_Tn5_volume(dna_ng, Tn5_calc_method):
     "Marek" method = using ratio of DNA:Tn5 as in Marek's original protocol (25 ng DNA : 3 ul Tn5)
     """
     # per rxn
-    if Tn5_calc_method == 'Silke_Fall2019':
+    if Tn5_calc_method == 'Silke_Spring2021':  # Marek's 2nd large batch (biotinylated)
+        Tn5_ul = None
+        if dna_ng >= 0 and dna_ng < 2.5:
+            Tn5_ul = 0.0437
+        elif dna_ng >= 2.5 and dna_ng < 5:
+            Tn5_ul = 0.0875
+        elif dna_ng >= 5 and dna_ng < 10:
+            Tn5_ul = dna_ng * 0.05
+        elif dna_ng >= 10:
+            Tn5_ul = dna_ng * 0.03
+        else:
+            raise ValueError('Logic error')  
+    if Tn5_calc_method == 'Silke_Fall2019':  # Marek's 1st large batch
         Tn5_ul = None
         if dna_ng >= 0 and dna_ng < 2.5:
             Tn5_ul = 0.0437
