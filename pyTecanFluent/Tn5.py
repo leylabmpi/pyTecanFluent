@@ -186,7 +186,7 @@ def calc_Tn5_volume(dna_ng, Tn5_calc_method):
             Tn5_ul = dna_ng * 0.03
         else:
             raise ValueError('Logic error')  
-    if Tn5_calc_method == 'Silke_Fall2019':  # Marek's 1st large batch
+    elif Tn5_calc_method == 'Silke_Fall2019':  # Marek's 1st large batch
         Tn5_ul = None
         if dna_ng >= 0 and dna_ng < 2.5:
             Tn5_ul = 0.0437
@@ -216,8 +216,8 @@ def calc_Tn5_volume(dna_ng, Tn5_calc_method):
             raise ValueError('Logic error')
     elif Tn5_calc_method == 'Marek':
         Tn5_ul = dna_ng * 0.12
-    else:
-        raise ValueError('Tn5_calc_method not recognized')
+    else:        
+        raise ValueError('Tn5_calc_method not recognized: {}'.format(Tn5_calc_method))
 
     return Tn5_ul
 
