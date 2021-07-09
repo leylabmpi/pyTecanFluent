@@ -175,7 +175,7 @@ class labware(object):
                             'target_position_prompt' : pos})  # prompt = what is prompted for user
         # adding other labware; sorting by labware order in the gwl
         df_labware = []
-        adapter_cnt = {'96 well' : 0, '384 well' : 0}
+        adapter_cnt = {'96 well' : 0, '384 well' : 0, '96 well magnet' : 0}
         for RackLabel in sorted(self.labware_order, key=self.labware_order.get):
             v = self.labware[RackLabel]
             # RackType
@@ -218,6 +218,19 @@ class labware(object):
                 RackType = RackType.replace('PCR Adapter 384 Well and ', '')
                 loc = 'PCR96WellAdapter_CoverSite_1'     # yes, it's correct
                 pos = adapter_cnt['384 well']
+            elif RackType.startswith('Alpaqua Magnum 96 Well and '):
+                adapter_cnt['96 well magnet'] += 1
+                # adding adapter to labware table
+                df_labware.append({'labware_name' : 'Magnet for {}'.format(RackLabel),
+                                   'labware_type' : 'Alpaqua Magnum FLX 96 well',
+                                   'target_location' : loc,
+                                   'target_position' : pos,
+                                   'target_location_prompt' : loc,
+                                   'target_position_prompt' : pos})
+                # editing info for plate on adapter
+                RackType = RackType.replace('Alpaqua Magnum 96 Well and ', '')
+                loc = '96MicroplateSkirted_CoverSite_6'
+                pos = adapter_cnt['96 well magnet'] 
             # if labware type is trough, ordering: 6-10,1-5
             try:
                 lw_cat = v['category']

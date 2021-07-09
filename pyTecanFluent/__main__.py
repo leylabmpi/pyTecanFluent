@@ -12,6 +12,7 @@ from pyTecanFluent import QPCR
 from pyTecanFluent import Pool
 from pyTecanFluent import LITE
 from pyTecanFluent import Tn5
+from pyTecanFluent import Tn5_onBead
 
 # main
 def main(args=None):
@@ -47,6 +48,9 @@ def main(args=None):
   ## Tn5-tagmentation
   tn5 = Tn5.parse_args(subparsers=subparsers)
   tn5.set_defaults(func=Tn5.main)
+  ## Tn5-tagmentation on-bead
+  tn5_onBead = Tn5_onBead.parse_args(subparsers=subparsers)
+  tn5_onBead.set_defaults(func=Tn5_onBead.main)
 
   # parsing args
   if args:

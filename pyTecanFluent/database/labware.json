@@ -119,6 +119,18 @@
         "wells" : 96,
         "max_volume" : 200
     },
+    "Alpaqua Magnum FLX 96 well" : {
+        "target_location" : ["Nest61mm_Pos"],
+        "category" : "plate",
+        "wells" : 96,
+        "max_volume" : 200
+    },
+    "Alpaqua Magnum 96 Well and 96 Well Eppendorf TwinTec PCR" : {
+        "target_location" : ["Nest61mm_Pos"],
+        "category" : "plate",
+        "wells" : 96,
+        "max_volume" : 200
+    },
     "1.5ml Eppendorf" : {
         "target_location" : ["eppendorf"],
         "category" : "tube",
