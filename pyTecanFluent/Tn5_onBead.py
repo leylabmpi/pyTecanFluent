@@ -82,15 +82,11 @@ def parse_args(test_args=None, subparsers=None):
                           help='Primer volume per PCR, assuming foward+reverse are already combined (default: %(default)s)')
     pcr_rgnt.add_argument('--mm-labware-type', type=str, default='25ml_1 waste',
                           help='Labware type for mastermix (default: %(default)s)')
-    pcr_rgnt.add_argument('--n-tip-reuse', type=int, default=4,
-                          help='Number of tip reuses for multi-dispense (default: %(default)s)')
     
     # Liquid classes
     liq = parser.add_argument_group('Liquid classes')
     liq.add_argument('--sup-liq', type=str, default='Tn5-on-bead Supernatant Free Single',
                       help='Supernatant removal liquid class (default: %(default)s)')    
-    liq.add_argument('--sample-liq', type=str, default='Water Contact Wet Single',
-                      help='Sample liquid class (default: %(default)s)')
     liq.add_argument('--mm-liq', type=str, default='MasterMix Free Single',
                       help='PCR: Mastermix liquid class (default: %(default)s)')
     liq.add_argument('--primer-liq', type=str, default='Water Contact Wet Single',
@@ -150,8 +146,7 @@ def main_PCR(df_map, args):
                                  mm_volume=args.mm_volume, 
                                  liq_cls=args.mm_liq,
                                  sup_volume=args.sup_volume,
-                                 sup_rm_liq_cls=args.sup_liq,                          
-                                 n_tip_reuse=args.n_tip_reuse)
+                                 sup_rm_liq_cls=args.sup_liq)
 
     ## primers into tagmentation dest plate
     if args.primer_volume > 0:

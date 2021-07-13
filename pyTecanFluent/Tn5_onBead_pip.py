@@ -17,7 +17,7 @@ def batch(iterable, n=1):
         yield iterable[ndx:min(ndx + n, l)]
 
 def pip_mastermix(df_map, gwl,  mm_labware_type='25ml_1 waste',
-                  mm_volume=13.1, n_tip_reuse=6, liq_cls='MasterMix Free Single',
+                  mm_volume=13.1, liq_cls='MasterMix Free Single',
                   sup_volume=100, sup_rm_liq_cls='Water Free Single'):
     """
     Writing worklist commands for aliquoting mastermix.
