@@ -71,23 +71,10 @@ def parse_args(test_args=None, subparsers=None):
                          help='Which rows of the sample file to use (eg., "all"=all rows; "1-48"=rows1-48; "1,3,5-6"=rows1+3+5+6), (default: %(default)s)')
     groupIO.add_argument('--prefix', type=str, default='TECAN_Tn5-on-Bead',
                          help='Output file name prefix (default: %(default)s)')
-
-    ## Destination plate
-    # dest = parser.add_argument_group('Destination plate')
-    # dest.add_argument('--dest-name', type=str, default='Destination plate',
-    #                   help='Distination labware name (default: %(default)s)')
-    # dest.add_argument('--dest-type', type=str, default='PCR Adapter 96 Well and 96 Well Eppendorf TwinTec PCR',
-    #                   choices=['96 Well Eppendorf TwinTec PCR on Alpaqua magnet',
-    #                            '96 Well Eppendorf TwinTec PCR',
-    #                            '384 Well Biorad PCR on magnet',
-    #                            '384 Well Biorad PCR'],
-    #                   help='Destination labware type (default: %(default)s)')
-    # dest.add_argument('--dest-start', type=int, default=1,
-    #                   help='Start well number on destination plate (default: %(default)s)')
     
     ## Reagents
     pcr_rgnt = parser.add_argument_group('PCR Reagents')
-    pcr_rgnt.add_argument('--sup-volume', type=float, default=100.0,
+    pcr_rgnt.add_argument('--sup-volume', type=float, default=120.0,
                           help='Supernatant volume (default: %(default)s)')
     pcr_rgnt.add_argument('--mm-volume', type=float, default=23.0,
                           help='PCR MasterMix volume per well (default: %(default)s)')
@@ -102,11 +89,11 @@ def parse_args(test_args=None, subparsers=None):
     liq = parser.add_argument_group('Liquid classes')
     liq.add_argument('--sup-liq', type=str, default='Tn5-on-bead Supernatant Free Single',
                       help='Supernatant removal liquid class (default: %(default)s)')    
-    liq.add_argument('--sample-liq', type=str, default='Water Contact Wet Single Ignore',
+    liq.add_argument('--sample-liq', type=str, default='Water Contact Wet Single',
                       help='Sample liquid class (default: %(default)s)')
     liq.add_argument('--mm-liq', type=str, default='MasterMix Free Single',
                       help='PCR: Mastermix liquid class (default: %(default)s)')
-    liq.add_argument('--primer-liq', type=str, default='Water Contact Wet Single Ignore',
+    liq.add_argument('--primer-liq', type=str, default='Water Contact Wet Single',
                      help='Primer liquid class (default: %(default)s)')
 
     misc = parser.add_argument_group('Misc')     

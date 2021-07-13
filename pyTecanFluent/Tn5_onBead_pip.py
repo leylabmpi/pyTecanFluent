@@ -44,29 +44,36 @@ def pip_mastermix(df_map, gwl,  mm_labware_type='25ml_1 waste',
 #                       'TECAN_dest_target_position'], inplace=True)
 #    df.reset_index(inplace=True)
 #    print(df); sys.exit()
-    
+
+    # determining sup. asp-disp cycles
+    n_cycles = int(round(sup_volume / 45 + 0.49999,0))
+    sup_volume = round(sup_volume / n_cycles,1)
+
     # for each Sample-PCR, write out asp/dispense commands
     for x in batch(range(df.shape[0]), 8):
-        for i in x:
-            # removing supernatant
-            ## aspiration
-            asp = Fluent.Aspirate()
-            asp.RackLabel = df.loc[i,'TECAN_dest_labware_name']
-            asp.RackType = df.loc[i,'TECAN_dest_labware_type']
-            asp.Position = df.loc[i,'TECAN_dest_target_position']
-            asp.Volume = sup_volume
-            asp.LiquidClass = sup_rm_liq_cls
-            gwl.add(asp)
-            ## dispensing
-            disp = Fluent.Dispense()
-            disp.RackLabel = '100ml_waste[001]'
-            disp.RackType = '100ml_1'
-            disp.Position = 1
-            disp.Volume = sup_volume
-            disp.LiquidClass = sup_rm_liq_cls
-            gwl.add(disp)
-            ## tip waste
-            gwl.add(Fluent.Waste())
+        for i in range(n_cycles):
+            for ii in x:
+                # removing supernatant
+                ## aspiration
+                asp = Fluent.Aspirate()
+                asp.RackLabel = df.loc[ii,'TECAN_dest_labware_name']
+                asp.RackType = df.loc[ii,'TECAN_dest_labware_type']
+                asp.Position = df.loc[ii,'TECAN_dest_target_position']
+                asp.Volume = sup_volume
+                asp.LiquidClass = sup_rm_liq_cls
+                gwl.add(asp)
+                ## dispensing
+                disp = Fluent.Dispense()
+                disp.RackLabel = '100ml_waste[001]'
+                disp.RackType = '100ml_1'
+                disp.Position = 1
+                disp.Volume = sup_volume
+                disp.LiquidClass = sup_rm_liq_cls
+                gwl.add(disp)
+                if i + 1 == n_cycles or len([y for y in x]) < 8:
+                    gwl.add(Fluent.Waste())
+                else:
+                    gwl.add(Fluent.Flush())
         gwl.add(Fluent.Break())
         for i in x:    
             # aliquoting mastermix
@@ -88,7 +95,7 @@ def pip_mastermix(df_map, gwl,  mm_labware_type='25ml_1 waste',
             gwl.add(disp)
             ## tip waste
             gwl.add(Fluent.Waste())
-        gwl.add(Fluent.Break())
+    gwl.add(Fluent.Break())
                 
 def pip_primer(i, gwl, df_map, primer_labware_name, 
                primer_labware_type, primer_target_position,
