@@ -100,7 +100,7 @@ def parse_args(test_args=None, subparsers=None):
     
     # Liquid classes
     liq = parser.add_argument_group('Liquid classes')
-    liq.add_argument('--sup-liq', type=str, default='Tn5 Contact Wet Single Ignore',
+    liq.add_argument('--sup-liq', type=str, default='Tn5-on-bead Supernatant Free Single',
                       help='Supernatant removal liquid class (default: %(default)s)')    
     liq.add_argument('--sample-liq', type=str, default='Water Contact Wet Single Ignore',
                       help='Sample liquid class (default: %(default)s)')

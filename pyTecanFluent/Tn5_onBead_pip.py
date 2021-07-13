@@ -35,14 +35,15 @@ def pip_mastermix(df_map, gwl,  mm_labware_type='25ml_1 waste',
 
     # copying df
     df = df_map.copy()
-    x = cycle(range(8))
-    df['CHANNEL_ORDER'] = [next(x) for y in range(df.shape[0])]
-    x = cycle(range(n_tip_reuse))
-    df['TIP_BATCH'] = Utils.tip_batch(df['CHANNEL_ORDER'], n_tip_reuse)
-    df.sort_values(by=['TIP_BATCH',
-                       'CHANNEL_ORDER',
-                       'TECAN_dest_target_position'], inplace=True)
-    df.reset_index(inplace=True)
+#    x = cycle(range(8))
+#    df['CHANNEL_ORDER'] = [next(x) for y in range(df.shape[0])]
+#    x = cycle(range(n_tip_reuse))
+#    df['TIP_BATCH'] = Utils.tip_batch(df['CHANNEL_ORDER'], n_tip_reuse)
+#    df.sort_values(by=['TIP_BATCH',
+#                       'CHANNEL_ORDER',
+#                       'TECAN_dest_target_position'], inplace=True)
+#    df.reset_index(inplace=True)
+#    print(df); sys.exit()
     
     # for each Sample-PCR, write out asp/dispense commands
     for x in batch(range(df.shape[0]), 8):
@@ -53,7 +54,7 @@ def pip_mastermix(df_map, gwl,  mm_labware_type='25ml_1 waste',
             asp.RackLabel = df.loc[i,'TECAN_dest_labware_name']
             asp.RackType = df.loc[i,'TECAN_dest_labware_type']
             asp.Position = df.loc[i,'TECAN_dest_target_position']
-            asp.Volume = mm_volume
+            asp.Volume = sup_volume
             asp.LiquidClass = sup_rm_liq_cls
             gwl.add(asp)
             ## dispensing
@@ -61,7 +62,7 @@ def pip_mastermix(df_map, gwl,  mm_labware_type='25ml_1 waste',
             disp.RackLabel = '100ml_waste[001]'
             disp.RackType = '100ml_1'
             disp.Position = 1
-            disp.Volume = mm_volume
+            disp.Volume = sup_volume
             disp.LiquidClass = sup_rm_liq_cls
             gwl.add(disp)
             ## tip waste
