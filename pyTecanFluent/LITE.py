@@ -623,7 +623,7 @@ def PrimerPCR_plate_map(df_map, prefix='PrimerPCR', sep=','):
     f = functools.partial(map2biorad, positions=dest_pos_max)
     df_biorad = df_map.groupby('TECAN_dest_labware_name').apply(f)
     biorad_files = []
-    if isinstance(df_biorad.index, pd.core.index.MultiIndex):
+    if isinstance(df_biorad.index, pd.MultiIndex):
         for labware in df_biorad.index.get_level_values(0).unique():
             biorad_file = prefix + '_BIORAD-{}.txt'.format(labware.replace(' ', '_'))
             df_biorad.loc[labware].to_csv(biorad_file, sep=sep, index=False, na_rep='')

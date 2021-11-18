@@ -291,7 +291,7 @@ def calc_final_volume(row, dilute_conc, min_vol, max_vol, min_total, max_total):
     # stepping from min to max possible sample volumes 
     v2_all = []
     c2_all = []
-    for v1 in np.linspace(min_vol, max_vol, (max_vol - min_vol) * 10):
+    for v1 in np.linspace(min_vol, max_vol, int((max_vol - min_vol) * 10)):
         v1 = round(v1, 2)
         v2 = round((v1 * c1) / dilute_conc, 2)
         if v2 == 0:

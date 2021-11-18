@@ -46,7 +46,7 @@ def pip_mastermix(df_map, gwl,  mm_labware_type='25ml_1 waste',
 #    print(df); sys.exit()
 
     # determining sup. asp-disp cycles
-    n_cycles = int(round(sup_volume / 45 + 0.49999,0))
+    n_cycles = int(round(sup_volume / 192 + 0.49999,0))
     sup_volume = round(sup_volume / n_cycles,1)
 
     # for each Sample-PCR, write out asp/dispense commands

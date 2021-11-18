@@ -5,7 +5,7 @@
 ## batteries
 import os
 import sys
-import unittest
+import pytest
 ## 3rd party
 import pandas as pd
 ## package
@@ -16,90 +16,44 @@ from pyTecanFluent import Labware
 test_dir = os.path.join(os.path.dirname(__file__))
 data_dir = os.path.join(test_dir, 'data')
 
-
-class Test_db(unittest.TestCase):
-    def setUp(self):
-        self.db = Fluent.db()
-
-    def tearDown(self):
-        pass
-
-    def test_RackTypes(self):
-        RackTypes = self.db.RackTypes()
-        self.assertTrue(isinstance(RackTypes, list))
-
-    def test_get_labware(self):
-        RackType = self.db.RackTypes()[0]
-        v = self.db.get_labware(RackType)
-        self.assertTrue(isinstance(v, dict))
-
-class Test_aspirate(unittest.TestCase):
-    def setUp(self):
-        self.asp = Fluent.Aspirate()
-        self.asp.RackLabel = 'test'
-        self.asp.RackType = 'test'
-
-    def tearDown(self):
-        pass
-
-    def test_cmd(self):
-        self.assertTrue(isinstance(self.asp.cmd(), str))
-
-class Test_dispense(unittest.TestCase):
-    def setUp(self):
-        self.disp = Fluent.Dispense()
-
-    def tearDown(self):
-        pass
-
-    def test_cmd(self):
-        self.assertRaises(AssertionError, self.disp.cmd)
-
-class Test_comment(unittest.TestCase):
-    def setUp(self):
-        self.comment = Fluent.Comment('test')
-
-    def tearDown(self):
-        pass
-
-    def test_cmd(self):
-        ret = self.comment.cmd()
-        self.assertTrue(isinstance(ret, str))
+# tests
+def test_db():
+    db = Fluent.db()    
+    RackTypes = db.RackTypes()
+    assert isinstance(RackTypes, list)
     
-class Test_waste(unittest.TestCase):
-    def setUp(self):
-        self.waste = Fluent.Waste()
-
-    def tearDown(self):
-        pass
-
-    def test_cmd(self):
-        ret = self.waste.cmd()
-        self.assertTrue(isinstance(ret, str))        
-            
-class Test_gwl(unittest.TestCase):
-    def setUp(self):
-        self.gwl = Fluent.gwl()
-
-    def tearDown(self):
-        pass
+    RackType = db.RackTypes()[0]
+    v = db.get_labware(RackType)
+    assert isinstance(v, dict)
     
-    def test_add(self):
-        asp = Fluent.Aspirate()
-        self.assertRaises(AssertionError, self.gwl.add, asp)
+def test_aspirate():
+    asp = Fluent.Aspirate()
+    asp.RackLabel = 'test'
+    asp.RackType = 'test'
+    assert isinstance(asp.cmd(), str)
+
+def test_dispense():
+    disp = Fluent.Dispense()
+    disp.RackLabel = 'test'
+    disp.RackType = 'test'
+    assert isinstance(disp.cmd(), str)
+
+def test_comment():
+    c = Fluent.Comment()
+    assert isinstance(c.cmd(), str)
+
+def test_waste():
+    w = Fluent.Waste()
+    assert isinstance(w.cmd(), str)
+    
+def test_gwl():
+    gwl = Fluent.gwl()
+    with pytest.raises(AssertionError):
+        gwl.add(Fluent.Aspirate())
+
+def test_labware():
+    lw = Labware.labware()
+    gwl = Fluent.gwl()
+    ret = lw.add_gwl(gwl)
+    assert ret is None
         
-class Test_labware(unittest.TestCase):
-    def setUp(self):
-        self.labware = Labware.labware()
-
-    def tearDown(self):
-        pass
-
-    def test_add(self):
-        self.gwl = Fluent.gwl()
-        ret = self.labware.add_gwl(self.gwl)
-        self.assertTrue(ret is None)
-    
-
-if __name__ == '__main__':
-    unittest.main()

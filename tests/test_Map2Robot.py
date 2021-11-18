@@ -7,7 +7,7 @@ import os
 import sys
 import shutil
 import tempfile
-import unittest
+import pytest
 ## 3rd party
 import pandas as pd
 ## package
@@ -22,38 +22,21 @@ data_dir = os.path.join(test_dir, 'data')
 
 
 # tests
-class Test_Map2Robot_main_basic(unittest.TestCase):
+def test_help(script_runner):
+    ret = script_runner.run('pyTecanFluent', 'map2robot', '-h')
+    assert ret.success
 
-    def setUp(self):
-        self.tmp_dir = tempfile.mkdtemp()
-        self.prefix = os.path.join(self.tmp_dir, 'output_')
-        mapfile = os.path.join(data_dir, 'basic_96well.txt')
-        self.args = Map2Robot.parse_args(['--prefix', self.prefix, mapfile])
-        self.files = Map2Robot.main(self.args)
+def test_basic(script_runner, tmp_path):
+    output_prefix = os.path.join(str(tmp_path), 'basic')
+    map_file = os.path.join(data_dir, 'basic_96well.txt')
+    ret = script_runner.run('pyTecanFluent', 'map2robot', '--prefix',
+                            output_prefix, map_file)
+    assert ret.success
 
-    def tearDown(self):
-        shutil.rmtree(self.tmp_dir)        
-
-    def test_main_gwl(self):
-        ret = Utils.check_gwl(self.files[0])
-        self.assertIsNone(ret)
+def test_single_barcode(script_runner, tmp_path):
+    output_prefix = os.path.join(str(tmp_path), 'single-barcode')
+    map_file = os.path.join(data_dir, 'mapping_file_fecal_stability.txt')
+    ret = script_runner.run('pyTecanFluent', 'map2robot', '--prefix',
+                            output_prefix, map_file)
+    assert ret.success
         
-class Test_Map2Robot_main_single_barcode(unittest.TestCase):
-    
-    def setUp(self):
-        self.tmp_dir = tempfile.mkdtemp()
-        self.prefix = os.path.join(self.tmp_dir, 'output_')
-        mapfile = os.path.join(data_dir, 'mapping_file_fecal_stability.txt')
-        self.args = Map2Robot.parse_args(['--prefix', self.prefix, mapfile])
-        self.files = Map2Robot.main(self.args)
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp_dir)        
-
-    def test_main_gwl(self):
-        ret = Utils.check_gwl(self.files[0])
-        self.assertIsNone(ret)
-
-        
-if __name__ == '__main__':
-    unittest.main()
