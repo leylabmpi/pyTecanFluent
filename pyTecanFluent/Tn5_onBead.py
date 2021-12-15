@@ -336,56 +336,7 @@ def add_dest(df_map):#, dest_labware, dest_type='384 Well Biorad PCR', dest_star
     df_map['TECAN_dest_labware_type'] = df_map['TECAN_sample_labware_type']
     df_map['TECAN_dest_target_position'] = df_map['TECAN_sample_target_position']
     return df_map
-    
-    
-    # db = Fluent.db()    
-    # dest_start= int(dest_start)
-    
-    # # labware type found in DB?
-    # db.get_labware(dest_type)
-    # positions = db.get_labware_wells(dest_type)
-
-    # # init destination df
-    # sample_col = 'SampleID'
-    # cols = [sample_col, 
-    #         'TECAN_dest_labware_name',
-    #         'TECAN_dest_labware_type', 
-    #         'TECAN_dest_target_position']    
-    # ncol = len(cols)
-    # nrow = df_map.shape[0] 
-    # df_dest = pd.DataFrame(np.nan, index=range(nrow), columns=cols)
-
-    # # number of destination plates required
-    # n_dest_plates = round(df_dest.shape[0] / positions + 0.5, 0)
-    # if n_dest_plates > 1:
-    #     msg = ('WARNING: Not enough wells for the number of samples.' 
-    #     ' Using multiple destination plates')
-    #     print(msg, file=sys.stderr)
-            
-    # # filling destination df
-    # orig_dest_labware = dest_labware
-    # for i,sample in enumerate(df_map['SampleID']):
-    #     # dest location
-    #     dest_position = i + dest_start
-    #     dest_position = positions if dest_position % positions == 0 else dest_position % positions 
-
-    #     # destination plate name
-    #     if n_dest_plates > 1:
-    #         x = round((i + dest_start) / positions + 0.499, 0)        
-    #         dest_labware = '{} {}'.format(orig_dest_labware, int(x))
-
-    #     # adding values DF
-    #     df_dest.iloc[i] = [sample, dest_labware, dest_type, dest_position]
-
-    # # df join (map + destination)
-    # assert df_map.shape[0] == df_dest.shape[0], 'df_map and df_dest are different lengths' 
-    # df_j = pd.merge(df_map, df_dest, on=sample_col, how='inner')
-    # assert df_j.shape[0] == df_dest.shape[0], 'map-dest DF join error'
-    # assert df_j.shape[0] > 0, 'DF has len=0 after adding destinations'
-
-    # # return
-    # return df_j
-
+        
 def reorder_384well(df, reorder_col):
     """Reorder values so that the odd, then the even locations are
     transferred. This is faster for a 384-well plate
@@ -464,7 +415,8 @@ def write_report_line(outFH, subject, volume, round_digits=1, error_perc=None):
         
 def write_pcr_report(df_map, outFH, mm_volume=0.0,
                      prm_volume=0.0, error_perc=10.0):
-    """Writing a report on pcr reagnets
+    """
+    Writing a report on pcr reagnets
     """
     # calculating total volumes
     n_rxn = df_map.shape[0]
