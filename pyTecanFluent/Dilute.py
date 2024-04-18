@@ -213,6 +213,7 @@ def conc2df(concfile, row_select=None, file_format=None, header=True):
     elif file_format == 'excel':
         xls = pd.ExcelFile(concfile)
         df = pd.read_excel(xls, header=header)
+        print('Size of the input table: {}'.format(df.shape))
     else:
         raise ValueError('Concentration file not in usable format')
 
@@ -247,7 +248,7 @@ def check_df_conc(df_conc):
     db = Fluent.db()
     msg = 'ERROR (concfile, line={}): labware type not recognized: {}'
     for i,lt in enumerate(df_conc['TECAN_labware_type']):
-        try:
+        try:            
             db.get_labware(lt)
         except KeyError:
             raise KeyError(msg.format(i, lt))
